@@ -1,7 +1,15 @@
 <!DOCTYPE html>
+<head>
 <!-- https://bl.ocks.org/mbostock/6123708 -->
 <meta charset="utf-8">
 <style>
+body{
+  /* height: 100%; */
+}
+div{
+  display: inline-block;
+  width:auto;
+}
 
 .dot circle {
   fill: lightsteelblue;
@@ -20,8 +28,29 @@
   shape-rendering: crispEdges;
   vector-effect: non-scaling-stroke;
 }
+.notification-bottom {
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  /* Rest of your styling */
+}
 
+.node{
+  /* width: 100%;
+  height: 100%;
+  text-align: left; */
+}
+.node.selected{
+  fill:red;
+
+}
 </style>
+</head>
 <body>
+  <div class="notification-bottom">
+    <p><input type="text" id="text"> FontSize:<input type="number" id="fontSize" onchange="onFontSizeEdit();"></p>
+  </div>
 <script src="https://d3js.org/d3.v3.min.js"></script>
 <script src="main.js"></script>
+</body>
