@@ -45,11 +45,14 @@ div{
   text-align: left; */
   position: absolute;
   width:auto;
-  text-align: left;
-
-  -webkit-user-modify: read-write;
+  /* text-align: left; */
+  overflow: hidden;
+  white-space:nowrap;
+  /* -webkit-user-modify: read-write;
     overflow-wrap: break-word;
-    -webkit-line-break: after-white-space;
+    -webkit-line-break: after-white-space; */
+
+
 }
 .node.selected{
   fill:red;
@@ -64,6 +67,23 @@ div{
   width: 100%;
   height:100%;
 }
+
+#text{
+  resize: none;
+    overflow: hidden;
+    min-height: 50px;
+    max-height: 100px;
+}
+
+.custom-file-upload {
+    border: 1px solid #ccc;
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+input[type="file"],#save {
+    display: none;
+}
 </style>
 </head>
 <body>
@@ -71,7 +91,20 @@ div{
 
   </div>
   <div class="notification-bottom">
-    <p><input type="text" id="text"> FontSize:<input type="number" id="fontSize"><span id="status"></span></p>
+    <p>xxx
+      <textarea id="text"></textarea> 
+      FontSize:<input type="number" step="10" id="fontSize">
+      <span id="status"></span>
+      <label class="custom-file-upload">
+        SavE
+        <button id="save"></button>
+      </label>
+      
+      <label for="file" class="custom-file-upload">
+        LoaD<input type="file" id="file" name="file">
+      </label>
+      </p>
+    
   </div>
 <script src="https://d3js.org/d3.v3.min.js"></script>
 <script src="main.js"></script>

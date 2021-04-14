@@ -1,5 +1,6 @@
 
 
+// Translate and Scale parameters
 T = [0,0];
 S = 1;
 
@@ -9,7 +10,6 @@ dragstartpos = null;
 
 
 BODY = document.getElementsByTagName('body')[0];
-
 M = 0;
 
 
@@ -25,8 +25,9 @@ var width = (window.innerWidth || document.documentElement.clientWidth || BODY.c
     height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight - margin.top - margin.bottom;
 
 var zoom = d3.behavior.zoom()
+    .scale(S).translate([T[0]*S,T[1]*S]) // initial parameters
     .on("zoom", zoomed);
-//    .scaleExtent([1, 10])
+//    .scaleExtent([1, 10]) //yeah, I don't like limits
 
 var drag = d3.behavior.drag()
     .origin(function(d) { return d; })
@@ -36,31 +37,30 @@ var drag = d3.behavior.drag()
 
 
 
-function __resize(){
-    width = Math.min(window.innerWidth , document.documentElement.clientWidth);// , BODY.clientWidth);
-    height = Math.min( window.innerHeight, document.documentElement.clientHeight);//, BODY.clientHeight);
-    width = width - margin.left - margin.right;
-    height = height - 10 - margin.top - margin.bottom;
+// function __resize(){
+//     width = Math.min(window.innerWidth , document.documentElement.clientWidth);// , BODY.clientWidth);
+//     height = Math.min( window.innerHeight, document.documentElement.clientHeight);//, BODY.clientHeight);
+//     width = width - margin.left - margin.right;
+//     height = height - 10 - margin.top - margin.bottom;
 
-    d3.select("#svg0")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom);
+//     d3.select("#svg0")
+//         .attr("width", width + margin.left + margin.right)
+//         .attr("height", height + margin.top + margin.bottom);
     
-    d3.select('#rect0')
-        .attr("width", width)
-        .attr("height", height);
-
-}
+//     d3.select('#rect0')
+//         .attr("width", width)
+//         .attr("height", height);
+// }
 
 // __resize();
 
-resize_timeout = null;
-function _resize(){
-    clearTimeout(resize_timeout);
-    resize_timeout = setTimeout(__resize, 500);
-}
+// resize_timeout = null;
+// function _resize(){
+//     clearTimeout(resize_timeout);
+//     resize_timeout = setTimeout(__resize, 500);
+// }
 
-d3.select(window).on('resize.updatesvg', _resize);
+// d3.select(window).on('resize.updatesvg', _resize);
 
 var container = d3.select("#container");
 
@@ -125,10 +125,15 @@ nodes = ((localStorage['noteplace.nodes'] == 'undefined')||(localStorage['notepl
    {id: 18, x: -9342.456857155341, y: -809.2705284670758, text: "test18", fontSize: 2152.6948230494886},
    {id: 19, x: -17632.957016230488, y: -1748.6982337578795, text: "test19", fontSize: 3044.3702144069366},
    {id: 20, x: -34529.21208752887, y: -3879.757393564678, text: "test20", fontSize: 6088.740428813872},
-   {id: 21, x: -60637.16828294902, y: -7697.692581519314, text: "test21", fontSize: 14481.546878700345},
-   {id: 22, x: -85847.63605109324, y: -13852.14863316447, text: "test22", fontSize: 24354.96171525547},
-   {id: 23, x: -114125.98197880859, y: -20149.82054705238, text: "test23", fontSize: 48709.92343051093}
-  ]:JSON.parse(localStorage['noteplace.nodes']);
+   {id: 113, x: 10412901562002.574, y: 1891828629789.287, text: "WOW you're far from home.", fontSize: 2311438465816.513},
+   {id: 114, x: 374.2565272544432, y: 354.53262339773846, text: "test114", fontSize: 159.99999999999832},
+   {id: 115, x: 214123162955070.66, y: 10711632881380.672, text: "I mean. WOW.", fontSize: 31098885119754.062},
+   {id: 116, x: 1104592423952645, y: -81819586322754.16, text: "Is anyone seeing this??", fontSize: 209207528124706.03},
+   {id: 117, x: 27359550959356268, y: -1764328513537750, text: "Here's a heart for ya:\n❤️", fontSize: 3980657295328512.5},
+   {id: 118, x: 339542519644310660, y: 20194450624807310, text: "Here's a beacon of hope:\n⛯", fontSize: 31845258362628070},
+   {id: 119, x: 1044733020186787100, y: -43038781628711940, text: "Now that is just.. stupid", fontSize: 151482431295748700},
+   {id: 120, x: 5369006128692392000, y: -759527390857764900, text: "STOP.", fontSize: 720575940379260300} //yep. this is totally the end.
+     ]:JSON.parse(localStorage['noteplace.nodes']);
 
 node = container.selectAll(".node")
 
@@ -147,8 +152,10 @@ function select(d){
 
   $('#text').enabled = true;
   $('#fontSize').enabled = true;
-  $('#text').value=d.text;
-  $('#fontSize').value=d.fontSize;
+  $('#text').value = d.text;
+  $('#fontSize').value = d.fontSize;
+  $('#fontSize').step = d.fontSize * 0.25;
+  
 }
 
 
@@ -160,6 +167,19 @@ function select_clear(){
   $('#text').value='';
   $('#fontSize').value='';
 }
+
+
+function getHTML(d){
+  return d.text.replaceAll('\n','<br/>').replaceAll(' ','&nbsp');
+}
+
+function getFontSize(d){
+  return d.fontSize*S+'px';
+}
+
+
+
+
 
 function redraw(){
 node = node.data(nodes);
@@ -176,15 +196,16 @@ node = node.data(nodes);
               console.log('aaa!');
               // console.log(this);
               //this.setAttribute("contentEditable", "true");
+              
               d3.event.stopPropagation();
             })
             // .append("text")
-            .text((d)=>d.text)
+            .html(getHTML)
             
           node
             .style("left",getX)
             .style("top",getY)
-            .style("font-size",(d)=>d.fontSize*S+'px')
+            .style("font-size",getFontSize)
             // .attr("x",(d)=>d.x).attr("y",(d)=>d.y)
             // .on("mousedown",function(d){
             //   selected_node = d;
@@ -201,7 +222,7 @@ node = node.data(nodes);
             //   d3.event.stopPropagation();
             // })
             //.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-            
+  node.exit().remove();          
   node.classed("selected", function(d) { return d === selected_node; })
 }
 redraw();
@@ -233,6 +254,8 @@ function zoomed() {
 status('T=['+T[0].toFixed(2)+','+T[1].toFixed(2)+']'+' S='+S.toFixed(2));//+' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
 
     //container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+    
+    
     redraw();
 }
 
@@ -312,8 +335,10 @@ function getG(d){
 
 function onFontSizeEdit(){
   if(selected_node !==null){
-    selected_node.fontSize = 1*document.getElementById("fontSize").value;
-    getG(selected_node).style.fontSize = selected_node.fontSize;
+    selected_node.fontSize = 1*this.value;
+    getG(selected_node).style.fontSize = getFontSize(selected_node);
+
+    this.step = this.value*0.25;
 
     save();
   }
@@ -322,7 +347,10 @@ function onFontSizeEdit(){
 function onTextEditChange(){
   if(selected_node !==null){
     selected_node.text = this.value;
-    getG(selected_node).getElementsByTagName('text')[0].innerHTML = selected_node.text;
+    getG(selected_node).getElementsByTagName('div')[0].innerHTML = getHTML(selected_node);
+
+    this.style.height = "5px";
+    this.style.height = (this.scrollHeight)+"px";
 
     save();
   }
@@ -331,3 +359,43 @@ function onTextEditChange(){
 $('#text').oninput = onTextEditChange;
 $('#fontSize').onchange = onFontSizeEdit;
 
+
+
+
+function download(filename, text) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}
+
+
+// Start file download.
+document.getElementById("save").addEventListener("click", function(){
+  // Generate download of hello.txt file with some content
+  var text = JSON.stringify({T:T,S:S,nodes:nodes});
+  var filename = "hello.txt";
+  
+  download(filename, text);
+}, false);
+
+
+$('#file').onchange = function(){
+    var fr=new FileReader();
+    fr.onload=function(){
+        G = JSON.parse(fr.result);
+        T = [1*G.T[0],1*G.T[1]];
+        S = 1*G.S;
+        zoom.translate([T[0]*S,T[1]*S]);
+        nodes = G.nodes;
+        redraw();
+    }
+      
+    fr.readAsText(this.files[0]);  
+}
