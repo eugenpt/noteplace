@@ -3,7 +3,8 @@
 T = [0,0];
 S = 1;
 
-dragstartpos = [0,0];
+// is necessary for proper dragging..
+dragstartpos = null;
 
 
 
