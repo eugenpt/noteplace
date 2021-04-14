@@ -3,6 +3,9 @@
 T = [0,0];
 S = 1;
 
+dragstartpos = [0,0];
+
+
 
 BODY = document.getElementsByTagName('body')[0];
 
@@ -75,8 +78,10 @@ d3.select(window).on('resize.updatesvg', _resize);
 
 var container = d3.select("#container");
 
-container.call(zoom)
-
+container
+    .call(zoom)
+    .on("dblclick.zoom", null)
+    .on("dblclick",dblclick)
 // var container = svg.append("g");
 
 // container.append("g")
@@ -112,9 +117,9 @@ container.call(zoom)
 // });
 
 
-nodes = localStorage['noteplace.nodes'] == undefined?[
+nodes = ((localStorage['noteplace.nodes'] == 'undefined')||(localStorage['noteplace.nodes'] == undefined))?[
    {id: 0, x: 0, y: 0, text: "test0", fontSize: 12},
-   {id: 1, x: 90.10408020019531, y: 45.55634880065918, text: "test1", fontSize: 12},
+   {id: 1, x: 100, y: 100, text: "test1", fontSize: 12},
    {id: 2, x: 183, y: 85.5, text: "test2", fontSize: 10.000000000000002},
    {id: 3, x: 177.71582669914915, y: 84.10224103813428, text: "test3", fontSize: 4.204482076268574},
    {id: 4, x: 173.18169898809143, y: 83.77972083086841, text: "test4", fontSize: 1.7677669529663695},
@@ -193,19 +198,19 @@ node = node.data(nodes);
           node
             .style("left",getX)
             .style("top",getY)
+            .style("font-size",(d)=>d.fontSize*S+'px')
             // .attr("x",(d)=>d.x).attr("y",(d)=>d.y)
-            .style("font-size",(d)=>d.fontSize)
             // .on("mousedown",function(d){
             //   selected_node = d;
             //   redraw();
             // })
-            // .on("mousedown",function(d){
-            //   if(selected_node === d){
-            //     select_clear();
-            //   }else
-            //     select(d);
-            //   redraw();
-            // })
+            .on("mousedown",function(d){
+              if(selected_node === d){
+                select_clear();
+              }else
+                select(d);
+              redraw();
+            })
             // .on("dblclick",function(d){
             //   d3.event.stopPropagation();
             // })
@@ -239,33 +244,44 @@ function zoomed() {
 
 //    console.log(T)
 //    console.log(S)
-status('T='+T+' S='+S);
+status('T=['+T[0].toFixed(2)+','+T[1].toFixed(2)+']'+' S='+S.toFixed(2));//+' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
 
-    container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+    //container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     redraw();
 }
 
+
+
 function dragstarted(d) {
+  
   d3.event.sourceEvent.stopPropagation();
   d3.select(this).classed("dragging", true);
 }
 
-_mouse = {x:0,y:0}
 
 function dragged(d) {
-  _mouse.x = d3.event.x; _mouse.y=d3.event.y;
-  console.log(_mouse);
+  if(dragstartpos==null){
+    dragstartpos = [d3.event.x,d3.event.y];
+  }
+  status(' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
   d3.select(this)
-  .style("left",function(d){d.x = (d3.event.x - T[0])/S; return getX(d);})
-  .style("top",function(d){d.y = (d3.event.y - T[1])/S; return getY(d);})
-//.attr("transform", function(d) {d.x = d3.event.x;d.y = d3.event.y; return "translate(" + d.x + "," + d.y + ")"; })
+  .style("left",function(d){d.x = (d3.event.x - dragstartpos[0])/S + dragstartpos[0] ; return getX(d);})
+  .style("top",function(d){d.y = (d3.event.y- dragstartpos[1])/S + dragstartpos[1]  ; return getY(d);})
+
+  status(
+    'T=['+T[0].toFixed(2)+','+T[1].toFixed(2)+']'+' S='+S.toFixed(2)
+    + ' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']'
+    +' left:'+getG(d).style.left+' top:'+getG(d).style.top+''
+    );
+
+  //.attr("transform", function(d) {d.x = d3.event.x;d.y = d3.event.y; return "translate(" + d.x + "," + d.y + ")"; })
       //      .attr("x", d.x = d3.event.x).attr("y", d.y = d3.event.y);
 }
 
 function dragended(d) {
-  console.log(d3.event.x+' '+d3.event.y)  ;
+  // console.log(d3.event.x+' '+d3.event.y)  ;
   d3.select(this).classed("dragging", false);
-
+  dragstartpos = null;
   save();
 }
 
@@ -276,7 +292,13 @@ function nodeFromMouse(_t){
     N=N+1;
     fontSize = 20/S;
 
-    return {id:N, x: (d3.event.x - T[0])/S, y: (d3.event.y - T[1])/S, text:'test'+N, fontSize:fontSize}
+    return {
+        id:N, 
+        x: (d3.event.x)/S - T[0], 
+        y: (d3.event.y)/S - T[1], 
+        text:'test'+N, 
+        fontSize:fontSize
+      }
 }
 
 function save(){
