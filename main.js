@@ -34,21 +34,6 @@ var drag = d3.behavior.drag()
     .on("drag", dragged)
     .on("dragend", dragended);
 
-// var svg = d3.select("body").append("svg").attr("id","svg0")
-//     .attr("width", width + margin.left + margin.right)
-//     .attr("height", height + margin.top + margin.bottom)
-//   .append("g")
-//     .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
-//     .call(zoom)
-//     .on("dblclick.zoom", null)
-//     .on("dblclick",dblclick)
-//     ;
-
-// var rect = svg.append("rect").attr("id","rect0")
-//     .attr("width", width)
-//     .attr("height", height)
-//     .style("fill", "none")
-//     .style("pointer-events", "all");
 
 
 function __resize(){
