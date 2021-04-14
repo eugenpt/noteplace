@@ -3,12 +3,14 @@
 <!-- https://bl.ocks.org/mbostock/6123708 -->
 <meta charset="utf-8">
 <style>
-body{
-  /* height: 100%; */
+html, body {
+  margin:0px;
+  height:100%;
 }
 div{
   display: inline-block;
   width:auto;
+  
 }
 
 .dot circle {
@@ -40,16 +42,35 @@ div{
   /* width: 100%;
   height: 100%;
   text-align: left; */
+  position: absolute;
+  width:auto;
+  text-align: left;
+
+  -webkit-user-modify: read-write;
+    overflow-wrap: break-word;
+    -webkit-line-break: after-white-space;
 }
 .node.selected{
   fill:red;
 
 }
+
+.inside_node{
+
+}
+#container{
+
+  width: 100%;
+  height:100%;
+}
 </style>
 </head>
 <body>
+  <div id="container">
+
+  </div>
   <div class="notification-bottom">
-    <p><input type="text" id="text"> FontSize:<input type="number" id="fontSize"></p>
+    <p><input type="text" id="text"> FontSize:<input type="number" id="fontSize"><span id="status"></span></p>
   </div>
 <script src="https://d3js.org/d3.v3.min.js"></script>
 <script src="main.js"></script>

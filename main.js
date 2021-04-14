@@ -1,6 +1,19 @@
+
+
+T = [0,0];
+S = 1;
+
+
 BODY = document.getElementsByTagName('body')[0];
 
 M = 0;
+
+
+function status(a){
+  $('#status').innerText = a;
+}
+
+
 // M = 10;
 // var margin = {top: -M, right: -M, bottom: -M, left: -M}
 var margin = {top: 0, right:0, bottom: 0, left: 0}
@@ -17,21 +30,21 @@ var drag = d3.behavior.drag()
     .on("drag", dragged)
     .on("dragend", dragended);
 
-var svg = d3.select("body").append("svg").attr("id","svg0")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
-    .call(zoom)
-    .on("dblclick.zoom", null)
-    .on("dblclick",dblclick)
-    ;
+// var svg = d3.select("body").append("svg").attr("id","svg0")
+//     .attr("width", width + margin.left + margin.right)
+//     .attr("height", height + margin.top + margin.bottom)
+//   .append("g")
+//     .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
+//     .call(zoom)
+//     .on("dblclick.zoom", null)
+//     .on("dblclick",dblclick)
+//     ;
 
-var rect = svg.append("rect").attr("id","rect0")
-    .attr("width", width)
-    .attr("height", height)
-    .style("fill", "none")
-    .style("pointer-events", "all");
+// var rect = svg.append("rect").attr("id","rect0")
+//     .attr("width", width)
+//     .attr("height", height)
+//     .style("fill", "none")
+//     .style("pointer-events", "all");
 
 
 function __resize(){
@@ -50,7 +63,7 @@ function __resize(){
 
 }
 
-__resize();
+// __resize();
 
 resize_timeout = null;
 function _resize(){
@@ -60,27 +73,31 @@ function _resize(){
 
 d3.select(window).on('resize.updatesvg', _resize);
 
-var container = svg.append("g");
+var container = d3.select("#container");
 
-container.append("g")
-    .attr("class", "x axis")
-  .selectAll("line")
-    .data(d3.range(0, width, 10))
-  .enter().append("line")
-    .attr("x1", function(d) { return d; })
-    .attr("y1", 0)
-    .attr("x2", function(d) { return d; })
-    .attr("y2", height);
+container.call(zoom)
 
-container.append("g")
-    .attr("class", "y axis")
-  .selectAll("line")
-    .data(d3.range(0, height, 10))
-  .enter().append("line")
-    .attr("x1", 0)
-    .attr("y1", function(d) { return d; })
-    .attr("x2", width)
-    .attr("y2", function(d) { return d; });
+// var container = svg.append("g");
+
+// container.append("g")
+//     .attr("class", "x axis")
+//   .selectAll("line")
+//     .data(d3.range(0, width, 10))
+//   .enter().append("line")
+//     .attr("x1", function(d) { return d; })
+//     .attr("y1", 0)
+//     .attr("x2", function(d) { return d; })
+//     .attr("y2", height);
+
+// container.append("g")
+//     .attr("class", "y axis")
+//   .selectAll("line")
+//     .data(d3.range(0, height, 10))
+//   .enter().append("line")
+//     .attr("x1", 0)
+//     .attr("y1", function(d) { return d; })
+//     .attr("x2", width)
+    // .attr("y2", function(d) { return d; });
 
 // d3.tsv("dots.tsv", dottype, function(error, dots) {
 //   dot = container.append("g")
@@ -156,38 +173,43 @@ function select_clear(){
 function redraw(){
 node = node.data(nodes);
         node.enter()
-          .insert("g")
+          .insert("div")
           .attr("class","node")
           .attr("id",(d)=>"node_"+d.id)
           .call(drag) 
-            .append("text")
+          .append("div")
+            .attr("class","inside_node")
+            .attr('contentEditable',true)
+            // .append("text")
             .on("dblclick", function(d){
               console.log('aaa!');
               // console.log(this);
-              this.setAttribute("contentEditable", "true");
+              //this.setAttribute("contentEditable", "true");
               d3.event.stopPropagation();
             })
             // .append("text")
             .text((d)=>d.text)
             
           node
-            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+            .style("left",getX)
+            .style("top",getY)
             // .attr("x",(d)=>d.x).attr("y",(d)=>d.y)
             .style("font-size",(d)=>d.fontSize)
             // .on("mousedown",function(d){
             //   selected_node = d;
             //   redraw();
             // })
-            .on("mousedown",function(d){
-              if(selected_node === d){
-                select_clear();
-              }else
-                select(d);
-              redraw();
-            })
-            .on("dblclick",function(d){
-              d3.event.stopPropagation();
-            })
+            // .on("mousedown",function(d){
+            //   if(selected_node === d){
+            //     select_clear();
+            //   }else
+            //     select(d);
+            //   redraw();
+            // })
+            // .on("dblclick",function(d){
+            //   d3.event.stopPropagation();
+            // })
+            //.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
             
   node.classed("selected", function(d) { return d === selected_node; })
 }
@@ -199,13 +221,28 @@ function dottype(d) {
   return d;
 }
 
-T = [0,0];
-S = 1;
+
+function getX(d){
+  return (d.x + T[0])*S + 'px';
+  return d.x+'px';
+}
+
+function getY(d){
+  return (d.y + T[1])*S + 'px';
+  return d.y+'px';
+}
 
 function zoomed() {
     S = d3.event.scale;
-    T = d3.event.translate;
-  container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+    T[0] = d3.event.translate[0]/S;
+    T[1] = d3.event.translate[1]/S;
+
+//    console.log(T)
+//    console.log(S)
+status('T='+T+' S='+S);
+
+    container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+    redraw();
 }
 
 function dragstarted(d) {
@@ -213,9 +250,15 @@ function dragstarted(d) {
   d3.select(this).classed("dragging", true);
 }
 
+_mouse = {x:0,y:0}
+
 function dragged(d) {
+  _mouse.x = d3.event.x; _mouse.y=d3.event.y;
+  console.log(_mouse);
   d3.select(this)
-      .attr("transform", function(d) {d.x = d3.event.x;d.y = d3.event.y; return "translate(" + d.x + "," + d.y + ")"; })
+  .style("left",function(d){d.x = (d3.event.x - T[0])/S; return getX(d);})
+  .style("top",function(d){d.y = (d3.event.y - T[1])/S; return getY(d);})
+//.attr("transform", function(d) {d.x = d3.event.x;d.y = d3.event.y; return "translate(" + d.x + "," + d.y + ")"; })
       //      .attr("x", d.x = d3.event.x).attr("y", d.y = d3.event.y);
 }
 
