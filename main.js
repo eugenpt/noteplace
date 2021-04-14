@@ -222,6 +222,8 @@ function dragged(d) {
 function dragended(d) {
   console.log(d3.event.x+' '+d3.event.y)  ;
   d3.select(this).classed("dragging", false);
+
+  save();
 }
 
 var N=Math.max.apply(Math,nodes.map((d) => d.id));
@@ -234,24 +236,47 @@ function nodeFromMouse(_t){
     return {id:N, x: (d3.event.x - T[0])/S, y: (d3.event.y - T[1])/S, text:'test'+N, fontSize:fontSize}
 }
 
-function addNode(n){
-  nodes.push(n);
+function save(){
 
   localStorage['noteplace.nodes'] = JSON.stringify(nodes);
+
+}
+
+function addNode(n){
+  nodes.push(n);
+  save();
 }
 
 function dblclick(){
     console.log("T="+T)  ;
     console.log("S="+S);
     console.log(d3.event.x+' '+d3.event.y)  ;
-    nodes.push(nodeFromMouse(this));
+    addNode(nodeFromMouse(this));
     redraw()
 }
 
+function getG(d){
+  return document.getElementById('node_' + d.id);
+}
 
 function onFontSizeEdit(){
   if(selected_node !==null){
     selected_node.fontSize = 1*document.getElementById("fontSize").value;
+    getG(selected_node).style.fontSize = selected_node.fontSize;
 
+    save();
   }
 }
+
+function onTextEditChange(){
+  if(selected_node !==null){
+    selected_node.text = this.value;
+    getG(selected_node).getElementsByTagName('text')[0].innerHTML = selected_node.text;
+
+    save();
+  }
+}
+
+$('#text').oninput = onTextEditChange;
+$('#fontSize').onchange = onFontSizeEdit;
+
