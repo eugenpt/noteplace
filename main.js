@@ -1,4 +1,7 @@
 
+// https://stackoverflow.com/a/17111220/2624911
+dragInitiated = false;
+
 
 // Translate and Scale parameters
 T = [0,0];
@@ -201,6 +204,7 @@ node = node.data(nodes);
             })
             // .append("text")
             .html(getHTML)
+            .each((d)=>addOnContentChange(getG(d),function(e){d.text = getG(d).innerText;save();}))
             
           node
             .style("left",getX)
@@ -260,31 +264,35 @@ status('T=['+T[0].toFixed(2)+','+T[1].toFixed(2)+']'+' S='+S.toFixed(2));//+' E:
 }
 
 
-
 function dragstarted(d) {
-  
-  d3.event.sourceEvent.stopPropagation();
-  d3.select(this).classed("dragging", true);
+  console.log(d3.event.sourceEvent.which);
+  if (d3.event.sourceEvent.which == 2){
+  dragInitiated = true;
+    d3.event.sourceEvent.stopPropagation();
+    d3.select(this).classed("dragging", true);
+  }
 }
 
 
 function dragged(d) {
-  if(dragstartpos==null){
-    dragstartpos = [d3.event.x,d3.event.y];
+  if(dragInitiated){
+    if(dragstartpos==null){
+      dragstartpos = [d3.event.x,d3.event.y];
+    }
+    status(' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
+    d3.select(this)
+    .style("left",function(d){d.x = (d3.event.x - dragstartpos[0])/S + dragstartpos[0] ; return getX(d);})
+    .style("top",function(d){d.y = (d3.event.y- dragstartpos[1])/S + dragstartpos[1]  ; return getY(d);})
+
+    status(
+      'T=['+T[0].toFixed(2)+','+T[1].toFixed(2)+']'+' S='+S.toFixed(2)
+      + ' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']'
+      +' left:'+getG(d).style.left+' top:'+getG(d).style.top+''
+      );
+
+    //.attr("transform", function(d) {d.x = d3.event.x;d.y = d3.event.y; return "translate(" + d.x + "," + d.y + ")"; })
+        //      .attr("x", d.x = d3.event.x).attr("y", d.y = d3.event.y);
   }
-  status(' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
-  d3.select(this)
-  .style("left",function(d){d.x = (d3.event.x - dragstartpos[0])/S + dragstartpos[0] ; return getX(d);})
-  .style("top",function(d){d.y = (d3.event.y- dragstartpos[1])/S + dragstartpos[1]  ; return getY(d);})
-
-  status(
-    'T=['+T[0].toFixed(2)+','+T[1].toFixed(2)+']'+' S='+S.toFixed(2)
-    + ' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']'
-    +' left:'+getG(d).style.left+' top:'+getG(d).style.top+''
-    );
-
-  //.attr("transform", function(d) {d.x = d3.event.x;d.y = d3.event.y; return "translate(" + d.x + "," + d.y + ")"; })
-      //      .attr("x", d.x = d3.event.x).attr("y", d.y = d3.event.y);
 }
 
 function dragended(d) {
@@ -292,6 +300,8 @@ function dragended(d) {
   d3.select(this).classed("dragging", false);
   dragstartpos = null;
   save();
+
+  dragInitiated = false;
 }
 
 var N=Math.max.apply(Math,nodes.map((d) => d.id));
@@ -322,11 +332,26 @@ function addNode(n){
 }
 
 function dblclick(){
-    console.log("T="+T)  ;
+    console.log("T="+T);
     console.log("S="+S);
     console.log(d3.event.x+' '+d3.event.y)  ;
-    addNode(nodeFromMouse(this));
+
+    tnode = nodeFromMouse(this)
+    addNode( tnode );
+
     redraw()
+
+    var el = getG(tnode);
+    var range = document.createRange()
+    var sel = window.getSelection()
+    
+    //range.setStart(el.childNodes[0], 0)
+    range.selectNodeContents(el.childNodes[0])
+    // range.collapse(true)
+    
+    sel.removeAllRanges()
+    sel.addRange(range)
+    
 }
 
 function getG(d){
@@ -386,16 +411,36 @@ document.getElementById("save").addEventListener("click", function(){
 }, false);
 
 
-$('#file').onchange = function(){
+$('#file').oninput = function(){
     var fr=new FileReader();
     fr.onload=function(){
+        console.log('Loading..');
         G = JSON.parse(fr.result);
         T = [1*G.T[0],1*G.T[1]];
         S = 1*G.S;
-        zoom.translate([T[0]*S,T[1]*S]);
+        zoom.scale(S).translate([T[0]*S,T[1]*S]);
         nodes = G.nodes;
         redraw();
+        console.log('Loading complete, now '+nodes.length+' nodes');
+
+        $('#file').value = "";
     }
       
     fr.readAsText(this.files[0]);  
+}
+
+
+function addOnContentChange(elt, fun){
+  if(window.addEventListener) {
+    // Normal browsers
+    elt.addEventListener('DOMSubtreeModified', fun, false);
+  } else
+   if(window.attachEvent) {
+      // IE
+      elt.attachEvent('DOMSubtreeModified', fun);
+   }
+}
+
+function contentChanged() {
+   // this function will run each time the content of the DIV changes
 }
