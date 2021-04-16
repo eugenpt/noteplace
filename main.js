@@ -1,3 +1,4 @@
+var md = new Remarkable();
 
 // https://stackoverflow.com/a/17111220/2624911
 dragInitiated = false;
@@ -140,15 +141,12 @@ function select_clear(){
 
 
 function getHTML(d){
-  return d.text.replaceAll('\n','<br/>').replaceAll(' ','&nbsp');
+  return md.render(d.text);  
 }
 
 function getFontSize(d){
   return d.fontSize*S+'px';
 }
-
-
-
 
 
 function redraw(){
@@ -160,22 +158,21 @@ node = node.data(nodes);
           .call(drag) 
           .append("div")
             .attr("class","inside_node")
-            .attr('contentEditable',true)
-            // .append("text")
+//            .attr('contentEditable',true)
             .on("dblclick", function(d){
               console.log(d3.event);
               console.log('aaa!');
-              // console.log(this);
-              //this.setAttribute("contentEditable", "true");
               if(d3.event.ctrlKey){
 
               }else{
+                select(d);
+                
+                $('#text').select();
                 d3.event.stopPropagation();
               }
             })
-            // .append("text")
-            .html(getHTML)
-            .each((d)=>addOnContentChange(getG(d),function(e){d.text = getG(d).innerText;save();}))
+            .html(getHTML);
+            //.each((d)=>addOnContentChange(getG(d),function(e){d.text = getG(d).innerText;save();}))
             
           node
             .style("left",getX)
@@ -193,9 +190,17 @@ node = node.data(nodes);
                 select(d);
               redraw();
             })
-            // .on("dblclick",function(d){
-            //   d3.event.stopPropagation();
-            // })
+            .on("dblclick",function(d){
+              if(d3.event.ctrlKey){
+
+              }else{
+                select(d);
+                
+                $('#text').select();
+
+                d3.event.stopPropagation();
+              }
+            })
             //.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
   node.exit().remove();          
   node.classed("selected", function(d) { return d === selected_node; })
@@ -294,16 +299,7 @@ function addNode(n){
   save();
 }
 
-function dblclick(){
-  console.log("T="+T);
-  console.log("S="+S);
-  console.log(d3.event.x+' '+d3.event.y)  ;
-
-  tnode = nodeFromMouse(this)
-  addNode( tnode );
-
-  redraw()
-
+function selectAllContent(el){
   var el = getG(tnode);
   var range = document.createRange()
   var sel = window.getSelection()
@@ -314,6 +310,21 @@ function dblclick(){
   
   sel.removeAllRanges()
   sel.addRange(range)
+}
+
+function dblclick(){
+  console.log("T="+T);
+  console.log("S="+S);
+  console.log(d3.event.x+' '+d3.event.y)  ;
+
+  tnode = nodeFromMouse(this)
+  addNode( tnode );
+
+  select(tnode);
+
+  redraw()
+
+  $('#text').select();
     
 }
 
