@@ -8,6 +8,7 @@ T = [0,0];
 S = 1;
 
 // is necessary for proper dragging..
+dragstartmousepos = null;
 dragstartpos = null;
 
 
@@ -16,21 +17,48 @@ BODY = document.getElementsByTagName('body')[0];
 M = 0;
 
 
-function status(a){
-  $('#status').innerText = a;
+// function status(a){
+//   $('#status').innerText = a;
+// }
+
+function toStr(a){
+  return(typeof(a)=="number")?
+    a.toExponential(2)
+    :
+    (Array.isArray(a)?
+      ('['+a.map(toStr).join(', ')+']')
+      :
+      ((typeof(a)=='object')?
+      '{'+Object.keys(a).map((k)=>k+':'+toStr(a[k])).join(', ')+'}'
+      :a)
+    );
 }
 
+function status() {
+  if((arguments.length==1)&&(typeof(arguments[0])=='object')){
+    var s = toStr(arguments[0]);
+    $('#status').innerText = s.slice(1,s.length-1);
+  }else
+    $('#status').innerText = [... Array(arguments.length).keys()].map((j)=>toStr(arguments[j])).join(', ');
+}
 
-// M = 10;
-// var margin = {top: -M, right: -M, bottom: -M, left: -M}
-var margin = {top: 0, right:0, bottom: 0, left: 0}
-var width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth) - margin.left - margin.right,
-    height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight - margin.top - margin.bottom;
+var width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
+    height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
 
 var zoom = d3.behavior.zoom()
     .scale(S).translate([T[0]*S,T[1]*S]) // initial parameters
-    .on("zoom", zoomed);
-//    .scaleExtent([1, 10]) //yeah, I don't like limits
+    .on("zoom", zoomed)
+   .scaleExtent([1e-13, 1e13]) 
+   //yeah, I don't like limits, but..
+   //  without proper custom infinitely precise numbers 
+   //   this is what I can do with js
+   // 
+   // Which seems OK, 26 orders of magnitude..
+   //  is ~ the size of observable universe in meters
+   //
+   //   I know, I know, it would've been 
+   //     way cooler if it was ~ size(universe)/size(atom nucleus)
+   //       which is.. ~ 10^26/(10^-15) ~ 10^41
 
 var drag = d3.behavior.drag()
     .origin(function(d) { return d; })
@@ -38,73 +66,12 @@ var drag = d3.behavior.drag()
     .on("drag", dragged)
     .on("dragend", dragended);
 
-
-
-// function __resize(){
-//     width = Math.min(window.innerWidth , document.documentElement.clientWidth);// , BODY.clientWidth);
-//     height = Math.min( window.innerHeight, document.documentElement.clientHeight);//, BODY.clientHeight);
-//     width = width - margin.left - margin.right;
-//     height = height - 10 - margin.top - margin.bottom;
-
-//     d3.select("#svg0")
-//         .attr("width", width + margin.left + margin.right)
-//         .attr("height", height + margin.top + margin.bottom);
-    
-//     d3.select('#rect0')
-//         .attr("width", width)
-//         .attr("height", height);
-// }
-
-// __resize();
-
-// resize_timeout = null;
-// function _resize(){
-//     clearTimeout(resize_timeout);
-//     resize_timeout = setTimeout(__resize, 500);
-// }
-
-// d3.select(window).on('resize.updatesvg', _resize);
-
 var container = d3.select("#container");
 
 container
     .call(zoom)
     .on("dblclick.zoom", null)
     .on("dblclick",dblclick)
-// var container = svg.append("g");
-
-// container.append("g")
-//     .attr("class", "x axis")
-//   .selectAll("line")
-//     .data(d3.range(0, width, 10))
-//   .enter().append("line")
-//     .attr("x1", function(d) { return d; })
-//     .attr("y1", 0)
-//     .attr("x2", function(d) { return d; })
-//     .attr("y2", height);
-
-// container.append("g")
-//     .attr("class", "y axis")
-//   .selectAll("line")
-//     .data(d3.range(0, height, 10))
-//   .enter().append("line")
-//     .attr("x1", 0)
-//     .attr("y1", function(d) { return d; })
-//     .attr("x2", width)
-    // .attr("y2", function(d) { return d; });
-
-// d3.tsv("dots.tsv", dottype, function(error, dots) {
-//   dot = container.append("g")
-//       .attr("class", "dot")
-//     .selectAll("circle")
-//       .data(dots)
-//     .enter().append("circle")
-//       .attr("r", 5)
-//       .attr("cx", function(d) { return d.x; })
-//       .attr("cy", function(d) { return d.y; })
-//       .call(drag);
-// });
-
 
 nodes = ((localStorage['noteplace.nodes'] == 'undefined')||(localStorage['noteplace.nodes'] == undefined))?[
    {id: 0, x: 0, y: 0, text: "test0", fontSize: 12},
@@ -196,11 +163,15 @@ node = node.data(nodes);
             .attr('contentEditable',true)
             // .append("text")
             .on("dblclick", function(d){
+              console.log(d3.event);
               console.log('aaa!');
               // console.log(this);
               //this.setAttribute("contentEditable", "true");
-              
-              d3.event.stopPropagation();
+              if(d3.event.ctrlKey){
+
+              }else{
+                d3.event.stopPropagation();
+              }
             })
             // .append("text")
             .html(getHTML)
@@ -249,18 +220,13 @@ function getY(d){
 }
 
 function zoomed() {
-    S = d3.event.scale;
-    T[0] = d3.event.translate[0]/S;
-    T[1] = d3.event.translate[1]/S;
+  S = d3.event.scale;
+  T[0] = d3.event.translate[0]/S;
+  T[1] = d3.event.translate[1]/S;
 
-//    console.log(T)
-//    console.log(S)
-status('T=['+T[0].toFixed(2)+','+T[1].toFixed(2)+']'+' S='+S.toFixed(2));//+' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
-
-    //container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-    
-    
-    redraw();
+  status({T:T,S:S});//+' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
+  
+  redraw();
 }
 
 
@@ -277,21 +243,19 @@ function dragstarted(d) {
 function dragged(d) {
   if(dragInitiated){
     if(dragstartpos==null){
-      dragstartpos = [d3.event.x,d3.event.y];
+      dragstartmousepos = [d3.event.x, d3.event.y];
+      dragstartpos = [d.x, d.y];
     }
     status(' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
     d3.select(this)
-    .style("left",function(d){d.x = (d3.event.x - dragstartpos[0])/S + dragstartpos[0] ; return getX(d);})
-    .style("top",function(d){d.y = (d3.event.y- dragstartpos[1])/S + dragstartpos[1]  ; return getY(d);})
+    .style("left",function(d){d.x = (d3.event.x - dragstartmousepos[0])/S + dragstartpos[0] ; return getX(d);})
+    .style("top",function(d){d.y = (d3.event.y- dragstartmousepos[1])/S + dragstartpos[1]  ; return getY(d);})
 
     status(
       'T=['+T[0].toFixed(2)+','+T[1].toFixed(2)+']'+' S='+S.toFixed(2)
       + ' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']'
       +' left:'+getG(d).style.left+' top:'+getG(d).style.top+''
       );
-
-    //.attr("transform", function(d) {d.x = d3.event.x;d.y = d3.event.y; return "translate(" + d.x + "," + d.y + ")"; })
-        //      .attr("x", d.x = d3.event.x).attr("y", d.y = d3.event.y);
   }
 }
 
@@ -304,7 +268,7 @@ function dragended(d) {
   dragInitiated = false;
 }
 
-var N=Math.max.apply(Math,nodes.map((d) => d.id));
+var N = Math.max.apply(Math,nodes.map((d) => d.id));
 
 function nodeFromMouse(_t){
     var point = d3.mouse(_t);
@@ -321,9 +285,8 @@ function nodeFromMouse(_t){
 }
 
 function save(){
-
+  // TODO: probably will want to save each changed node separately
   localStorage['noteplace.nodes'] = JSON.stringify(nodes);
-
 }
 
 function addNode(n){
@@ -332,25 +295,25 @@ function addNode(n){
 }
 
 function dblclick(){
-    console.log("T="+T);
-    console.log("S="+S);
-    console.log(d3.event.x+' '+d3.event.y)  ;
+  console.log("T="+T);
+  console.log("S="+S);
+  console.log(d3.event.x+' '+d3.event.y)  ;
 
-    tnode = nodeFromMouse(this)
-    addNode( tnode );
+  tnode = nodeFromMouse(this)
+  addNode( tnode );
 
-    redraw()
+  redraw()
 
-    var el = getG(tnode);
-    var range = document.createRange()
-    var sel = window.getSelection()
-    
-    //range.setStart(el.childNodes[0], 0)
-    range.selectNodeContents(el.childNodes[0])
-    // range.collapse(true)
-    
-    sel.removeAllRanges()
-    sel.addRange(range)
+  var el = getG(tnode);
+  var range = document.createRange()
+  var sel = window.getSelection()
+  
+  //range.setStart(el.childNodes[0], 0)
+  range.selectNodeContents(el.childNodes[0])
+  // range.collapse(true)
+  
+  sel.removeAllRanges()
+  sel.addRange(range)
     
 }
 
@@ -429,7 +392,7 @@ $('#file').oninput = function(){
     fr.readAsText(this.files[0]);  
 }
 
-
+// https://gist.github.com/simondahla/0c324ba8e6ed36055787
 function addOnContentChange(elt, fun){
   if(window.addEventListener) {
     // Normal browsers
@@ -441,6 +404,4 @@ function addOnContentChange(elt, fun){
    }
 }
 
-function contentChanged() {
-   // this function will run each time the content of the DIV changes
-}
+
