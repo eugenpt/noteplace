@@ -2,6 +2,8 @@
 // https://stackoverflow.com/a/17111220/2624911
 dragInitiated = false;
 
+md = new Remarkable();
+
 
 // Translate and Scale parameters
 T = [0,0];
@@ -46,7 +48,8 @@ var width = (window.innerWidth || document.documentElement.clientWidth || BODY.c
     height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
 
 var zoom = d3.behavior.zoom()
-    .scale(S).translate([T[0]*S,T[1]*S]) // initial parameters
+    .scale(S)
+    .translate([-T[0]*S,-T[1]*S]) // initial parameters
     .on("zoom", zoomed)
    .scaleExtent([1e-13, 1e13]) 
    //yeah, I don't like limits, but..
@@ -140,7 +143,9 @@ function select_clear(){
 
 
 function getHTML(d){
+  return md.render(d.text);
   return d.text.replaceAll('\n','<br/>').replaceAll(' ','&nbsp');
+  
 }
 
 function getFontSize(d){
@@ -210,19 +215,19 @@ function dottype(d) {
 
 
 function getX(d){
-  return (d.x + T[0])*S + 'px';
+  return (d.x - T[0])*S + 'px';
   return d.x+'px';
 }
 
 function getY(d){
-  return (d.y + T[1])*S + 'px';
+  return (d.y - T[1])*S + 'px';
   return d.y+'px';
 }
 
 function zoomed() {
   S = d3.event.scale;
-  T[0] = d3.event.translate[0]/S;
-  T[1] = d3.event.translate[1]/S;
+  T[0] = -d3.event.translate[0]/S;
+  T[1] = -d3.event.translate[1]/S;
 
   status({T:T,S:S});//+' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
   
@@ -277,8 +282,8 @@ function nodeFromMouse(_t){
 
     return {
         id:N, 
-        x: (d3.event.x)/S - T[0], 
-        y: (d3.event.y)/S - T[1], 
+        x: (d3.event.x)/S + T[0], 
+        y: (d3.event.y)/S + T[1], 
         text:'test'+N, 
         fontSize:fontSize
       }
@@ -381,7 +386,7 @@ $('#file').oninput = function(){
         G = JSON.parse(fr.result);
         T = [1*G.T[0],1*G.T[1]];
         S = 1*G.S;
-        zoom.scale(S).translate([T[0]*S,T[1]*S]);
+        zoom.scale(S).translate([-T[0]*S,-T[1]*S]);
         nodes = G.nodes;
         redraw();
         console.log('Loading complete, now '+nodes.length+' nodes');
@@ -405,3 +410,48 @@ function addOnContentChange(elt, fun){
 }
 
 
+var db = firebase.firestore();
+
+
+nodes2 = [];
+
+// load all nodes
+db.collection("nodes")
+    // .where('scale','<=',S*100)
+    .where('X','<=',T[0]+width/S)
+    .orderBy('scale')
+    // .where('Y','<=',T[1]+width/S)
+    // .where('Xmax','>=',T[0])
+    // .where('Ymax','>=',T[0])
+  .get().then((querySnapshot) => {
+  nodes2 = []
+  querySnapshot.forEach((doc) => {
+      console.log(doc.id);
+      console.log(doc.data());
+  });
+});
+
+
+function save_all_nodes(){
+  nodes.forEach((d)=>{
+    t = {
+    style:"",
+    scale:20/d.fontSize,
+    X:d.x,
+    Y:d.y,
+    id:d.id,
+    type:"text",
+    content:d.text,
+    Xmax:d.x +  d.fontSize*0.5*d.text.length,
+    Ymax:d.y + d.fontSize
+    };
+    console.log(t);
+    db.collection("nodes").add(t)
+    .then((docRef) => {
+        console.log("Document written with ID: ", docRef.id);
+    })
+    .catch((error) => {
+        console.error("Error adding document: ", error);
+    });
+  })
+}
