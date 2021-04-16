@@ -164,7 +164,8 @@ node = node.data(nodes);
             .on("dblclick", function(d){
               console.log('aaa!');
               // console.log(this);
-              this.setAttribute("contentEditable", "true");
+              select(d);
+              $('#text').select();
               d3.event.stopPropagation();
             })
             // .append("text")
@@ -250,8 +251,11 @@ function addNode(n){
 function dblclick(){
     console.log("T="+T)  ;
     console.log("S="+S);
-    console.log(d3.event.x+' '+d3.event.y)  ;
-    addNode(nodeFromMouse(this));
+    console.log(d3.event.x+' '+d3.event.y);
+    var tnode = nodeFromMouse(this)
+    addNode(tnode);
+    select(tnode);
+    $('#text').select();
     redraw()
 }
 
