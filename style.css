@@ -54,10 +54,18 @@ html, body {
   
   }
   .node.selected{
-    fill:red;
-    color:red;
+    /* fill:red;
+    color:red; */
+    border:1px solid black;
   }
   
+.node blockquote{
+    margin-inline-start: 1em;
+}
+.node ol{
+    padding-inline-start: 1em;
+}
+
   .inside_node{
   
   }
@@ -69,7 +77,7 @@ html, body {
   
   #text{
     resize: none;
-      overflow: hidden;
+      /* overflow: hidden; */
       min-height: 50px;
       max-height: 100px;
   }

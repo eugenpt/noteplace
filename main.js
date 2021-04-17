@@ -84,8 +84,22 @@ function status() {
     $('#status').innerText = [... Array(arguments.length).keys()].map((j)=>toStr(arguments[j])).join(', ');
 }
 
-var width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
+width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
+height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
+
+resizeWatchTimeout = null;
+window.addEventListener('resize', function(event){
+  // do stuff here
+  clearTimeout(resizeWatchTimeout);
+  resizeWatchTimeout = setTimeout(function(){
+    width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
     height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
+    
+    filterNodes2Draw();
+    redraw();
+  },100); // run update only every 100ms
+});
+
 
 var zoom = d3.behavior.zoom()
     .scale(S)
@@ -148,6 +162,22 @@ nodes = ((localStorage['noteplace.nodes'] == 'undefined')||(localStorage['notepl
    {id: 120, x: 5369006128692392000, y: -759527390857764900, text: "STOP.", fontSize: 720575940379260300} //yep. this is totally the end.
      ]:JSON.parse(localStorage['noteplace.nodes']);
 
+
+nodes2draw = [];
+
+
+function filterNodes2Draw(){
+  nodes2draw = nodes
+      .filter((d)=>(d.x>=-T[0] - d.fontSize * d.text.length)
+                 &&(d.x<=-T[0] + width/S + d.fontSize * d.text.length)
+                 &&(d.y>=-T[1] - d.fontSize * 3)
+                 &&(d.y<=-T[1]+height/S + d.fontSize * 3)
+                 //&&(d.fontSize >= 0.02/S )
+              )
+}
+
+filterNodes2Draw();
+
 node = container.selectAll(".node")
 
 selected_node = null;
@@ -192,7 +222,7 @@ function getFontSize(d){
 
 
 function redraw(){
-node = node.data(nodes);
+node = node.data(nodes2draw);
         node.enter()
           .insert("div")
           .attr("class","node")
@@ -222,6 +252,7 @@ node = node.data(nodes);
             //.each((d)=>addOnContentChange(getG(d),function(e){d.text = getG(d).innerText;save();}))
             
           node
+            .attr("id",(d)=>"node_"+d.id)
             .style("left",getX)
             .style("top",getY)
             .style("font-size",getFontSize)
@@ -237,6 +268,10 @@ node = node.data(nodes);
                 select(d);
               redraw();
             })
+            .style('display',(d)=>d.fontSize > 0.2/S ? 'inline-block' : 'none')
+            .select('.inside_node')
+            .html(getHTML);
+
             // .on("dblclick",function(d){
             // })
             //.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
