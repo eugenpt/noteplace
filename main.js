@@ -1,13 +1,20 @@
+T = [0,0];
+urlParams = new URLSearchParams(window.location.search);
+T[0] = 1*urlParams.get('Tx')
+T[1] = 1*urlParams.get('Ty')
+
+S = 1*urlParams.get('S')
+S = S?S:1;
+
+
 BODY = document.getElementsByTagName('body')[0];
 
-M = 0;
-// M = 10;
-// var margin = {top: -M, right: -M, bottom: -M, left: -M}
-var margin = {top: 0, right:0, bottom: 0, left: 0}
-var width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth) - margin.left - margin.right,
-    height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight - margin.top - margin.bottom;
+margin = {top:0, bottom:0, left:0, right:0};
+width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth) 
+height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight
 
 var zoom = d3.behavior.zoom()
+    .scale(S).translate(T)
     .on("zoom", zoomed);
 //    .scaleExtent([1, 10])
 
@@ -18,10 +25,10 @@ var drag = d3.behavior.drag()
     .on("dragend", dragended);
 
 var svg = d3.select("body").append("svg").attr("id","svg0")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+    .attr("width", width )
+    .attr("height", height)
   .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
+    // .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
     .call(zoom)
     .on("dblclick.zoom", null)
     .on("dblclick",dblclick)
@@ -62,25 +69,27 @@ d3.select(window).on('resize.updatesvg', _resize);
 
 var container = svg.append("g");
 
-container.append("g")
-    .attr("class", "x axis")
-  .selectAll("line")
-    .data(d3.range(0, width, 10))
-  .enter().append("line")
-    .attr("x1", function(d) { return d; })
-    .attr("y1", 0)
-    .attr("x2", function(d) { return d; })
-    .attr("y2", height);
+container.attr("transform", "translate(" + T + ")scale(" + S + ")");
 
-container.append("g")
-    .attr("class", "y axis")
-  .selectAll("line")
-    .data(d3.range(0, height, 10))
-  .enter().append("line")
-    .attr("x1", 0)
-    .attr("y1", function(d) { return d; })
-    .attr("x2", width)
-    .attr("y2", function(d) { return d; });
+// container.append("g")
+//     .attr("class", "x axis")
+//   .selectAll("line")
+//     .data(d3.range(0, width, 10))
+//   .enter().append("line")
+//     .attr("x1", function(d) { return d; })
+//     .attr("y1", 0)
+//     .attr("x2", function(d) { return d; })
+//     .attr("y2", height);
+
+// container.append("g")
+//     .attr("class", "y axis")
+//   .selectAll("line")
+//     .data(d3.range(0, height, 10))
+//   .enter().append("line")
+//     .attr("x1", 0)
+//     .attr("y1", function(d) { return d; })
+//     .attr("x2", width)
+//     .attr("y2", function(d) { return d; });
 
 // d3.tsv("dots.tsv", dottype, function(error, dots) {
 //   dot = container.append("g")
@@ -132,6 +141,29 @@ function $(s){
   }else{
     throw "Not Implemented"
   }
+}
+
+
+function toStr(a){
+  return(typeof(a)=="number")?
+    a.toExponential(2)
+    :
+    (Array.isArray(a)?
+      ('['+a.map(toStr).join(', ')+']')
+      :
+      ((typeof(a)=='object')?
+      '{'+Object.keys(a).map((k)=>k+':'+toStr(a[k])).join(', ')+'}'
+      :a)
+    );
+}
+
+
+function status() {
+  if((arguments.length==1)&&(typeof(arguments[0])=='object')){
+    var s = toStr(arguments[0]);
+    $('#status').innerText = s.slice(1,s.length-1);
+  }else
+    $('#status').innerText = [... Array(arguments.length).keys()].map((j)=>toStr(arguments[j])).join(', ');
 }
 
 function select(d){
@@ -200,14 +232,37 @@ function dottype(d) {
   return d;
 }
 
-T = [0,0];
-S = 1;
 
+zoom_urlPushTimeout = null;
 function zoomed() {
-    S = d3.event.scale;
-    T = d3.event.translate;
-  container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  S = d3.event.scale;
+  T = d3.event.translate;
+
+  container.attr("transform", "translate(" + T + ")scale(" + S + ")");
+  
+  status({T:T,S:S});
+  
+  
+  clearTimeout(zoom_urlPushTimeout);
+  // every 10s of stay at one place time - 
+  zoom_urlPushTimeout = setTimeout(function(){
+    console.log('history pushed');
+      url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
+      window.history.pushState(
+          {T:T,S:S}, 
+          'Noteplace', 
+          url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+    }, 10000);
+    
 }
+zoom_urlReplaceTimeout = setInterval(function(){
+  // console.log('history replaced');
+  url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
+  window.history.replaceState(
+      {T:T,S:S}, 
+      'Noteplace', 
+      url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+}, 200);
 
 function dragstarted(d) {
   d3.event.sourceEvent.stopPropagation();
