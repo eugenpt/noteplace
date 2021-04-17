@@ -8,6 +8,13 @@ dragInitiated = false;
 T = [0,0];
 S = 1;
 
+urlParams = new URLSearchParams(window.location.search);
+T[0] = 1*urlParams.get('Tx')|0
+T[1] = 1*urlParams.get('Ty')|0
+
+S = 1*urlParams.get('S')
+S = S?S:1;
+
 // is necessary for proper dragging..
 dragstartmousepos = null;
 dragstartpos = null;
@@ -34,6 +41,7 @@ function toStr(a){
       :a)
     );
 }
+
 
 function status() {
   if((arguments.length==1)&&(typeof(arguments[0])=='object')){
@@ -163,7 +171,9 @@ node = node.data(nodes);
               console.log(d3.event);
               console.log('aaa!');
               if(d3.event.ctrlKey){
+                dblclick();
 
+                d3.event.stopPropagation();
               }else{
                 select(d);
                 
@@ -192,7 +202,9 @@ node = node.data(nodes);
             })
             .on("dblclick",function(d){
               if(d3.event.ctrlKey){
+                dblclick();
 
+                d3.event.stopPropagation();
               }else{
                 select(d);
                 
@@ -224,6 +236,8 @@ function getY(d){
   return d.y+'px';
 }
 
+
+zoom_urlPushTimeout = null;
 function zoomed() {
   S = d3.event.scale;
   T[0] = d3.event.translate[0]/S;
@@ -232,7 +246,28 @@ function zoomed() {
   status({T:T,S:S});//+' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
   
   redraw();
+
+  clearTimeout(zoom_urlPushTimeout);
+
+  // every 10s of stay at one place time - 
+  zoom_urlPushTimeout = setTimeout(function(){
+    console.log('history pushed');
+      url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
+      window.history.pushState(
+          {T:T,S:S}, 
+          'Noteplace', 
+          url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+    }, 10000);
+    
 }
+zoom_urlReplaceTimeout = setInterval(function(){
+  console.log('history replaced');
+  url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
+  window.history.replaceState(
+      {T:T,S:S}, 
+      'Noteplace', 
+      url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+}, 200);
 
 
 function dragstarted(d) {
