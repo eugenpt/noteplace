@@ -87,18 +87,18 @@ function status() {
 width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
 height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
 
-resizeWatchTimeout = null;
-window.addEventListener('resize', function(event){
-  // do stuff here
-  clearTimeout(resizeWatchTimeout);
-  resizeWatchTimeout = setTimeout(function(){
-    width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
-    height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
+// resizeWatchTimeout = null;
+// window.addEventListener('resize', function(event){
+//   // do stuff here
+//   clearTimeout(resizeWatchTimeout);
+//   resizeWatchTimeout = setTimeout(function(){
+//     width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
+//     height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
     
-    filterNodes2Draw();
-    redraw();
-  },100); // run update only every 100ms
-});
+//     filterNodes2Draw();
+//     redraw();
+//   },100); // run update only every 100ms
+// });
 
 
 var zoom = d3.behavior.zoom()
@@ -163,20 +163,20 @@ nodes = ((localStorage['noteplace.nodes'] == 'undefined')||(localStorage['notepl
      ]:JSON.parse(localStorage['noteplace.nodes']);
 
 
-nodes2draw = [];
+// nodes2draw = [];
 
 
-function filterNodes2Draw(){
-  nodes2draw = nodes
-      .filter((d)=>(d.x>=-T[0] - d.fontSize * d.text.length)
-                 &&(d.x<=-T[0] + width/S + d.fontSize * d.text.length)
-                 &&(d.y>=-T[1] - d.fontSize * 3)
-                 &&(d.y<=-T[1]+height/S + d.fontSize * 3)
-                 //&&(d.fontSize >= 0.02/S )
-              )
-}
+// function filterNodes2Draw(){
+//   nodes2draw = nodes
+//       .filter((d)=>(d.x>=-T[0] - d.fontSize * d.text.length)
+//                  &&(d.x<=-T[0] + width/S + d.fontSize * d.text.length)
+//                  &&(d.y>=-T[1] - d.fontSize * 3)
+//                  &&(d.y<=-T[1]+height/S + d.fontSize * 3)
+//                  //&&(d.fontSize >= 0.02/S )
+//               )
+// }
 
-filterNodes2Draw();
+// filterNodes2Draw();
 
 node = container.selectAll(".node")
 
@@ -222,7 +222,7 @@ function getFontSize(d){
 
 
 function redraw(){
-node = node.data(nodes2draw);
+node = node.data(nodes);
         node.enter()
           .insert("div")
           .attr("class","node")
@@ -261,13 +261,13 @@ node = node.data(nodes2draw);
             //   selected_node = d;
             //   redraw();
             // })
-            .on("mousedown",function(d){
-              if(selected_node === d){
-                select_clear();
-              }else
-                select(d);
-              redraw();
-            })
+            // .on("mousedown",function(d){
+            //   if(selected_node === d){
+            //     select_clear();
+            //   }else
+            //     select(d);
+            //   redraw();
+            // })
             .style('display',(d)=>d.fontSize > 0.2/S ? 'inline-block' : 'none')
             .select('.inside_node')
             .html(getHTML);
