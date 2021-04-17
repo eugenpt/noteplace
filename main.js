@@ -9,8 +9,8 @@ T = [0,0];
 S = 1;
 
 urlParams = new URLSearchParams(window.location.search);
-T[0] = 1*urlParams.get('Tx')|0
-T[1] = 1*urlParams.get('Ty')|0
+T[0] = 1*urlParams.get('Tx')
+T[1] = 1*urlParams.get('Ty')
 
 S = 1*urlParams.get('S')
 S = S?S:1;
@@ -19,6 +19,39 @@ S = S?S:1;
 dragstartmousepos = null;
 dragstartpos = null;
 
+
+moveZoom = {
+  dur: 1000,  // total duration of the transition (TODO: change depending on scale of transition?)
+  dt: 20,     // update interval
+  start: {T:[0,0], S:1},
+  end: {T:[0,0], S:1},
+  tStart: 0,
+  interval: null
+}
+
+function part(x0,x1,t,dur){
+  return (x0*dur + (x1-x0)*t)/dur;
+}
+
+function zoomStep(){
+  var t = Date.now() - moveZoom.tStart;
+
+  if(t>=moveZoom.dur){
+    applyZoom(moveZoom.end.T, moveZoom.end.S);
+    clearInterval(moveZoom.interval);
+
+  }else{
+
+    applyZoom(
+      [ 
+        part(moveZoom.start.T[0], moveZoom.end.T[0] , t , moveZoom.dur),
+        part(moveZoom.start.T[1], moveZoom.end.T[1] , t , moveZoom.dur)
+      ],
+        part(moveZoom.start.S, moveZoom.end.S, t, moveZoom.dur)
+      );
+  }
+  redraw();
+}
 
 
 BODY = document.getElementsByTagName('body')[0];
@@ -55,7 +88,8 @@ var width = (window.innerWidth || document.documentElement.clientWidth || BODY.c
     height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
 
 var zoom = d3.behavior.zoom()
-    .scale(S).translate([T[0]*S,T[1]*S]) // initial parameters
+    .scale(S)
+    .translate([T[0]*S,T[1]*S]) // initial parameters
     .on("zoom", zoomed)
    .scaleExtent([1e-13, 1e13]) 
    //yeah, I don't like limits, but..
@@ -178,6 +212,9 @@ node = node.data(nodes);
                 select(d);
                 
                 $('#text').select();
+                var S_ = 20/d.fontSize;
+                smoothZoom([-d.x + width/(3*S_),-d.y + height/(10*S_)],S_);
+                //redraw();
                 d3.event.stopPropagation();
               }
             })
@@ -200,19 +237,8 @@ node = node.data(nodes);
                 select(d);
               redraw();
             })
-            .on("dblclick",function(d){
-              if(d3.event.ctrlKey){
-                dblclick();
-
-                d3.event.stopPropagation();
-              }else{
-                select(d);
-                
-                $('#text').select();
-
-                d3.event.stopPropagation();
-              }
-            })
+            // .on("dblclick",function(d){
+            // })
             //.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
   node.exit().remove();          
   node.classed("selected", function(d) { return d === selected_node; })
@@ -261,7 +287,7 @@ function zoomed() {
     
 }
 zoom_urlReplaceTimeout = setInterval(function(){
-  console.log('history replaced');
+  // console.log('history replaced');
   url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
   window.history.replaceState(
       {T:T,S:S}, 
@@ -420,14 +446,32 @@ document.getElementById("save").addEventListener("click", function(){
 }, false);
 
 
+function smoothZoom(T_,S_){
+  moveZoom.start.T = T;
+  moveZoom.start.S = S;
+  moveZoom.end.T = T_;
+  moveZoom.end.S = S_;
+
+  moveZoom.tStart = Date.now();
+
+  moveZoom.interval = setInterval(zoomStep, moveZoom.dt);
+}
+
+function applyZoom(T_,S_){
+  T=T_;
+  S=S_;
+  zoom.scale(S).translate([T[0]*S,T[1]*S]);
+
+
+
+}
+
 $('#file').oninput = function(){
     var fr=new FileReader();
     fr.onload=function(){
         console.log('Loading..');
         G = JSON.parse(fr.result);
-        T = [1*G.T[0],1*G.T[1]];
-        S = 1*G.S;
-        zoom.scale(S).translate([T[0]*S,T[1]*S]);
+        applyZoom([1*G.T[0],1*G.T[1]], 1*G.S);
         nodes = G.nodes;
         redraw();
         console.log('Loading complete, now '+nodes.length+' nodes');
