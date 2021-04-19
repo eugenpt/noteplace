@@ -3,7 +3,6 @@ var md = new Remarkable();
 // https://stackoverflow.com/a/17111220/2624911
 dragInitiated = false;
 
-
 // Translate and Scale parameters
 T = [0,0];
 S = 1;
@@ -15,9 +14,17 @@ T[1] = 1*urlParams.get('Ty')
 S = 1*urlParams.get('S')
 S = S?S:1;
 
-// is necessary for proper dragging..
-dragstartmousepos = null;
-dragstartpos = null;
+BODY = document.getElementsByTagName('body')[0];
+M = 0;
+
+zoomMax = 1e14;
+zoomMin = 1e-15;
+
+zoomK = 1.6;
+
+let container = _("#container");
+let node_container = _("#node_container");
+
 
 
 moveZoom = {
@@ -54,8 +61,6 @@ function zoomStep(){
 }
 
 
-BODY = document.getElementsByTagName('body')[0];
-M = 0;
 
 
 // function status(a){
@@ -101,8 +106,6 @@ height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clien
 // });
 
 
-zoomMax = 1e13;
-zoomMin = 1e-13;
 
 // var zoom = d3.behavior.zoom()
 //     .scale(S)
@@ -126,14 +129,23 @@ zoomMin = 1e-13;
 //     .on("drag", dragged)
 //     .on("dragend", dragended);
 
-var container = _("#container");
 
 container.ondblclick = function(e) {
-  console.log('dblclick');
+  console.log('dblclick on empty field at ['+e.clientX+','+e.clientY+']');
   console.log(e);
+  var id = newId();
+  var node = newNode({
+    id:id, 
+    x:e.clientX/S + T[0], 
+    y:e.clientY/S + T[1], 
+    fontSize:20/S, 
+    text:'test'+id
+  });
   // no dblclick zoom!
   e.preventDefault();
   e.stopPropagation();
+  
+  onNodeDblClick(node);
 }
 
 $(container).on('mousewheel', function(e) {
@@ -141,12 +153,14 @@ $(container).on('mousewheel', function(e) {
 
   mousePos = [T[0] + e.clientX/S , T[1] + e.clientY/S]
 
-  S = Math.min(zoomMax,Math.max(zoomMin,e.deltaY>0 ? S*1.2 : S/1.2));
+  S = Math.min(zoomMax,Math.max(zoomMin,e.deltaY>0 ? S*zoomK : S/zoomK));
 
 
   T = [mousePos[0] - e.clientX/S, mousePos[1]-e.clientY/S]
 
   status({T:T,S:S})
+
+  $('.node').addClass('zoom');
 
   redraw();
 });
@@ -155,91 +169,221 @@ $(container).on('mousewheel', function(e) {
 _isMouseDown = false;
 _mouseDownPos = [0,0];
 _mouseDownT = [0,0];
-container.onmousedown = function(e) {
-  _mouseDownPos = [e.clientX, e.clientY];
-  _mouseDownT = [T[0],T[1]];
-  _isMouseDown = true;
+_isMouseDragging = false;
+_mouseDragStart = [0,0];
+_mouseDragPos = [0,0];
 
-  console.log(e);
-  //e.preventDefault();
+container.onmousedown = function(e) {
+  $('.node').removeClass('zoom'); // disable visible transition
+  
+  if(contentEditMouseDown){
+    contentEditMouseDown = false;
+  }else{
+    _mouseDownPos = [e.clientX, e.clientY];
+    _mouseDownT = [T[0],T[1]];
+    _isMouseDown = true;
+
+    console.log(e);
+    //e.preventDefault();
+
+    if(contentEditTextarea){
+      contentEditTextarea.parentElement.innerHTML = getHTML(contentEditTextarea.parentElement.dataset['text']);
+      contentEditTextarea = null;
+    }
+  }
 }
 
 window.onmouseup = function(e) {
   _isMouseDown = false;
+  _isMouseDragging = false;
   //e.preventDefault();
 }
 
 container.onmousemove = function(e){
   if(_isMouseDown){
+    if(_isMouseDragging){
+      _isMouseDragging.dataset['x'] = _mouseDragPos[0] +  (e.clientX - _mouseDragStart[0])/S;
+      _isMouseDragging.dataset['y'] = _mouseDragPos[1] +  (e.clientY - _mouseDragStart[1])/S;
 
-    T[0] = _mouseDownT[0] -  (e.clientX - _mouseDownPos[0])/S;
-    T[1] = _mouseDownT[1] -  (e.clientY - _mouseDownPos[1])/S;
+      updateNode(_isMouseDragging)
+    }else{
 
-    redraw()
+      T[0] = _mouseDownT[0] -  (e.clientX - _mouseDownPos[0])/S;
+      T[1] = _mouseDownT[1] -  (e.clientY - _mouseDownPos[1])/S;
+
+      redraw()
+    }
+  }
+}
+
+if($(".node").length){
+  console.log("seems we already have nodes.");
+
+  save();
+}else{
+  console.log('No nodes in html..');
+  try{
+  //if(localStorage['noteplace.node_ids']){
+    node_ids = JSON.parse(localStorage['noteplace.node_ids']);
+    nodes = node_ids.map(function(id){
+      console.log(id);
+      console.log('noteplace.node_'+id);
+      
+      return JSON.parse(localStorage['noteplace.node_'+id]);
+    });
+    
+  }catch{
+
+    nodes = [
+    {id: 0, x: 0, y: 0, text: "test0", fontSize: 12},
+    {id: 1, x: 100, y: 100, text: "test1", fontSize: 12},
+    {id: 2, x: 183, y: 85.5, text: "test2", fontSize: 10.000000000000002},
+    {id: 3, x: 177.71582669914915, y: 84.10224103813428, text: "test3", fontSize: 4.204482076268574},
+    {id: 4, x: 173.18169898809143, y: 83.77972083086841, text: "test4", fontSize: 1.7677669529663695},
+    {id: 5, x: 172.25362133778404, y: 83.82391500469258, text: "test5", fontSize: 0.8838834764831848},
+    {id: 6, x: 171.81167959954246, y: 83.89020626542883, text: "test6", fontSize: 0.4419417382415924},
+    {id: 7, x: 171.69807758002312, y: 83.84816472660286, text: "test7", fontSize: 0.039062499999999965},
+    {id: 8, x: 171.58772601752312, y: 83.84914128910286, text: "test8", fontSize: 0.019531249999999983},
+    {id: 9, x: 171.53938617377312, y: 83.85451238285286, text: "test9", fontSize: 0.009765624999999991},
+    {id: 10, x: 171.52229633002312, y: 83.85841863285286, text: "test10", fontSize: 0.004882812499999996},
+    {id: 11, x: 171.5140747601513, y: 83.86304412981941, text: "test11", fontSize: 0.0029033376831121096},
+    {id: 12, x: 171.5083740342907, y: 83.86542565010431, text: "test12", fontSize: 0.001726334915006218},
+    {id: 13, x: 171.50607848896962, y: 83.86699217543257, text: "test13", fontSize: 0.000513242440950753},
+    {id: 14, x: 171.50464071771412, y: 83.86762401331647, text: "test14", fontSize: 0.000513242440950753},
+    {id: 15, x: -491.3739216040643, y: -85.2758672147873, text: "test15", fontSize: 159.99999999999872},
+    {id: 16, x: -1303.9223347593845, y: -189.27585654519936, text: "test16", fontSize: 226.27416997969334},
+    {id: 17, x: -3614.630561610377, y: -323.70819890103445, text: "test17", fontSize: 905.0966799187728},
+    {id: 18, x: -9342.456857155341, y: -809.2705284670758, text: "test18", fontSize: 2152.6948230494886},
+    {id: 19, x: -17632.957016230488, y: -1748.6982337578795, text: "test19", fontSize: 3044.3702144069366},
+    {id: 20, x: -34529.21208752887, y: -3879.757393564678, text: "test20", fontSize: 6088.740428813872},
+    {id: 113, x: 10412901562002.574, y: 1891828629789.287, text: "WOW you're far from home.", fontSize: 2311438465816.513},
+    {id: 114, x: 374.2565272544432, y: 354.53262339773846, text: "test114", fontSize: 159.99999999999832},
+    {id: 115, x: 214123162955070.66, y: 10711632881380.672, text: "I mean. WOW.", fontSize: 31098885119754.062},
+    {id: 116, x: 1104592423952645, y: -81819586322754.16, text: "Is anyone seeing this??", fontSize: 209207528124706.03},
+    {id: 117, x: 27359550959356268, y: -1764328513537750, text: "Here's a heart for ya:\n❤️", fontSize: 3980657295328512.5},
+    {id: 118, x: 339542519644310660, y: 20194450624807310, text: "Here's a beacon of hope:\n⛯", fontSize: 31845258362628070},
+    {id: 119, x: 1044733020186787100, y: -43038781628711940, text: "Now that is just.. stupid", fontSize: 151482431295748700},
+    {id: 120, x: 5369006128692392000, y: -759527390857764900, text: "STOP.", fontSize: 720575940379260300} //yep. this is totally the end.
+    ];
+  }
+  nodes.forEach(newNode);
+}
+
+function save(node=null){
+  if(node === null){
+    // save all
+    node_ids = [];
+    [].forEach.call($(".node"),(node)=>{
+      save(node);
+      node_ids.push(node.dataset['id']);
+      localStorage['noteplace.node_ids'] = JSON.stringify(node_ids);
+    })
+  }else{
+    // node provided, save only node
+    if('x' in node){
+      // original object
+      localStorage['noteplace.node_'+node.id] = JSON.stringify(node);
+    }else{
+      // DOM node
+      localStorage['noteplace.'+node.id] = JSON.stringify(node.dataset);
+    }
   }
 }
 
 
-nodes = ((localStorage['noteplace.nodes'] == 'undefined')||(localStorage['noteplace.nodes'] == undefined))?[
-   {id: 0, x: 0, y: 0, text: "test0", fontSize: 12},
-   {id: 1, x: 100, y: 100, text: "test1", fontSize: 12},
-   {id: 2, x: 183, y: 85.5, text: "test2", fontSize: 10.000000000000002},
-   {id: 3, x: 177.71582669914915, y: 84.10224103813428, text: "test3", fontSize: 4.204482076268574},
-   {id: 4, x: 173.18169898809143, y: 83.77972083086841, text: "test4", fontSize: 1.7677669529663695},
-   {id: 5, x: 172.25362133778404, y: 83.82391500469258, text: "test5", fontSize: 0.8838834764831848},
-   {id: 6, x: 171.81167959954246, y: 83.89020626542883, text: "test6", fontSize: 0.4419417382415924},
-   {id: 7, x: 171.69807758002312, y: 83.84816472660286, text: "test7", fontSize: 0.039062499999999965},
-   {id: 8, x: 171.58772601752312, y: 83.84914128910286, text: "test8", fontSize: 0.019531249999999983},
-   {id: 9, x: 171.53938617377312, y: 83.85451238285286, text: "test9", fontSize: 0.009765624999999991},
-   {id: 10, x: 171.52229633002312, y: 83.85841863285286, text: "test10", fontSize: 0.004882812499999996},
-   {id: 11, x: 171.5140747601513, y: 83.86304412981941, text: "test11", fontSize: 0.0029033376831121096},
-   {id: 12, x: 171.5083740342907, y: 83.86542565010431, text: "test12", fontSize: 0.001726334915006218},
-   {id: 13, x: 171.50607848896962, y: 83.86699217543257, text: "test13", fontSize: 0.000513242440950753},
-   {id: 14, x: 171.50464071771412, y: 83.86762401331647, text: "test14", fontSize: 0.000513242440950753},
-   {id: 15, x: -491.3739216040643, y: -85.2758672147873, text: "test15", fontSize: 159.99999999999872},
-   {id: 16, x: -1303.9223347593845, y: -189.27585654519936, text: "test16", fontSize: 226.27416997969334},
-   {id: 17, x: -3614.630561610377, y: -323.70819890103445, text: "test17", fontSize: 905.0966799187728},
-   {id: 18, x: -9342.456857155341, y: -809.2705284670758, text: "test18", fontSize: 2152.6948230494886},
-   {id: 19, x: -17632.957016230488, y: -1748.6982337578795, text: "test19", fontSize: 3044.3702144069366},
-   {id: 20, x: -34529.21208752887, y: -3879.757393564678, text: "test20", fontSize: 6088.740428813872},
-   {id: 113, x: 10412901562002.574, y: 1891828629789.287, text: "WOW you're far from home.", fontSize: 2311438465816.513},
-   {id: 114, x: 374.2565272544432, y: 354.53262339773846, text: "test114", fontSize: 159.99999999999832},
-   {id: 115, x: 214123162955070.66, y: 10711632881380.672, text: "I mean. WOW.", fontSize: 31098885119754.062},
-   {id: 116, x: 1104592423952645, y: -81819586322754.16, text: "Is anyone seeing this??", fontSize: 209207528124706.03},
-   {id: 117, x: 27359550959356268, y: -1764328513537750, text: "Here's a heart for ya:\n❤️", fontSize: 3980657295328512.5},
-   {id: 118, x: 339542519644310660, y: 20194450624807310, text: "Here's a beacon of hope:\n⛯", fontSize: 31845258362628070},
-   {id: 119, x: 1044733020186787100, y: -43038781628711940, text: "Now that is just.. stupid", fontSize: 151482431295748700},
-   {id: 120, x: 5369006128692392000, y: -759527390857764900, text: "STOP.", fontSize: 720575940379260300} //yep. this is totally the end.
-     ]:JSON.parse(localStorage['noteplace.nodes']);
+save();
 
 function onNodeClick(e){
   console.log('clicked on ['+this.id+'] : '+this.innerText);
 }
 
+contentEditNode = null;
+contentEditMouseDown = false;
+contentEditTextarea = null;
+
 function onNodeDblClick(e){
   console.log('double-clicked on ['+this.id+'] : '+this.innerText);
-
   console.log(e);
+
+  if('preventDefault' in e){
   e.preventDefault();
   e.stopPropagation();
+
+  contentEditNode = this;
+  }else{
+    contentEditNode = e;
+  }
+
+  contentEditTextarea = document.createElement('textarea');
+  contentEditTextarea.id = 'contentEditTextarea';
+  contentEditTextarea.value = contentEditNode.dataset['text'];
+  contentEditTextarea.style.fontSize = contentEditNode.dataset['fontSize']*S+'px';
+  contentEditTextarea.style.fontFamily = 'Open Sans';
+  contentEditTextarea.oninput = function(e){
+    this.parentElement.dataset['text'] = this.value;
+  }
+  contentEditTextarea.onmousedown = (e)=>{
+    contentEditMouseDown = true;
+  }
+
+  contentEditNode.innerHTML = '';
+  contentEditNode.appendChild(contentEditTextarea);
+
+  contentEditTextarea.select();
 }
 
+function onNodeMouseDown(e){
+  if(e.button==1){
+    _isMouseDragging = this;
+    _mouseDragStart = [e.clientX, e.clientY];
+    _mouseDragPos = [1*this.dataset['x'], 1*this.dataset['y']];
+  }
+}
 
-nodes.forEach(function(d){
+// https://stackoverflow.com/a/1535650/2624911
+function newId(){
+  // Check to see if the counter has been initialized
+  if ( typeof newId.N == 'undefined' ) {
+      // It has not... perform the initialization
+      console.log('newId.N init')
+      newId.N = 0;
+  }  
+  console.log('pre-loop : newId.N='+newId.N);
+  console.log('pre-loop : getNode(newId.N)='+getNode(newId.N));
+
+  while(getNode(newId.N)){
+    newId.N++;
+    console.log('in-loop : newId.N='+newId.N);
+    console.log('in-loop : getNode(newId.N)='+getNode(newId.N));
+  }
+  console.log('after-loop : newId.N='+newId.N);
+  console.log('after-loop : getNode(newId.N)='+getNode(newId.N));
+  newId.N++;
+  return newId.N-1;
+}
+
+function newNode(d){
   var tn = document.createElement('div');
+  if (!('id' in d))
+    d.id = newId()
   tn.id = 'node_'+d.id;
   tn.className = "node";
-  tn.innerHTML = getHTML(d);
+  tn.innerHTML = getHTML(d.text);
 //  tn.contentEditable = true;
   tn.dataset["x"] = d.x;
   tn.dataset["y"] = d.y;
   tn.dataset["fontSize"] = d.fontSize;
+  tn.dataset['text'] = d.text;
+  tn.dataset['id'] = d.id;
   tn.onclick = onNodeClick;
   tn.ondblclick = onNodeDblClick;
+  tn.onmousedown = onNodeMouseDown;
   updateNode(tn);
-  container.appendChild(tn);
+  node_container.appendChild(tn);
   return tn;
-})
+}
+
+
 
 
 function updateNode(n){
@@ -253,23 +397,6 @@ function redraw(){
   [].forEach.call($('.node'),
     updateNode)
 }
-
-// nodes2draw = [];
-
-
-// function filterNodes2Draw(){
-//   nodes2draw = nodes
-//       .filter((d)=>(d.x>=-T[0] - d.fontSize * d.text.length)
-//                  &&(d.x<=-T[0] + width/S + d.fontSize * d.text.length)
-//                  &&(d.y>=-T[1] - d.fontSize * 3)
-//                  &&(d.y<=-T[1]+height/S + d.fontSize * 3)
-//                  //&&(d.fontSize >= 0.02/S )
-//               )
-// }
-
-// filterNodes2Draw();
-
-node = $(".node")
 
 selected_node = null;
 
@@ -303,8 +430,8 @@ function select_clear(){
 }
 
 
-function getHTML(d){
-  return md.render(d.text);  
+function getHTML(text){
+  return md.render(text);  
 }
 
 function getFontSize(d){
@@ -466,10 +593,10 @@ function nodeFromMouse(_t){
       }
 }
 
-function save(){
-  // TODO: probably will want to save each changed node separately
-  localStorage['noteplace.nodes'] = JSON.stringify(nodes);
-}
+// function save(){
+//   // TODO: probably will want to save each changed node separately
+//   localStorage['noteplace.nodes'] = JSON.stringify(nodes);
+// }
 
 function addNode(n){
   nodes.push(n);
@@ -503,6 +630,11 @@ function dblclick(){
 
   $('#text').select();
     
+}
+
+
+function getNode(id){
+  return document.getElementById('node_' + id);
 }
 
 function getG(d){

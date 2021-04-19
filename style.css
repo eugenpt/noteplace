@@ -2,6 +2,8 @@ html, body {
     margin:0px;
     height:100%;
     overflow: hidden; /* Hide scrollbars */ 
+    font-family: 'Open Sans';
+
   }
   div{
     display: inline-block;
@@ -101,3 +103,17 @@ html, body {
     z-index: 1000;
   }
   
+  #node_container{
+    /* transition-duration: 0.2s; */
+  }
+
+  .node{
+    /* transition-duration: 0.2s; */
+  }
+  .node.zoom{
+    transition-duration: 0.2s;
+  }
+
+  a.node_a{
+      text-decoration: none;
+  }
