@@ -98,6 +98,6 @@ html, body {
     /* Rest of your styling */
     border: 1px solid black;
     background-color: white;
-    z-index: -1;
+    z-index: 1000;
   }
   

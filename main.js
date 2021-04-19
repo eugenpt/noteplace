@@ -79,9 +79,9 @@ function toStr(a){
 function status() {
   if((arguments.length==1)&&(typeof(arguments[0])=='object')){
     var s = toStr(arguments[0]);
-    $('#status').innerText = s.slice(1,s.length-1);
+    _('#status').innerText = s.slice(1,s.length-1);
   }else
-    $('#status').innerText = [... Array(arguments.length).keys()].map((j)=>toStr(arguments[j])).join(', ');
+    _('#status').innerText = [... Array(arguments.length).keys()].map((j)=>toStr(arguments[j])).join(', ');
 }
 
 width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
@@ -101,11 +101,14 @@ height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clien
 // });
 
 
-var zoom = d3.behavior.zoom()
-    .scale(S)
-    .translate([T[0]*S,T[1]*S]) // initial parameters
-    .on("zoom", zoomed)
-   .scaleExtent([1e-13, 1e13]) 
+zoomMax = 1e13;
+zoomMin = 1e-13;
+
+// var zoom = d3.behavior.zoom()
+//     .scale(S)
+//     .translate([T[0]*S,T[1]*S]) // initial parameters
+//     .on("zoom", zoomed)
+//    .scaleExtent([1e-13, 1e13]) 
    //yeah, I don't like limits, but..
    //  without proper custom infinitely precise numbers 
    //   this is what I can do with js
@@ -117,18 +120,20 @@ var zoom = d3.behavior.zoom()
    //     way cooler if it was ~ size(universe)/size(atom nucleus)
    //       which is.. ~ 10^26/(10^-15) ~ 10^41
 
-var drag = d3.behavior.drag()
-    .origin(function(d) { return d; })
-    .on("dragstart", dragstarted)
-    .on("drag", dragged)
-    .on("dragend", dragended);
+// var drag = d3.behavior.drag()
+//     .origin(function(d) { return d; })
+//     .on("dragstart", dragstarted)
+//     .on("drag", dragged)
+//     .on("dragend", dragended);
 
-var container = d3.select("#container");
+var container = _("#container");
 
-container
-    .call(zoom)
-    .on("dblclick.zoom", null)
-    .on("dblclick",dblclick)
+container.ondblclick = function(e) {
+  // no dblclick zoom!
+  e.preventDefault();
+}
+
+    
 
 nodes = ((localStorage['noteplace.nodes'] == 'undefined')||(localStorage['noteplace.nodes'] == undefined))?[
    {id: 0, x: 0, y: 0, text: "test0", fontSize: 12},
@@ -163,6 +168,19 @@ nodes = ((localStorage['noteplace.nodes'] == 'undefined')||(localStorage['notepl
      ]:JSON.parse(localStorage['noteplace.nodes']);
 
 
+nodes.forEach((d)=>{
+  var tn = document.createElement('div');
+  tn.className = "node";
+  tb.innerHTML = text;
+  tn.contentEditable = true;
+  $(tb).data("x", d.x).data("y", d.y).data("fontSize", d.fontSize);
+  updateNode(tb);
+  bp.appendChild(tb);
+  return tb;
+
+  container.appendChild()
+})
+
 // nodes2draw = [];
 
 
@@ -182,22 +200,22 @@ node = container.selectAll(".node")
 
 selected_node = null;
 
-function $(s){
+function _(s){
   if(s[0]=='#'){
     return document.getElementById(s.slice(1));
   }else{
-    throw "Not Implemented"
+    throw Error('Not Implemented: selector=['+s+']')
   }
 }
 
 function select(d){
   selected_node = d;
 
-  $('#text').enabled = true;
-  $('#fontSize').enabled = true;
-  $('#text').value = d.text;
-  $('#fontSize').value = d.fontSize;
-  $('#fontSize').step = d.fontSize * 0.25;
+  _('#text').disabled = false;
+  _('#fontSize').disabled = false;
+  _('#text').value = d.text;
+  _('#fontSize').value = d.fontSize;
+  _('#fontSize').step = d.fontSize * 0.25;
   
 }
 
@@ -205,10 +223,10 @@ function select(d){
 function select_clear(){
   selected_node = null;
 
-  $('#text').enabled = false;
-  $('#fontSize').enabled = false;
-  $('#text').value='';
-  $('#fontSize').value='';
+  _('#text').disabled = true;
+  _('#fontSize').disabled = true;
+  _('#text').value = '';
+  _('#fontSize').value = '';
 }
 
 
