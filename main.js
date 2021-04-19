@@ -109,9 +109,13 @@ $(container).on('mousewheel', function(e) {
 
 function applyZoom(T_,S_){
   T = T_;
+
+  ds = Math.abs(Math.log10(S/S_));
+  console.log('ds='+ds);
   S = S_;
 
-  $('.node').addClass('zoom');
+  $('.node').css('transition-duration',(0.2+ds)+'s');
+  // $('.node').addClass('zoom');
   
   status({T:T,S:S});
 
@@ -129,7 +133,8 @@ _mouseDragPos = [0,0];
 selected_node = null;
 
 container.onmousedown = function(e) {
-  $('.node').removeClass('zoom'); // disable visible transition
+  $('.node').css('transition-duration','0s');
+  // $('.node').removeClass('zoom'); // disable visible transition
   
   if(contentEditMouseDown){
     contentEditMouseDown = false;
@@ -186,7 +191,12 @@ function stopEditing(){
 
 window.onmouseup = function(e) {
   _isMouseDown = false;
-  _isMouseDragging = false;
+
+  if(_isMouseDragging){
+    save(_isMouseDragging);
+
+    _isMouseDragging = false;
+  }
 
   if(e.button==1){
     e.preventDefault();
@@ -467,7 +477,7 @@ function zoomToURL(s){
   S = 1*urlParams.get('S')
   S = S?S:1;
 
-  applyZoom([1*urlParams.get('Tx'),1*urlParams.get('Ty')],S);
+  applyZoom([1*urlParams.get('Tx'),1*urlParams.get('Ty')], 1*urlParams.get('S') ? 1*urlParams.get('S') : 1);
   
 
   redraw();
