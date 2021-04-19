@@ -7,12 +7,6 @@ dragInitiated = false;
 T = [0,0];
 S = 1;
 
-urlParams = new URLSearchParams(window.location.search);
-T[0] = 1*urlParams.get('Tx')
-T[1] = 1*urlParams.get('Ty')
-
-S = 1*urlParams.get('S')
-S = S?S:1;
 
 BODY = document.getElementsByTagName('body')[0];
 M = 0;
@@ -159,17 +153,34 @@ container.onmousedown = function(e) {
 }
 
 function selectNode(n){
-  if(selected_node){
+  if(selected_node){ //remove class
     selected_node.classList.remove('selected');
   }
   selected_node = n;
-  if(selected_node){
+  if(selected_node){// apply class, setup editing tools
     selected_node.classList.add('selected');
+    //   
+    _('#text').disabled = false;
+    _('#fontSize').disabled = false;
+    _('#text').value = selected_node.dataset['text'];
+    _('#fontSize').value = selected_node.dataset['fontSize'];
+    _('#fontSize').step = _('#fontSize').value * 0.25;
+  }else{// just deselect => clear inputs
+    
+    _('#text').disabled = true;
+    _('#fontSize').disabled = true;
+    _('#text').value = '';
+    _('#fontSize').value = '';
   }
 }
 
+
 function stopEditing(){
-  newNode(contentEditTextarea.parentElement);
+  if(contentEditTextarea.value==''){
+    node_container.removeChild(contentEditTextarea.parentElement);
+  }else{
+    newNode(contentEditTextarea.parentElement);
+  }
   contentEditTextarea = null;
 }
 
@@ -181,6 +192,7 @@ window.onmouseup = function(e) {
     e.preventDefault();
   }
 }
+
 
 container.onmousemove = function(e){
   if(_isMouseDown){
@@ -199,68 +211,16 @@ container.onmousemove = function(e){
   }
 }
 
-if($(".node").length){
-  console.log("seems we already have nodes.");
-
-  save();
-}else{
-  console.log('No nodes in html..');
-  try{
-  //if(localStorage['noteplace.node_ids']){
-    node_ids = JSON.parse(localStorage['noteplace.node_ids']);
-    nodes = node_ids.map(function(id){
-      console.log(id);
-      console.log('noteplace.node_'+id);
-      
-      return JSON.parse(localStorage['noteplace.node_'+id]);
-    });
-    
-  }catch{
-
-    nodes = [
-    {id: 0, x: 0, y: 0, text: "test0", fontSize: 12},
-    {id: 1, x: 100, y: 100, text: "test1", fontSize: 12},
-    {id: 2, x: 183, y: 85.5, text: "test2", fontSize: 10.000000000000002},
-    {id: 3, x: 177.71582669914915, y: 84.10224103813428, text: "test3", fontSize: 4.204482076268574},
-    {id: 4, x: 173.18169898809143, y: 83.77972083086841, text: "test4", fontSize: 1.7677669529663695},
-    {id: 5, x: 172.25362133778404, y: 83.82391500469258, text: "test5", fontSize: 0.8838834764831848},
-    {id: 6, x: 171.81167959954246, y: 83.89020626542883, text: "test6", fontSize: 0.4419417382415924},
-    {id: 7, x: 171.69807758002312, y: 83.84816472660286, text: "test7", fontSize: 0.039062499999999965},
-    {id: 8, x: 171.58772601752312, y: 83.84914128910286, text: "test8", fontSize: 0.019531249999999983},
-    {id: 9, x: 171.53938617377312, y: 83.85451238285286, text: "test9", fontSize: 0.009765624999999991},
-    {id: 10, x: 171.52229633002312, y: 83.85841863285286, text: "test10", fontSize: 0.004882812499999996},
-    {id: 11, x: 171.5140747601513, y: 83.86304412981941, text: "test11", fontSize: 0.0029033376831121096},
-    {id: 12, x: 171.5083740342907, y: 83.86542565010431, text: "test12", fontSize: 0.001726334915006218},
-    {id: 13, x: 171.50607848896962, y: 83.86699217543257, text: "test13", fontSize: 0.000513242440950753},
-    {id: 14, x: 171.50464071771412, y: 83.86762401331647, text: "test14", fontSize: 0.000513242440950753},
-    {id: 15, x: -491.3739216040643, y: -85.2758672147873, text: "test15", fontSize: 159.99999999999872},
-    {id: 16, x: -1303.9223347593845, y: -189.27585654519936, text: "test16", fontSize: 226.27416997969334},
-    {id: 17, x: -3614.630561610377, y: -323.70819890103445, text: "test17", fontSize: 905.0966799187728},
-    {id: 18, x: -9342.456857155341, y: -809.2705284670758, text: "test18", fontSize: 2152.6948230494886},
-    {id: 19, x: -17632.957016230488, y: -1748.6982337578795, text: "test19", fontSize: 3044.3702144069366},
-    {id: 20, x: -34529.21208752887, y: -3879.757393564678, text: "test20", fontSize: 6088.740428813872},
-    {id: 113, x: 10412901562002.574, y: 1891828629789.287, text: "WOW you're far from home.", fontSize: 2311438465816.513},
-    {id: 114, x: 374.2565272544432, y: 354.53262339773846, text: "test114", fontSize: 159.99999999999832},
-    {id: 115, x: 214123162955070.66, y: 10711632881380.672, text: "I mean. WOW.", fontSize: 31098885119754.062},
-    {id: 116, x: 1104592423952645, y: -81819586322754.16, text: "Is anyone seeing this??", fontSize: 209207528124706.03},
-    {id: 117, x: 27359550959356268, y: -1764328513537750, text: "Here's a heart for ya:\n❤️", fontSize: 3980657295328512.5},
-    {id: 118, x: 339542519644310660, y: 20194450624807310, text: "Here's a beacon of hope:\n⛯", fontSize: 31845258362628070},
-    {id: 119, x: 1044733020186787100, y: -43038781628711940, text: "Now that is just.. stupid", fontSize: 151482431295748700},
-    {id: 120, x: 5369006128692392000, y: -759527390857764900, text: "STOP.", fontSize: 720575940379260300} //yep. this is totally the end.
-    ];
-  }
-  nodes.forEach(newNode);
-}
 
 function save(node=null){
   if(node === null){
     // save all
     node_ids = [];
-    [].forEach.call($(".node"),(node)=>{
+    [].forEach.call(_(".node"),(node)=>{
       save(node);
       node_ids.push(node.dataset['id']);
-      localStorage['noteplace.node_ids'] = JSON.stringify(node_ids);
-    })
+    });
+    localStorage['noteplace.node_ids'] = JSON.stringify(node_ids);
   }else{
     // node provided, save only node
     if('x' in node){
@@ -274,7 +234,16 @@ function save(node=null){
 }
 
 
-save();
+
+
+
+// ::::    :::  ::::::::  :::::::::  ::::::::::      :::::::::: :::    ::: ::::    :::  ::::::::   ::::::::  
+// :+:+:   :+: :+:    :+: :+:    :+: :+:             :+:        :+:    :+: :+:+:   :+: :+:    :+: :+:    :+: 
+// :+:+:+  +:+ +:+    +:+ +:+    +:+ +:+             +:+        +:+    +:+ :+:+:+  +:+ +:+        +:+        
+// +#+ +:+ +#+ +#+    +:+ +#+    +:+ +#++:++#        :#::+::#   +#+    +:+ +#+ +:+ +#+ +#+        +#++:++#++ 
+// +#+  +#+#+# +#+    +#+ +#+    +#+ +#+             +#+        +#+    +#+ +#+  +#+#+# +#+               +#+ 
+// #+#   #+#+# #+#    #+# #+#    #+# #+#             #+#        #+#    #+# #+#   #+#+# #+#    #+# #+#    #+# 
+// ###    ####  ########  #########  ##########      ###         ########  ###    ####  ########   ########  
 
 function onNodeClick(e){
   console.log('clicked on ['+this.id+'] : '+this.innerText);
@@ -297,7 +266,49 @@ function textareaAutoResize(e){
 
 function textareaBtnDown(e){
   if((e.ctrlKey) && ((e.keyCode == 0xA)||(e.keyCode == 0xD))){
+    // Ctrl+Enter
     stopEditing();
+  }
+  if((e.keyCode == 13) && (e.shiftKey)){
+    // Shift+Enter
+    stopEditing();
+
+    var new_node = newNode({
+      x:contentEditNode.dataset['x'],
+      y:1*contentEditNode.dataset['y']
+        // + 1*contentEditNode.dataset['fontSize']
+        + (contentEditNode.getBoundingClientRect().height/S),
+      x:contentEditNode.dataset['x'],
+      text:'',
+      fontSize:contentEditNode.dataset['fontSize'],
+    })
+    
+    selectNode(new_node);
+
+    onNodeDblClick(new_node);
+
+    // neither preventDefault nor stopPropagation
+    //    stoped newline from appearing
+    setTimeout(function(){contentEditTextarea.value='';},10);
+  }
+
+  if (e.keyCode == 9){
+    //Tab
+    
+
+
+    // no jump-to-next-field
+    e.preventDefault();
+  }
+
+  //https://stackoverflow.com/a/3369624/2624911
+  if (e.key === "Escape") { // escape key maps to keycode `27`
+    
+    selectNode(contentEditNode);
+    
+    stopEditing();
+        
+    e.stopPropagation();    
   }
 }
 
@@ -362,24 +373,17 @@ function newId(){
   // Check to see if the counter has been initialized
   if ( typeof newId.N == 'undefined' ) {
       // It has not... perform the initialization
-      console.log('newId.N init')
       newId.N = 0;
   }  
-  console.log('pre-loop : newId.N='+newId.N);
-  console.log('pre-loop : getNode(newId.N)='+getNode(newId.N));
-
   while(getNode(newId.N)){
     newId.N++;
-    console.log('in-loop : newId.N='+newId.N);
-    console.log('in-loop : getNode(newId.N)='+getNode(newId.N));
   }
-  console.log('after-loop : newId.N='+newId.N);
-  console.log('after-loop : getNode(newId.N)='+getNode(newId.N));
   newId.N++;
   return newId.N-1;
 }
 
 function newNode(d){
+  console.log(d);
   if('className' in d){
     tn = d;
     console.log('newNode with DOM node provided:');
@@ -433,8 +437,6 @@ function newNode(d){
 }
 
 
-
-
 function updateNode(n){
   n.style.left = (n.dataset["x"] - T[0])*S + 'px';
   n.style.top = (n.dataset["y"] - T[1])*S + 'px';
@@ -443,48 +445,43 @@ function updateNode(n){
 
 
 function redraw(){
-  [].forEach.call($('.node'),
+  [].forEach.call(_('.node'),
     updateNode)
 }
 
-selected_node = null;
 
 function _(s){
   if(s[0]=='#'){
     return document.getElementById(s.slice(1));
+  }else
+  if(s[0]=='.'){
+    return document.getElementsByClassName(s.slice(1));
   }else{
     throw Error('Not Implemented: selector=['+s+']')
   }
 }
 
-function select(d){
-  selected_node = d;
 
-  _('#text').disabled = false;
-  _('#fontSize').disabled = false;
-  _('#text').value = d.text;
-  _('#fontSize').value = d.fontSize;
-  _('#fontSize').step = d.fontSize * 0.25;
+function zoomToURL(s){
+  urlParams = new URLSearchParams(s);
+  S = 1*urlParams.get('S')
+  S = S?S:1;
+
+  applyZoom([1*urlParams.get('Tx'),1*urlParams.get('Ty')],S);
   
+
+  redraw();
 }
-
-
-function select_clear(){
-  selected_node = null;
-
-  _('#text').disabled = true;
-  _('#fontSize').disabled = true;
-  _('#text').value = '';
-  _('#fontSize').value = '';
-}
-
 
 function getHTML(text){
-  return md.render(text).slice(0,-1).replaceAll('\n','<br />');  
+  return md.render(text)
+            .slice(0, -1) // md.render adds newline (?)
+            .replaceAll('\n', '<br />')
+            .replace(/href="(\?[^"]+)"/,/class="local" onclick="zoomToURL('$1')"/);  
 }
 
 function getFontSize(d){
-  return d.fontSize*S+'px';
+  return d.fontSize * S + 'px';
 }
 
 
@@ -521,13 +518,6 @@ zoom_urlReplaceTimeout = setInterval(function(){
       url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
 }, 200);
 
-
-// function save(){
-//   // TODO: probably will want to save each changed node separately
-//   localStorage['noteplace.nodes'] = JSON.stringify(nodes);
-// }
-
-
 function selectAllContent(el){
   var el = getG(tnode);
   var range = document.createRange()
@@ -541,22 +531,6 @@ function selectAllContent(el){
   sel.addRange(range)
 }
 
-function dblclick(){
-  console.log("T="+T);
-  console.log("S="+S);
-  console.log(d3.event.x+' '+d3.event.y)  ;
-
-  tnode = nodeFromMouse(this)
-  addNode( tnode );
-
-  select(tnode);
-
-  redraw()
-
-  $('#text').select();
-    
-}
-
 
 function getNode(id){
   return document.getElementById('node_' + id);
@@ -567,32 +541,55 @@ function getG(d){
 }
 
 function onFontSizeEdit(){
-  if(selected_node !==null){
-    selected_node.fontSize = 1*this.value;
-    getG(selected_node).style.fontSize = getFontSize(selected_node);
+  if(selected_node !== null){
+    selected_node.dataset['fontSize'] = this.value;
+    selected_node.classList.add('zoom');
+    updateNode(selected_node);
+    // selected_node.classList.remove('zoom');
 
     this.step = this.value*0.25;
 
-    save();
+    save(selected_node);
   }
 }
 
 function onTextEditChange(){
-  if(selected_node !==null){
-    selected_node.text = this.value;
-    getG(selected_node).getElementsByTagName('div')[0].innerHTML = getHTML(selected_node);
+  if(selected_node !== null){
+    selected_node.dataset['text'] = this.value;
+    newNode(selected_node);
 
-    this.style.height = "5px";
-    this.style.height = (this.scrollHeight)+"px";
+    // this.style.height = "5px";
+    // this.style.height = (this.scrollHeight)+"px";
 
-    save();
+    save(selected_node);
   }
 }
 
-$('#text').oninput = onTextEditChange;
-$('#fontSize').onchange = onFontSizeEdit;
+_('#text').oninput = onTextEditChange;
+_('#fontSize').onchange = onFontSizeEdit;
 
 
+
+// https://gist.github.com/simondahla/0c324ba8e6ed36055787
+function addOnContentChange(elt, fun){
+  if(window.addEventListener) {
+    // Normal browsers
+    elt.addEventListener('DOMSubtreeModified', fun, false);
+  } else
+   if(window.attachEvent) {
+      // IE
+      elt.attachEvent('DOMSubtreeModified', fun);
+   }
+}
+
+
+// :::::::::: ::::::::::: :::        :::::::::: ::::::::  
+// :+:            :+:     :+:        :+:       :+:    :+: 
+// +:+            +:+     +:+        +:+       +:+        
+// :#::+::#       +#+     +#+        +#++:++#  +#++:++#++ 
+// +#+            +#+     +#+        +#+              +#+ 
+// #+#            #+#     #+#        #+#       #+#    #+# 
+// ###        ########### ########## ########## ########  
 
 
 function download(filename, text) {
@@ -611,7 +608,7 @@ function download(filename, text) {
 
 // Start file download.
 _("#save").addEventListener("click", function(){
-  nodes = [].map.call($('.node'),(d)=>{return {
+  nodes = [].map.call(_('.node'),(d)=>{return {
     id:d.dataset['id'],
     x:d.dataset['x'],
     y:d.dataset['y'],
@@ -620,22 +617,17 @@ _("#save").addEventListener("click", function(){
   }})
   // Generate download of hello.txt file with some content
   var text = JSON.stringify({T:T,S:S,nodes:nodes});
-  var filename = "hello.txt";
+  var filename = 'Noteplace_'
+                +(new Date().toISOString()
+                            .slice(0,19)
+                            .replaceAll('-','')
+                            .replace('T','-')
+                            .replaceAll(':','')
+                  )+'.json'
   
   download(filename, text);
 }, false);
 
-
-function smoothZoom(T_,S_){
-  moveZoom.start.T = T;
-  moveZoom.start.S = S;
-  moveZoom.end.T = T_;
-  moveZoom.end.S = S_;
-
-  moveZoom.tStart = Date.now();
-
-  moveZoom.interval = setInterval(zoomStep, moveZoom.dt);
-}
 
 _('#file').oninput = function(){
     var fr=new FileReader();
@@ -657,16 +649,37 @@ _('#file').oninput = function(){
     fr.readAsText(this.files[0]);  
 }
 
-// https://gist.github.com/simondahla/0c324ba8e6ed36055787
-function addOnContentChange(elt, fun){
-  if(window.addEventListener) {
-    // Normal browsers
-    elt.addEventListener('DOMSubtreeModified', fun, false);
-  } else
-   if(window.attachEvent) {
-      // IE
-      elt.attachEvent('DOMSubtreeModified', fun);
-   }
+
+//  :::::::: ::::::::::: :::     ::::::::: ::::::::::: :::    ::: :::::::::  
+// :+:    :+:    :+:   :+: :+:   :+:    :+:    :+:     :+:    :+: :+:    :+: 
+// +:+           +:+  +:+   +:+  +:+    +:+    +:+     +:+    +:+ +:+    +:+ 
+// +#++:++#++    +#+ +#++:++#++: +#++:++#:     +#+     +#+    +:+ +#++:++#+  
+//        +#+    +#+ +#+     +#+ +#+    +#+    +#+     +#+    +#+ +#+        
+// #+#    #+#    #+# #+#     #+# #+#    #+#    #+#     #+#    #+# #+#        
+//  ########     ### ###     ### ###    ###    ###      ########  ###        
+
+
+zoomToURL(window.location.search);
+
+if($(".node").length){
+  console.log("seems we already have nodes.");
+
+  save();
+}else{
+  console.log('No nodes in html..');
+  try{
+  //if(localStorage['noteplace.node_ids']){
+    node_ids = JSON.parse(localStorage['noteplace.node_ids']);
+    nodes = node_ids.map(function(id){
+      console.log(id);
+      console.log('noteplace.node_'+id);
+      
+      return JSON.parse(localStorage['noteplace.node_'+id]);
+    });
+  }catch{
+    nodes = nodes_default
+  }
+  nodes.forEach(newNode);
 }
 
-
+save();

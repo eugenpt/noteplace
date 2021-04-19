@@ -56,8 +56,10 @@ html, body {
   
 .node blockquote{
     margin-inline-start: 1em;
+    margin-inline-end: 0px;
 }
 .node ol,ul{
+    padding-inline-start: 1em;
     padding-inline-start: 1em;
 }
 
@@ -117,4 +119,8 @@ html, body {
   a.node_a{
     color: inherit; /* blue colors for links too */
     text-decoration: inherit; /* no underline */
+  }
+
+  a.local{
+    cursor:pointer;
   }
