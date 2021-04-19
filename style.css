@@ -107,9 +107,14 @@ html, body {
   
   #node_container{
     /* transition-duration: 0.2s; */
+    display: block;
+    position: absolute;
   }
 
   .node{
+    /* display: block; */
+    /* white-space: pre; */
+    position: absolute;
     /* transition-duration: 0.2s; */
   }
   .node.zoom{

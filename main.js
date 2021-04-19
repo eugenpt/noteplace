@@ -108,6 +108,7 @@ $(container).on('mousewheel', function(e) {
 
 
 function applyZoom(T_,S_){
+  console.log('S='+S+' S_='+S_);
   T = T_;
 
   ds = Math.abs(Math.log10(S/S_));
@@ -133,6 +134,7 @@ _mouseDragPos = [0,0];
 selected_node = null;
 
 container.onmousedown = function(e) {
+  console.log('container.onmousedown');
   $('.node').css('transition-duration','0s');
   // $('.node').removeClass('zoom'); // disable visible transition
   
@@ -190,12 +192,27 @@ function stopEditing(){
 }
 
 window.onmouseup = function(e) {
-  _isMouseDown = false;
 
   if(_isMouseDragging){
     save(_isMouseDragging);
 
     _isMouseDragging = false;
+    _isMouseDown = false;
+
+  }else if(_isMouseDown){
+    // stop moving 
+    T[0] = _mouseDownT[0] - 1*node_container.dataset['x']/S;
+    T[1] = _mouseDownT[1] - 1*node_container.dataset['y']/S;
+
+    node_container.dataset['x'] = 0;
+    node_container.dataset['y'] = 0;
+    
+    node_container.style.left = 0;
+    node_container.style.top = 0;
+
+    redraw();
+
+    _isMouseDown = false;
   }
 
   if(e.button==1){
@@ -213,10 +230,14 @@ container.onmousemove = function(e){
       updateNode(_isMouseDragging)
     }else{
 
-      T[0] = _mouseDownT[0] -  (e.clientX - _mouseDownPos[0])/S;
-      T[1] = _mouseDownT[1] -  (e.clientY - _mouseDownPos[1])/S;
+      // T[0] = _mouseDownT[0] -  (e.clientX - _mouseDownPos[0])/S;
+      // T[1] = _mouseDownT[1] -  (e.clientY - _mouseDownPos[1])/S;
+      node_container.dataset['x'] = (e.clientX - _mouseDownPos[0]);
+      node_container.dataset['y'] = (e.clientY - _mouseDownPos[1]);
+      node_container.style.left = node_container.dataset['x'] + 'px';
+      node_container.style.top = node_container.dataset['y'] + 'px';
 
-      redraw()
+      // redraw()
     }
   }
 }
@@ -365,6 +386,8 @@ function onNodeDblClick(e){
 }
 
 function onNodeMouseDown(e){
+  console.log('onNodeMouseBtn');
+  console.log(e);
   if(e.button==1){
     _isMouseDragging = this;
     _mouseDragStart = [e.clientX, e.clientY];
@@ -474,8 +497,7 @@ function _(s){
 
 function zoomToURL(s){
   urlParams = new URLSearchParams(s);
-  S = 1*urlParams.get('S')
-  S = S?S:1;
+  
 
   applyZoom([1*urlParams.get('Tx'),1*urlParams.get('Ty')], 1*urlParams.get('S') ? 1*urlParams.get('S') : 1);
   
