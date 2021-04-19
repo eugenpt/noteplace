@@ -8,10 +8,50 @@ dragInitiated = false;
 T = [0,0];
 S = 1;
 
+urlParams = new URLSearchParams(window.location.search);
+T[0] = 1*urlParams.get('Tx')
+T[1] = 1*urlParams.get('Ty')
+
+S = 1*urlParams.get('S')
+S = S?S:1;
+
 // is necessary for proper dragging..
 dragstartmousepos = null;
 dragstartpos = null;
 
+
+moveZoom = {
+  dur: 1000,  // total duration of the transition (TODO: change depending on scale of transition?)
+  dt: 20,     // update interval
+  start: {T:[0,0], S:1},
+  end: {T:[0,0], S:1},
+  tStart: 0,
+  interval: null
+}
+
+function part(x0,x1,t,dur){
+  return (x0*dur + (x1-x0)*t)/dur;
+}
+
+function zoomStep(){
+  var t = Date.now() - moveZoom.tStart;
+
+  if(t>=moveZoom.dur){
+    applyZoom(moveZoom.end.T, moveZoom.end.S);
+    clearInterval(moveZoom.interval);
+
+  }else{
+
+    applyZoom(
+      [ 
+        part(moveZoom.start.T[0], moveZoom.end.T[0] , t , moveZoom.dur),
+        part(moveZoom.start.T[1], moveZoom.end.T[1] , t , moveZoom.dur)
+      ],
+        part(moveZoom.start.S, moveZoom.end.S, t, moveZoom.dur)
+      );
+  }
+  redraw();
+}
 
 
 BODY = document.getElementsByTagName('body')[0];
@@ -35,6 +75,7 @@ function toStr(a){
     );
 }
 
+
 function status() {
   if((arguments.length==1)&&(typeof(arguments[0])=='object')){
     var s = toStr(arguments[0]);
@@ -43,11 +84,26 @@ function status() {
     $('#status').innerText = [... Array(arguments.length).keys()].map((j)=>toStr(arguments[j])).join(', ');
 }
 
-var width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
-    height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
+width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
+height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
+
+// resizeWatchTimeout = null;
+// window.addEventListener('resize', function(event){
+//   // do stuff here
+//   clearTimeout(resizeWatchTimeout);
+//   resizeWatchTimeout = setTimeout(function(){
+//     width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
+//     height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
+    
+//     filterNodes2Draw();
+//     redraw();
+//   },100); // run update only every 100ms
+// });
+
 
 var zoom = d3.behavior.zoom()
-    .scale(S).translate([T[0]*S,T[1]*S]) // initial parameters
+    .scale(S)
+    .translate([T[0]*S,T[1]*S]) // initial parameters
     .on("zoom", zoomed)
    .scaleExtent([1e-13, 1e13]) 
    //yeah, I don't like limits, but..
@@ -106,6 +162,22 @@ nodes = ((localStorage['noteplace.nodes'] == 'undefined')||(localStorage['notepl
    {id: 120, x: 5369006128692392000, y: -759527390857764900, text: "STOP.", fontSize: 720575940379260300} //yep. this is totally the end.
      ]:JSON.parse(localStorage['noteplace.nodes']);
 
+
+// nodes2draw = [];
+
+
+// function filterNodes2Draw(){
+//   nodes2draw = nodes
+//       .filter((d)=>(d.x>=-T[0] - d.fontSize * d.text.length)
+//                  &&(d.x<=-T[0] + width/S + d.fontSize * d.text.length)
+//                  &&(d.y>=-T[1] - d.fontSize * 3)
+//                  &&(d.y<=-T[1]+height/S + d.fontSize * 3)
+//                  //&&(d.fontSize >= 0.02/S )
+//               )
+// }
+
+// filterNodes2Draw();
+
 node = container.selectAll(".node")
 
 selected_node = null;
@@ -163,11 +235,16 @@ node = node.data(nodes);
               console.log(d3.event);
               console.log('aaa!');
               if(d3.event.ctrlKey){
+                dblclick();
 
+                d3.event.stopPropagation();
               }else{
                 select(d);
                 
                 $('#text').select();
+                var S_ = 20/d.fontSize;
+                smoothZoom([-d.x + width/(3*S_),-d.y + height/(10*S_)],S_);
+                //redraw();
                 d3.event.stopPropagation();
               }
             })
@@ -175,6 +252,7 @@ node = node.data(nodes);
             //.each((d)=>addOnContentChange(getG(d),function(e){d.text = getG(d).innerText;save();}))
             
           node
+            .attr("id",(d)=>"node_"+d.id)
             .style("left",getX)
             .style("top",getY)
             .style("font-size",getFontSize)
@@ -183,24 +261,19 @@ node = node.data(nodes);
             //   selected_node = d;
             //   redraw();
             // })
-            .on("mousedown",function(d){
-              if(selected_node === d){
-                select_clear();
-              }else
-                select(d);
-              redraw();
-            })
-            .on("dblclick",function(d){
-              if(d3.event.ctrlKey){
+            // .on("mousedown",function(d){
+            //   if(selected_node === d){
+            //     select_clear();
+            //   }else
+            //     select(d);
+            //   redraw();
+            // })
+            .style('display',(d)=>d.fontSize > 0.2/S ? 'inline-block' : 'none')
+            .select('.inside_node')
+            .html(getHTML);
 
-              }else{
-                select(d);
-                
-                $('#text').select();
-
-                d3.event.stopPropagation();
-              }
-            })
+            // .on("dblclick",function(d){
+            // })
             //.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
   node.exit().remove();          
   node.classed("selected", function(d) { return d === selected_node; })
@@ -224,6 +297,8 @@ function getY(d){
   return d.y+'px';
 }
 
+
+zoom_urlPushTimeout = null;
 function zoomed() {
   S = d3.event.scale;
   T[0] = d3.event.translate[0]/S;
@@ -232,7 +307,28 @@ function zoomed() {
   status({T:T,S:S});//+' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
   
   redraw();
+
+  clearTimeout(zoom_urlPushTimeout);
+
+  // every 10s of stay at one place time - 
+  zoom_urlPushTimeout = setTimeout(function(){
+    console.log('history pushed');
+      url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
+      window.history.pushState(
+          {T:T,S:S}, 
+          'Noteplace', 
+          url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+    }, 10000);
+    
 }
+zoom_urlReplaceTimeout = setInterval(function(){
+  // console.log('history replaced');
+  url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
+  window.history.replaceState(
+      {T:T,S:S}, 
+      'Noteplace', 
+      url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+}, 200);
 
 
 function dragstarted(d) {
@@ -385,14 +481,32 @@ document.getElementById("save").addEventListener("click", function(){
 }, false);
 
 
+function smoothZoom(T_,S_){
+  moveZoom.start.T = T;
+  moveZoom.start.S = S;
+  moveZoom.end.T = T_;
+  moveZoom.end.S = S_;
+
+  moveZoom.tStart = Date.now();
+
+  moveZoom.interval = setInterval(zoomStep, moveZoom.dt);
+}
+
+function applyZoom(T_,S_){
+  T=T_;
+  S=S_;
+  zoom.scale(S).translate([T[0]*S,T[1]*S]);
+
+
+
+}
+
 $('#file').oninput = function(){
     var fr=new FileReader();
     fr.onload=function(){
         console.log('Loading..');
         G = JSON.parse(fr.result);
-        T = [1*G.T[0],1*G.T[1]];
-        S = 1*G.S;
-        zoom.scale(S).translate([T[0]*S,T[1]*S]);
+        applyZoom([1*G.T[0],1*G.T[1]], 1*G.S);
         nodes = G.nodes;
         redraw();
         console.log('Loading complete, now '+nodes.length+' nodes');
