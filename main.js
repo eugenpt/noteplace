@@ -129,11 +129,56 @@ zoomMin = 1e-13;
 var container = _("#container");
 
 container.ondblclick = function(e) {
+  console.log('dblclick');
+  console.log(e);
   // no dblclick zoom!
   e.preventDefault();
+  e.stopPropagation();
 }
 
-    
+$(container).on('mousewheel', function(e) {
+  console.log(e.deltaX, e.deltaY, e.deltaFactor);
+
+  mousePos = [T[0] + e.clientX/S , T[1] + e.clientY/S]
+
+  S = Math.min(zoomMax,Math.max(zoomMin,e.deltaY>0 ? S*1.2 : S/1.2));
+
+
+  T = [mousePos[0] - e.clientX/S, mousePos[1]-e.clientY/S]
+
+  status({T:T,S:S})
+
+  redraw();
+});
+
+
+_isMouseDown = false;
+_mouseDownPos = [0,0];
+_mouseDownT = [0,0];
+container.onmousedown = function(e) {
+  _mouseDownPos = [e.clientX, e.clientY];
+  _mouseDownT = [T[0],T[1]];
+  _isMouseDown = true;
+
+  console.log(e);
+  //e.preventDefault();
+}
+
+window.onmouseup = function(e) {
+  _isMouseDown = false;
+  //e.preventDefault();
+}
+
+container.onmousemove = function(e){
+  if(_isMouseDown){
+
+    T[0] = _mouseDownT[0] -  (e.clientX - _mouseDownPos[0])/S;
+    T[1] = _mouseDownT[1] -  (e.clientY - _mouseDownPos[1])/S;
+
+    redraw()
+  }
+}
+
 
 nodes = ((localStorage['noteplace.nodes'] == 'undefined')||(localStorage['noteplace.nodes'] == undefined))?[
    {id: 0, x: 0, y: 0, text: "test0", fontSize: 12},
@@ -167,19 +212,47 @@ nodes = ((localStorage['noteplace.nodes'] == 'undefined')||(localStorage['notepl
    {id: 120, x: 5369006128692392000, y: -759527390857764900, text: "STOP.", fontSize: 720575940379260300} //yep. this is totally the end.
      ]:JSON.parse(localStorage['noteplace.nodes']);
 
+function onNodeClick(e){
+  console.log('clicked on ['+this.id+'] : '+this.innerText);
+}
 
-nodes.forEach((d)=>{
+function onNodeDblClick(e){
+  console.log('double-clicked on ['+this.id+'] : '+this.innerText);
+
+  console.log(e);
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+
+nodes.forEach(function(d){
   var tn = document.createElement('div');
+  tn.id = 'node_'+d.id;
   tn.className = "node";
-  tb.innerHTML = text;
-  tn.contentEditable = true;
-  $(tb).data("x", d.x).data("y", d.y).data("fontSize", d.fontSize);
-  updateNode(tb);
-  bp.appendChild(tb);
-  return tb;
-
-  container.appendChild()
+  tn.innerHTML = getHTML(d);
+//  tn.contentEditable = true;
+  tn.dataset["x"] = d.x;
+  tn.dataset["y"] = d.y;
+  tn.dataset["fontSize"] = d.fontSize;
+  tn.onclick = onNodeClick;
+  tn.ondblclick = onNodeDblClick;
+  updateNode(tn);
+  container.appendChild(tn);
+  return tn;
 })
+
+
+function updateNode(n){
+  n.style.left = (n.dataset["x"] - T[0])*S + 'px';
+  n.style.top = (n.dataset["y"] - T[1])*S + 'px';
+  n.style.fontSize = (n.dataset["fontSize"])*S + 'px';
+}
+
+
+function redraw(){
+  [].forEach.call($('.node'),
+    updateNode)
+}
 
 // nodes2draw = [];
 
@@ -196,7 +269,7 @@ nodes.forEach((d)=>{
 
 // filterNodes2Draw();
 
-node = container.selectAll(".node")
+node = $(".node")
 
 selected_node = null;
 
@@ -239,7 +312,7 @@ function getFontSize(d){
 }
 
 
-function redraw(){
+function _redraw(){
 node = node.data(nodes);
         node.enter()
           .insert("div")
@@ -296,7 +369,7 @@ node = node.data(nodes);
   node.exit().remove();          
   node.classed("selected", function(d) { return d === selected_node; })
 }
-redraw();
+// redraw();
 
 function dottype(d) {
   d.x = +d.x;
@@ -304,16 +377,6 @@ function dottype(d) {
   return d;
 }
 
-
-function getX(d){
-  return (d.x + T[0])*S + 'px';
-  return d.x+'px';
-}
-
-function getY(d){
-  return (d.y + T[1])*S + 'px';
-  return d.y+'px';
-}
 
 
 zoom_urlPushTimeout = null;
@@ -519,7 +582,7 @@ function applyZoom(T_,S_){
 
 }
 
-$('#file').oninput = function(){
+_('#file').oninput = function(){
     var fr=new FileReader();
     fr.onload=function(){
         console.log('Loading..');
