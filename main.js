@@ -79,6 +79,7 @@ height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clien
 
 container.ondblclick = function(e) {
   console.log('dblclick on empty field at ['+e.clientX+','+e.clientY+']');
+  console.log('T='+T+' S='+S);
   console.log(e);
   var id = newId();
   var node = newNode({
@@ -135,6 +136,7 @@ selected_node = null;
 
 container.onmousedown = function(e) {
   console.log('container.onmousedown');
+  console.log('T='+T+' S='+S);
   $('.node').css('transition-duration','0s');
   // $('.node').removeClass('zoom'); // disable visible transition
   
@@ -192,6 +194,9 @@ function stopEditing(){
 }
 
 window.onmouseup = function(e) {
+  console.log('window onmouseup');
+  console.log(e);
+  console.log('T='+T+' S='+S);
 
   if(_isMouseDragging){
     save(_isMouseDragging);
@@ -690,7 +695,8 @@ _('#file').oninput = function(){
 // #+#    #+#    #+# #+#     #+# #+#    #+#    #+#     #+#    #+# #+#        
 //  ########     ### ###     ### ###    ###    ###      ########  ###        
 
-
+node_container.dataset['x'] = 0;
+node_container.dataset['y'] = 0;
 zoomToURL(window.location.search);
 
 if($(".node").length){
