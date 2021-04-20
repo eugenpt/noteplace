@@ -11,6 +11,8 @@ S = 1;
 BODY = document.getElementsByTagName('body')[0];
 M = 0;
 
+NODES = [];
+
 zoomMax = 1e14;
 zoomMin = 1e-15;
 
@@ -96,17 +98,26 @@ container.ondblclick = function(e) {
   onNodeDblClick(node);
 }
 
-$(container).on('mousewheel', function(e) {
+function onMouseWheel(e){
   console.log(e.deltaX, e.deltaY, e.deltaFactor);
 
   mousePos = [T[0] + e.clientX/S , T[1] + e.clientY/S]
-  S = Math.min(zoomMax,Math.max(zoomMin,e.deltaY>0 ? S*zoomK : S/zoomK))
+  S = Math.min(zoomMax,Math.max(zoomMin,e.deltaY<0 ? S*zoomK : S/zoomK))
   applyZoom(
     [mousePos[0] - e.clientX/S, mousePos[1]-e.clientY/S],
     S
   );
-});
+}
 
+// $(container).on('mousewheel', onMouseWheel );
+// _('#container').addEventListener("wheel", onMouseWheel);
+// _('#node_container').addEventListener("wheel", onMouseWheel);
+
+// $('#container').bind('mousewheel DOMMouseScroll', onMouseWheel);
+// $('#container').scroll(onMouseWheel)
+
+// safari?
+window.addEventListener("wheel",onMouseWheel);
 
 function applyZoom(T_,S_){
   console.log('S='+S+' S_='+S_);
@@ -420,16 +431,29 @@ function newId(){
   return newId.N-1;
 }
 
+// ::::    ::: :::::::::: :::       ::: ::::    :::  ::::::::  :::::::::  :::::::::: 
+// :+:+:   :+: :+:        :+:       :+: :+:+:   :+: :+:    :+: :+:    :+: :+:        
+// :+:+:+  +:+ +:+        +:+       +:+ :+:+:+  +:+ +:+    +:+ +:+    +:+ +:+        
+// +#+ +:+ +#+ +#++:++#   +#+  +:+  +#+ +#+ +:+ +#+ +#+    +:+ +#+    +:+ +#++:++#   
+// +#+  +#+#+# +#+        +#+ +#+#+ +#+ +#+  +#+#+# +#+    +#+ +#+    +#+ +#+        
+// #+#   #+#+# #+#         #+#+# #+#+#  #+#   #+#+# #+#    #+# #+#    #+# #+#        
+// ###    #### ##########   ###   ###   ###    ####  ########  #########  ########## 
+
+
 function newNode(d){
-  console.log(d);
+  // console.log(d);
   if('className' in d){
     tn = d;
-    console.log('newNode with DOM node provided:');
-    console.log(tn);
+    // console.log('newNode with DOM node provided:');
+    // console.log(tn);
   }else{
-    tn = document.createElement('div')
     if (!('id' in d))
       d.id = newId()
+    NODES.push(d);
+
+
+
+    tn = document.createElement('div')
     tn.id = 'node_'+d.id;
     tn.className = "node";
     //  tn.contentEditable = true;
@@ -602,8 +626,6 @@ function onTextEditChange(){
   }
 }
 
-_('#text').oninput = onTextEditChange;
-_('#fontSize').onchange = onFontSizeEdit;
 
 
 
@@ -617,6 +639,22 @@ function addOnContentChange(elt, fun){
       // IE
       elt.attachEvent('DOMSubtreeModified', fun);
    }
+}
+
+
+function addRandomNodes(N, Xlim, Ylim, FSLim){
+  for(var j=0; j<N; j++){
+    id = newId();
+
+    newNode({
+      x:Xlim[0]+Math.random()*(Xlim[1]-Xlim[0]),
+      y:Ylim[0]+Math.random()*(Ylim[1]-Ylim[0]),
+      fontSize:FSLim[0]+Math.random()*(FSLim[1]-FSLim[0]),
+      text:'test__'+id,
+      id:id
+    });
+  }
+  redraw();
 }
 
 
@@ -687,6 +725,7 @@ _('#file').oninput = function(){
 }
 
 
+
 //  :::::::: ::::::::::: :::     ::::::::: ::::::::::: :::    ::: :::::::::  
 // :+:    :+:    :+:   :+: :+:   :+:    :+:    :+:     :+:    :+: :+:    :+: 
 // +:+           +:+  +:+   +:+  +:+    +:+    +:+     +:+    +:+ +:+    +:+ 
@@ -698,6 +737,24 @@ _('#file').oninput = function(){
 node_container.dataset['x'] = 0;
 node_container.dataset['y'] = 0;
 zoomToURL(window.location.search);
+
+
+// event handlers
+
+_('#text').oninput = onTextEditChange;
+_('#fontSize').onchange = onFontSizeEdit;
+
+_('#btnAddLots').onclick = function(){
+  addRandomNodes(
+    1*_('#number').value,
+    [T[0], T[0]+width/S],
+    [T[1], T[1]+height/S],
+    [0.02/S,20/S]
+  )
+}
+
+
+// Load nodes? 
 
 if($(".node").length){
   console.log("seems we already have nodes.");
