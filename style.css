@@ -46,8 +46,14 @@ html, body {
       overflow-wrap: break-word;
       -webkit-line-break: after-white-space; */
   
-  
+    font-size: inherit;
   }
+
+  .node h1{
+    font-size: inherit;
+  }
+
+
   .node.selected{
     /* fill:red;
     color:red; */

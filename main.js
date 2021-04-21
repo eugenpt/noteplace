@@ -82,7 +82,7 @@ height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clien
 container.ondblclick = function(e) {
   console.log('dblclick on empty field at ['+e.clientX+','+e.clientY+']');
   console.log('T='+T+' S='+S);
-  console.log(e);
+  // console.log(e);
   var id = newId();
   var node = newNode({
     id:id, 
@@ -98,15 +98,30 @@ container.ondblclick = function(e) {
   onNodeDblClick(node);
 }
 
-function onMouseWheel(e){
-  console.log(e.deltaX, e.deltaY, e.deltaFactor);
-
-  mousePos = [T[0] + e.clientX/S , T[1] + e.clientY/S]
-  S = Math.min(zoomMax,Math.max(zoomMin,e.deltaY<0 ? S*zoomK : S/zoomK))
+function zoomInOut(in_degree, clientPos=null){
+  if(clientPos==null){
+    if(selected_node){
+      // zoom to it!
+      clientPos = [
+        (1*selected_node.dataset['x']-T[0])*S,
+        (1*selected_node.dataset['y']-T[1])*S,
+      ]
+    }else{
+      // just center
+      clientPos = [width/2,height/2];
+    }
+  }
+  mousePos =[T[0] + clientPos[0]/S , T[1] + clientPos[1]/S]
+  S = Math.min(zoomMax,Math.max(zoomMin, S*Math.pow(zoomK,in_degree)))
   applyZoom(
-    [mousePos[0] - e.clientX/S, mousePos[1]-e.clientY/S],
+    [mousePos[0] - clientPos[0]/S, mousePos[1]-clientPos[1]/S],
     S
   );
+}
+
+function onMouseWheel(e){
+  console.log(e.deltaX, e.deltaY, e.deltaFactor);
+  zoomInOut(e.deltaY<0 ? 1 : -1,  [e.clientX , e.clientY])
 }
 
 // $(container).on('mousewheel', onMouseWheel );
@@ -158,7 +173,7 @@ container.onmousedown = function(e) {
     _mouseDownT = [T[0],T[1]];
     _isMouseDown = true;
 
-    console.log(e);
+    // console.log(e);
     //e.preventDefault();
 
     if(contentEditTextarea){
@@ -206,7 +221,7 @@ function stopEditing(){
 
 window.addEventListener('mouseup',function(e) {
   console.log('window onmouseup');
-  console.log(e);
+  // console.log(e);
   console.log('T='+T+' S='+S);
 
   if(_isMouseDragging){
@@ -361,7 +376,7 @@ function textareaBtnDown(e){
 
 function onNodeDblClick(e){
   console.log('double-clicked on ['+this.id+'] : '+this.innerText);
-  console.log(e);
+  // console.log(e);
 
   if('preventDefault' in e){
     e.preventDefault();
@@ -403,7 +418,7 @@ function onNodeDblClick(e){
 
 function onNodeMouseDown(e){
   console.log('onNodeMouseBtn');
-  console.log(e);
+  // console.log(e);
   if(e.button==1){
     _isMouseDragging = this;
     _mouseDragStart = [e.clientX, e.clientY];
@@ -840,12 +855,13 @@ _('#load_gdrive').addEventListener('click',function(){
   _('#modal-save').style.display='none';
 
   fillFilesList((row)=>{console.log(row); getFileContent(row.dataset['fileId'],function(e){
-    console.log(e);
     if(e.status==200){
       // file loaded OK, load nodes'n'stuff
       loadFromG(JSON.parse(e.result));
       // only hide on OK load
       $('#exampleModal').modal('hide')
+      // save Filename for faster save
+      __GDRIVE_saveFilename = row.dataset['name'];
     }else{
       alert('error.. '+e);
       console.log(e);
@@ -926,6 +942,13 @@ _('#btnAddLots').onclick = function(){
     [T[1], T[1]+height/S],
     [0.02/S,20/S]
   )
+}
+
+_('#btnZoomIn').onclick = function(){
+  zoomInOut(1);
+}
+_('#btnZoomOut').onclick = function(){
+  zoomInOut(-1);
 }
 
 
