@@ -730,6 +730,8 @@ function loadFromG(G){
   T = [1*G.T[0],1*G.T[1]];
   S = 1*G.S;
   // applyZoom([1*G.T[0],1*G.T[1]], 1*G.S);
+  $('.node').remove();
+
   nodes = G.nodes;
   nodes.forEach(newNode);
   redraw();
@@ -760,13 +762,72 @@ _('#file').oninput = function(){
 // ™
 
 
+
+__GDRIVE_saveFilename = null;
 __files = new Map();
+
+function fillFilesList(rowClickFun){
+  
+  listFiles(function(files){
+    __files = new Map();
+    files.forEach((file)=>{
+      __files.set(file.name,file.id);
+      console.log(file);
+ 
+      var row = document.createElement('div');
+      row.className = 'row my-1';
+      row.dataset['fileId'] = file.id;
+      row.dataset['name'] = file.name;
+      
+      var col_name = document.createElement('div');
+      col_name.className = 'col-10 btn  btn-outline-secondary';
+      col_name.innerText = file.name;
+      col_name.onclick = function(_row){
+        console.log('row click');
+        return function(){rowClickFun(_row);
+        
+      }}(row)
+
+      var col_del = document.createElement('div');
+      col_del.className = 'col';
+      var del_btn = document.createElement('div');
+      del_btn.className = "btn btn-danger align-self-end";
+      del_btn.innerHTML = '⌫';
+      del_btn.title="delete "+file.name;
+      del_btn.onclick = function(_row){return function(){
+
+        _('#modalYesNoLabel').innerHTML = 'Delete?';
+        _('#modalYesNoBody').innerHTML = 'Really delete <b>' + _row.dataset['name'] + '</b>?';
+        _('#modalYesNo-Yes').onclick = function(){
+          gapi.client.drive.files.delete({
+            'fileId':_row.dataset['fileId']
+          }).then(function(a){
+            console.log(a); 
+            if(a.status==204){
+              _row.remove();
+              __files.delete(_row.dataset['name']);
+            }
+          })
+        };
+        $('#modalYesNo').modal('show');
+      }}(row)
+      col_del.appendChild(del_btn);
+
+      row.appendChild(col_name);
+      row.appendChild(col_del);
+
+      _('#modal-list').appendChild(row);
+    })  
+  });
+}
+
+
 _('#load_gdrive').addEventListener('click',function(){
   console.log('GDrive load..');
 
   _('#modal-input').value = '';
   _('#modal-input').oninput = function(){
-    if( _('#modal-input').value in __files){
+    if( __files.has(_('#modal-input').value)){
       _('#modal-save').style.display='';
     }else{
       _('#modal-save').style.display='none';
@@ -776,69 +837,68 @@ _('#load_gdrive').addEventListener('click',function(){
   _('#modal-list').innerHTML = '';
   _('#exampleModalLabel').innerHTML = 'Load from Google Drive file:';
   _('#modal-save').innerHTML = 'Save';
+  _('#modal-save').style.display='none';
 
-  listFiles(function(files){
-    __files = new Map();
-    files.forEach((file)=>{
-      __files[file.name] = file.id;
-      console.log(file);
-      var row_btn = document.createElement('div');
-
-      row_btn.className = "container-fluid btn btn-outline-primary"
-      row_btn.dataset['fileId'] = file.id;
-      var row = document.createElement('div');
-      row.className = 'row align-middle';
-      
-
-      var col_name = document.createElement('div');
-      col_name.className = 'col-8 align-middle';
-      var btn_name = document.createElement('div');
-      btn_name.className = 'btn btn-outlint-primary';
-      btn_name.innerText = file.name;
-      col_name.appendChild(btn_name);
-
-      var col_del = document.createElement('div');
-      col_del.className = 'col-2';
-      var del_btn = document.createElement('div');
-      del_btn.className = "btn btn-danger";
-      del_btn.innerHTML = '⌫';
-      del_btn.onclick = function(_row){return function(){
-        gapi.client.drive.files.delete({
-          'fileId':_row.dataset['fileId']
-        }).then(function(a){
-          console.log(a); 
-          if(a.status==204){
-            _row.remove();
-          }
-        })
-      }}(row_btn)
-      col_del.appendChild(del_btn);
-
-      row.appendChild(col_name);
-      row.appendChild(col_del);
-
-      row_btn.appendChild(row);
-
-      _('#modal-list').appendChild(row_btn);
-    })  
-  });
+  fillFilesList((row)=>{console.log(row); getFileContent(row.dataset['fileId'],function(e){
+    console.log(e);
+    if(e.status==200){
+      // file loaded OK, load nodes'n'stuff
+      loadFromG(JSON.parse(e.result));
+      // only hide on OK load
+      $('#exampleModal').modal('hide')
+    }else{
+      alert('error.. '+e);
+      console.log(e);
+    }
+  })})
 })
+
+function saveToGDrive(filename){
+  uploadFile(
+    filename, 
+    JSON.stringify(saveToG())
+  );
+  // save filename
+  __GDRIVE_saveFilename = filename;
+}
 
 _('#save_gdrive').addEventListener('click',function(){
   console.log('GDrive save..');
 
-  _('#modal-input').value = defaultFilename();
+  _('#modal-input').value = __GDRIVE_saveFilename?__GDRIVE_saveFilename:defaultFilename();
   _('#modal-input').oninput = function(){};
   _('#modal-save').style.display='';
   _('#exampleModalLabel').innerHTML = 'Save to Google Drive file:';
   _('#modal-save').innerHTML = 'Save';
+  _('#modal-list').innerHTML = '';
+
 
   _('#modal-save').onclick = function(){
-    uploadFile(
-      _('#modal-input').value, 
-      JSON.stringify(saveToG())
-    );
+    saveToGDrive(_('#modal-input').value);
   }
+
+
+  fillFilesList((_row)=>{
+    _('#modalYesNoLabel').innerHTML = 'Overwrite?';
+    _('#modalYesNoBody').innerHTML = 'Really Overwrite <b>' + _row.dataset['name'] + '</b>?';
+    _('#modalYesNo-Yes').onclick = function(){
+      // I was not able to rewrite file content
+      //  , so I will just delete and save
+      gapi.client.drive.files.delete({
+        'fileId':_row.dataset['fileId']
+      }).then(function(a){
+        if(a.status==204){
+          // Now save
+          saveToGDrive(_row.dataset['name']);
+        }else{
+          console.log(a); 
+          alert('Error while rewriting...');
+        }
+      })
+    };
+    $('#modalYesNo').modal('show');    
+  })
+
 }, false);
 
 //  :::::::: ::::::::::: :::     ::::::::: ::::::::::: :::    ::: :::::::::  

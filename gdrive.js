@@ -127,7 +127,7 @@ function getFileContent(fileId, resultFun){
   gapi.client.drive.files.get({
       fileId:fileId,
       alt:'media'
-  }).then(resultFun(e));          
+  }).then(resultFun);          
 }
 
 // https://gist.github.com/tanaikech/bd53b366aedef70e35a35f449c51eced
