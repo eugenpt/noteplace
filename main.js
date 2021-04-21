@@ -681,56 +681,165 @@ function download(filename, text) {
 }
 
 
+function defaultFilename(){
+  return 'Noteplace_'
+            +(new Date().toISOString()
+                        .slice(0,19)
+                        .replaceAll('-','')
+                        .replace('T','-')
+                        .replaceAll(':','')
+              )+'.json'
+}
+
+
 // Start file download.
 _("#save").addEventListener("click", function(){
-  var filename = 'Noteplace_'
-                +(new Date().toISOString()
-                            .slice(0,19)
-                            .replaceAll('-','')
-                            .replace('T','-')
-                            .replaceAll(':','')
-                  )+'.json'
-  _('#modal-input').value = filename;
+  _('#modal-input').value = defaultFilename();
+  _('#modal-save').style.display='';
+  _('#exampleModalLabel').innerHTML = 'Save to local file:';
 
   _('#modal-save').onclick = function(){
-
-
-    nodes = [].map.call(_('.node'),(d)=>{return {
-      id:d.dataset['id'],
-      x:d.dataset['x'],
-      y:d.dataset['y'],
-      fontSize:d.dataset['fontSize'],
-      text:d.dataset['text']
-    }})
-    // Generate download of hello.txt file with some content
-    var text = JSON.stringify({T:T,S:S,nodes:nodes});
-    
-    download(_('#modal-input').value, text);
+    download(
+      _('#modal-input').value, 
+      JSON.stringify(saveToG())
+    );
   }
 }, false);
+
+// save everything to a single object
+function saveToG(){
+  return {
+    T:T,
+    S:S,
+    nodes: [].map.call(_('.node'),
+                      (d)=>{return {
+                        id:d.dataset['id'],
+                        x:d.dataset['x'],
+                        y:d.dataset['y'],
+                        fontSize:d.dataset['fontSize'],
+                        text:d.dataset['text']
+                      }}
+                    )
+  }
+}
+
+// load everything from single object
+function loadFromG(G){
+  console.log('Loading..');
+
+  T = [1*G.T[0],1*G.T[1]];
+  S = 1*G.S;
+  // applyZoom([1*G.T[0],1*G.T[1]], 1*G.S);
+  nodes = G.nodes;
+  nodes.forEach(newNode);
+  redraw();
+  console.log('Loading complete, now '+nodes.length+' nodes');
+}
 
 
 _('#file').oninput = function(){
     var fr=new FileReader();
     fr.onload=function(){
-        console.log('Loading..');
-        G = JSON.parse(fr.result);
+      console.log('Received file..');
+      
+      loadFromG(JSON.parse(fr.result))
 
-        T = [1*G.T[0],1*G.T[1]];
-        S = 1*G.S;
-        // applyZoom([1*G.T[0],1*G.T[1]], 1*G.S);
-        nodes = G.nodes;
-        nodes.forEach(newNode);
-        redraw();
-        console.log('Loading complete, now '+nodes.length+' nodes');
-
-        $('#file').value = "";
+      $('#file').value = "";
     }
       
     fr.readAsText(this.files[0]);  
 }
 
+//  ::::::::   ::::::::   ::::::::   ::::::::  :::        ::::::::::      :::::::::  :::::::::  ::::::::::: :::     ::: :::::::::: 
+// :+:    :+: :+:    :+: :+:    :+: :+:    :+: :+:        :+:             :+:    :+: :+:    :+:     :+:     :+:     :+: :+:        
+// +:+        +:+    +:+ +:+    +:+ +:+        +:+        +:+             +:+    +:+ +:+    +:+     +:+     +:+     +:+ +:+        
+// :#:        +#+    +:+ +#+    +:+ :#:        +#+        +#++:++#        +#+    +:+ +#++:++#:      +#+     +#+     +:+ +#++:++#   
+// +#+   +#+# +#+    +#+ +#+    +#+ +#+   +#+# +#+        +#+             +#+    +#+ +#+    +#+     +#+      +#+   +#+  +#+        
+// #+#    #+# #+#    #+# #+#    #+# #+#    #+# #+#        #+#             #+#    #+# #+#    #+#     #+#       #+#+#+#   #+#        
+//  ########   ########   ########   ########  ########## ##########      #########  ###    ### ###########     ###     ########## 
+// ™
 
+
+__files = new Map();
+_('#load_gdrive').addEventListener('click',function(){
+  console.log('GDrive load..');
+
+  _('#modal-input').value = '';
+  _('#modal-input').oninput = function(){
+    if( _('#modal-input').value in __files){
+      _('#modal-save').style.display='';
+    }else{
+      _('#modal-save').style.display='none';
+    }
+  }
+  
+  _('#modal-list').innerHTML = '';
+  _('#exampleModalLabel').innerHTML = 'Load from Google Drive file:';
+  _('#modal-save').innerHTML = 'Save';
+
+  listFiles(function(files){
+    __files = new Map();
+    files.forEach((file)=>{
+      __files[file.name] = file.id;
+      console.log(file);
+      var row_btn = document.createElement('div');
+
+      row_btn.className = "container-fluid btn btn-outline-primary"
+      row_btn.dataset['fileId'] = file.id;
+      var row = document.createElement('div');
+      row.className = 'row align-middle';
+      
+
+      var col_name = document.createElement('div');
+      col_name.className = 'col-8 align-middle';
+      var btn_name = document.createElement('div');
+      btn_name.className = 'btn btn-outlint-primary';
+      btn_name.innerText = file.name;
+      col_name.appendChild(btn_name);
+
+      var col_del = document.createElement('div');
+      col_del.className = 'col-2';
+      var del_btn = document.createElement('div');
+      del_btn.className = "btn btn-danger";
+      del_btn.innerHTML = '⌫';
+      del_btn.onclick = function(_row){return function(){
+        gapi.client.drive.files.delete({
+          'fileId':_row.dataset['fileId']
+        }).then(function(a){
+          console.log(a); 
+          if(a.status==204){
+            _row.remove();
+          }
+        })
+      }}(row_btn)
+      col_del.appendChild(del_btn);
+
+      row.appendChild(col_name);
+      row.appendChild(col_del);
+
+      row_btn.appendChild(row);
+
+      _('#modal-list').appendChild(row_btn);
+    })  
+  });
+})
+
+_('#save_gdrive').addEventListener('click',function(){
+  console.log('GDrive save..');
+
+  _('#modal-input').value = defaultFilename();
+  _('#modal-input').oninput = function(){};
+  _('#modal-save').style.display='';
+  _('#exampleModalLabel').innerHTML = 'Save to Google Drive file:';
+  _('#modal-save').innerHTML = 'Save';
+
+  _('#modal-save').onclick = function(){
+    uploadFile(
+      _('#modal-input').value, 
+      JSON.stringify(saveToG())
+    );
+  }
+}, false);
 
 //  :::::::: ::::::::::: :::     ::::::::: ::::::::::: :::    ::: :::::::::  
 // :+:    :+:    :+:   :+: :+:   :+:    :+:    :+:     :+:    :+: :+:    :+: 
