@@ -683,15 +683,6 @@ function download(filename, text) {
 
 // Start file download.
 _("#save").addEventListener("click", function(){
-  nodes = [].map.call(_('.node'),(d)=>{return {
-    id:d.dataset['id'],
-    x:d.dataset['x'],
-    y:d.dataset['y'],
-    fontSize:d.dataset['fontSize'],
-    text:d.dataset['text']
-  }})
-  // Generate download of hello.txt file with some content
-  var text = JSON.stringify({T:T,S:S,nodes:nodes});
   var filename = 'Noteplace_'
                 +(new Date().toISOString()
                             .slice(0,19)
@@ -699,8 +690,23 @@ _("#save").addEventListener("click", function(){
                             .replace('T','-')
                             .replaceAll(':','')
                   )+'.json'
-  
-  download(filename, text);
+  _('#modal-input').value = filename;
+
+  _('#modal-save').onclick = function(){
+
+
+    nodes = [].map.call(_('.node'),(d)=>{return {
+      id:d.dataset['id'],
+      x:d.dataset['x'],
+      y:d.dataset['y'],
+      fontSize:d.dataset['fontSize'],
+      text:d.dataset['text']
+    }})
+    // Generate download of hello.txt file with some content
+    var text = JSON.stringify({T:T,S:S,nodes:nodes});
+    
+    download(_('#modal-input').value, text);
+  }
 }, false);
 
 
@@ -796,4 +802,11 @@ exampleModal.addEventListener('show.bs.modal', function (event) {
 
   modalTitle.textContent = 'New message to ' + recipient
   modalBodyInput.value = recipient
+})
+
+
+
+$('#exampleModal').on('shown.bs.modal', function () {
+  
+  $('#modal-input').trigger('focus')
 })
