@@ -85,7 +85,7 @@ html, body {
       padding: 6px 12px;
       cursor: pointer;
   }
-  input[type="file"],#save {
+  input[type="file"] {
       display: none;
   }
 
