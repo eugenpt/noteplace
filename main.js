@@ -143,6 +143,7 @@ function applyZoom(T_,S_){
   S = S_;
 
   $('.node').css('transition-duration',(0.2+ds)+'s');
+
   // $('.node').addClass('zoom');
   
   status({T:T,S:S});
@@ -241,6 +242,8 @@ window.addEventListener('mouseup',function(e) {
     node_container.style.left = 0;
     node_container.style.top = 0;
 
+    replaceHistoryState();
+
     redraw();
 
     _isMouseDown = false;
@@ -249,6 +252,7 @@ window.addEventListener('mouseup',function(e) {
   if(e.button==1){
     e.preventDefault();
   }
+  
 })
 
 
@@ -391,10 +395,14 @@ function onNodeDblClick(e){
   contentEditTextarea = document.createElement('textarea');
   contentEditTextarea.id = 'contentEditTextarea';
   contentEditTextarea.value = contentEditNode.dataset['text'];
-  contentEditTextarea.style.fontSize = contentEditNode.dataset['fontSize']*S+'px';
-  contentEditTextarea.style.fontFamily = 'Open Sans';
-  contentEditTextarea.style.width = Math.max(width/3, contentEditNode.getBoundingClientRect().width+20)+'px';
-  contentEditTextarea.style.height = contentEditNode.getBoundingClientRect().height+'px';
+  // contentEditTextarea.style.fontSize = contentEditNode.dataset['fontSize']*S+'px';
+  // contentEditTextarea.style.fontFamily = 'Open Sans';
+  contentEditTextarea.dataset['initS'] = S;
+  contentEditTextarea.dataset['initWidth'] = Math.max(width/3, contentEditNode.getBoundingClientRect().width+20);
+  contentEditTextarea.dataset['initHeight'] = contentEditNode.getBoundingClientRect().height;
+  contentEditTextarea.style.width = contentEditTextarea.dataset['initWidth'] +'px';
+  contentEditTextarea.style.height = contentEditTextarea.dataset['initHeight'] +'px';
+  
   contentEditTextarea.onkeydown = textareaBtnDown;
   contentEditTextarea.onkeyup = textareaAutoResize;
   contentEditTextarea.oninput = function(e){
@@ -524,6 +532,17 @@ function updateNode(n){
 function redraw(){
   [].forEach.call(_('.node'),
     updateNode)
+
+  if(contentEditTextarea){
+    console.log('redraw : contextEditTextarea');
+    console.log('initWidth:')
+    console.log(contentEditTextarea.dataset['initWidth'])
+    console.log('initS: '+ contentEditTextarea.dataset['initS'])
+    console.log('contentEditTextarea.style.width = '+contentEditTextarea.style.width);
+    contentEditTextarea.style.width = 1*contentEditTextarea.dataset['initWidth']*S/(1*contentEditTextarea.dataset['initS']) + 'px';
+    console.log('contentEditTextarea.style.width = '+contentEditTextarea.style.width);
+    contentEditTextarea.style.height = contentEditTextarea.dataset['initHeight']*S/contentEditTextarea.dataset['initS']  + 'px';
+    }
 }
 
 
@@ -587,20 +606,26 @@ function zoomed() {
 }
 
 function isCurrentState(){
-  return ((history.state.T[0]==T[0])
+  return ((history.state)
+        &&('T' in history.state)
+        &&('S' in history.state)
+        &&(history.state.T[0]==T[0])
         &&(history.state.T[1]==T[1])
         &&(history.state.S == S));
 }
 
+function replaceHistoryState(){
+  url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
+  window.history.replaceState(
+      {T:T,S:S}, 
+      'Noteplace', 
+      url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+      console.log('history replaced');
+}
+
 zoom_urlReplaceTimeout = setInterval(function(){
   if(!isCurrentState()){
-
-    console.log('history replaced');
-    url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
-    window.history.replaceState(
-        {T:T,S:S}, 
-        'Noteplace', 
-        url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+    replaceHistoryState();
   }
 }, 200);
 
