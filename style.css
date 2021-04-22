@@ -50,7 +50,27 @@ html, body {
   }
 
   .node h1{
-    font-size: inherit;
+    font-size: 1.5em;
+    font-weight: bold;
+  }
+  .node h2{
+    font-size: 1.4em;
+    font-weight: bold;
+  }
+  .node h3{
+    font-size: 1.35em;
+    font-weight: bold;
+  }
+  .node h4{
+    font-size: 1.3em;
+  }
+  .node h5{
+    font-size: 1.25em;
+    font-style:italic; 
+  }
+  .node h6{
+    font-size: 1.1em;
+    font-style:oblique; 
   }
 
 
