@@ -585,13 +585,23 @@ function zoomed() {
     }, 10000);
     
 }
+
+function isCurrentState(){
+  return ((history.state.T[0]==T[0])
+        &&(history.state.T[1]==T[1])
+        &&(history.state.S == S));
+}
+
 zoom_urlReplaceTimeout = setInterval(function(){
-  // console.log('history replaced');
-  url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
-  window.history.replaceState(
-      {T:T,S:S}, 
-      'Noteplace', 
-      url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+  if(!isCurrentState()){
+
+    console.log('history replaced');
+    url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
+    window.history.replaceState(
+        {T:T,S:S}, 
+        'Noteplace', 
+        url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+  }
 }, 200);
 
 function selectAllContent(el){
