@@ -491,16 +491,20 @@ function newNode(d){
   tn.ondblclick = onNodeDblClick;
   tn.onmousedown = onNodeMouseDown;
   tn.innerHTML = getHTML(tn.dataset['text']);
-  // Links do look promising, but all the behaviour breaks then
+  
   // tn.innerHTML =  '';
   // ta = document.createElement('a');
-  // ta.href = '?Tx='+tn.dataset["x"]+'&Ty='+tn.dataset["y"]+'&S='+30/tn.dataset["fontSize"];
+  // ta.href = '(?Tx='+tn.dataset["x"]+'&Ty='+tn.dataset["y"]+'&S='+30/tn.dataset["fontSize"];
   // ta.className = 'node_a';
   // ta.innerHTML = getHTML(tn.dataset['text']);
   // ta.onclick = function(e){
   //   console.log('a click!');
   //   e.preventDefault();
   //   e.stopPropagation();
+  // }
+  // ta.onauxclick = function(e){
+  //   // middle mouse button click!!
+  //   e.preventDefault();
   // }
   // ta.onmousedown = function(e){
   //   console.log('a onmousedown!');

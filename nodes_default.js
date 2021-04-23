@@ -1,7 +1,7 @@
 nodes_default = [
 {id: "0", x: "0", y: "0", fontSize: "12", text: "test0"}
 ,{id: "1", x: "100", y: "100", fontSize: "12", text: "test1"}
-,{id: "2", x: "222.9654", y: "101.16120000000001", fontSize: "19.53125", text: "# Welcome to Notespace\nHere you _will_ find a place for **each** of your notes"}
+,{id: "2", x: "222.9654", y: "101.16120000000001", fontSize: "19.53125", text: "# Welcome to Noteplace\nHere you _will_ find a place for **each** of your notes"}
 ,{id: "3", x: "177.71582669914915", y: "84.10224103813428", fontSize: "4.204482076268574", text: "test3"}
 ,{id: "4", x: "173.18169898809143", y: "83.77972083086841", fontSize: "1.7677669529663695", text: "test4"}
 ,{id: "5", x: "172.25362133778404", y: "83.82391500469258", fontSize: "0.8838834764831848", text: "test5"}
