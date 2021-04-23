@@ -80,6 +80,7 @@ html, body {
     /* fill:red;
     color:red; */
     border:1px solid black;
+    z-index: 1000;
   }
   
 .node blockquote{
@@ -180,6 +181,10 @@ html, body {
     /* border-color: rgb(0,0,0); */
 
     content: url(img/r.svg);
+
+    z-index: 10000;
+
+    cursor:grab;
   }
   .ui-rotatable-disabled .ui-rotatable-handle{
     display: none;

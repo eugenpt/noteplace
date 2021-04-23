@@ -185,7 +185,7 @@ container.onmousedown = function(e) {
     }
 
 
-    if(_selected_node){
+    if(_selected_node!==__nodeMouseDown){
       selectNode(null);
     }
   }
@@ -201,11 +201,15 @@ __X = null;
 function selectNode(n){
   if(_selected_node){ //remove class
     _selected_node.classList.remove('selected');
+    try{
     $(_selected_node).rotatable('destroy');
     
     [].forEach.call(_selected_node.getElementsByTagName('img'),(e)=>{
       $(e).resizable('destroy').css('width','auto');
     });
+    } catch{
+
+    }
   }
   _selected_node = n;
   if(_selected_node){// apply class, setup editing tools
@@ -233,7 +237,7 @@ function selectNode(n){
        $(_selected_node).rotatable(params);
 
       [].forEach.call(_selected_node.getElementsByTagName('img'),(img)=>{
-        console.log('resizable:');
+        console.log('making that img resizable:');
         console.log(img);
         __IMG = img;
         $(img).resizable({
@@ -248,6 +252,7 @@ function selectNode(n){
             console.log(e);
             console.log(ui);
             _selected_node.dataset['fontSize'] = ui.size.height/(5*S);
+            save(_selected_node);
             updateNode(_selected_node);
             // ui.originalElement.style.width='auto';
             __X = ui;
@@ -297,6 +302,8 @@ window.addEventListener('mouseup',function(e) {
   console.log('window onmouseup');
   // console.log(e);
   console.log('T='+T+' S='+S);
+
+  __nodeMouseDown = null;
 
   if(_isMouseDragging){
     save(_isMouseDragging);
@@ -462,8 +469,10 @@ function onNodeDblClick(e){
   }else{
     contentEditNode = e;
   }
-  console.log('double-clicked on ['+contentEditNode.id+'] : '+contentEditNode.innerText);
 
+
+  console.log('double-clicked on ['+contentEditNode.id+'] : '+contentEditNode.innerText);
+  console.log(this);
 
   // console.log(contentEditNode);
 
@@ -498,11 +507,20 @@ function onNodeDblClick(e){
   textareaAutoResize(contentEditTextarea);
   contentEditTextarea.select();
 
-  selectNode(contentEditNode);
+  // selectNode(contentEditNode);
 }
+
+
+function now(){
+  return new Date().getTime();
+}
+
+__nodeMouseDown = null;
 
 function onNodeMouseDown(e){
   console.log('onNodeMouseBtn');
+
+  __nodeMouseDown = this;
   // console.log(e);
   if(e.button==1){
     _isMouseDragging = this;
@@ -510,6 +528,9 @@ function onNodeMouseDown(e){
     _mouseDragPos = [1*this.dataset['x'], 1*this.dataset['y']];
 
     e.preventDefault();
+  }if(e.button==0){
+    // left mouse button
+  }else{
   }
 
   if(e.ctrlKey){
@@ -848,6 +869,7 @@ _("#save").addEventListener("click", function(){
       JSON.stringify(saveToG())
     );
   }
+  _('#modal-list').innerHTML = '';
 }, false);
 
 // save everything to a single object
