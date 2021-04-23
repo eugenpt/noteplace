@@ -1,6 +1,8 @@
 html, body {
     margin:0px;
     height:100%;
+    width:100%;
+    position:fixed;
     overflow: hidden; /* Hide scrollbars */ 
     font-family: 'Open Sans';
 
@@ -181,6 +183,15 @@ html, body {
   }
   .ui-rotatable-disabled .ui-rotatable-handle{
     display: none;
+  }
+
+  .node img{
+    transition-duration:inherit;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none; 
   }
 /* 
   .ui-rotatable-handle {

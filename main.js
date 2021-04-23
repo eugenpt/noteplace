@@ -100,11 +100,11 @@ container.ondblclick = function(e) {
 
 function zoomInOut(in_degree, clientPos=null){
   if(clientPos==null){
-    if(selected_node){
+    if(_selected_node){
       // zoom to it!
       clientPos = [
-        (1*selected_node.dataset['x']-T[0])*S,
-        (1*selected_node.dataset['y']-T[1])*S,
+        (1*_selected_node.dataset['x']-T[0])*S,
+        (1*_selected_node.dataset['y']-T[1])*S,
       ]
     }else{
       // just center
@@ -159,64 +159,63 @@ _isMouseDragging = false;
 _mouseDragStart = [0,0];
 _mouseDragPos = [0,0];
 
-selected_node = null;
+_selected_node = null;
 
 container.onmousedown = function(e) {
   console.log('container.onmousedown');
   console.log('T='+T+' S='+S);
   $('.node').css('transition-duration','0s');
   // $('.node').removeClass('zoom'); // disable visible transition
-  
-  if(contentEditMouseDown){
-    contentEditMouseDown = false;
+  if(__isResizing){
+    console.log('resizing..');
   }else{
-    _mouseDownPos = [e.clientX, e.clientY];
-    _mouseDownT = [T[0],T[1]];
-    _isMouseDown = true;
+    if(contentEditMouseDown){
+      contentEditMouseDown = false;
+    }else{
+      _mouseDownPos = [e.clientX, e.clientY];
+      _mouseDownT = [T[0],T[1]];
+      _isMouseDown = true;
 
-    // console.log(e);
-    //e.preventDefault();
+      // console.log(e);
+      //e.preventDefault();
 
-    if(contentEditTextarea){
-      stopEditing();
+      if(contentEditTextarea){
+        stopEditing();
+      }
     }
-  }
 
 
-  if(selected_node){
-    selectNode(null);
+    if(_selected_node){
+      selectNode(null);
+    }
   }
 }
 
-function selectNode(n){
-  if(selected_node){ //remove class
-    selected_node.classList.remove('selected');
-    $(selected_node).rotatable('destroy');
+__IMG = null
 
+__isResizing = false;
+
+
+
+__X = null;
+function selectNode(n){
+  if(_selected_node){ //remove class
+    _selected_node.classList.remove('selected');
+    $(_selected_node).rotatable('destroy');
+    
+    [].forEach.call(_selected_node.getElementsByTagName('img'),(e)=>{
+      $(e).resizable('destroy').css('width','auto');
+    });
   }
-  selected_node = n;
-  if(selected_node){// apply class, setup editing tools
-    selected_node.classList.add('selected');
+  _selected_node = n;
+  if(_selected_node){// apply class, setup editing tools
+    _selected_node.classList.add('selected');
     //
     //https://jsfiddle.net/Twisty/7zc36sug/
     //https://stackoverflow.com/a/62379454/2624911
     //https://jsfiddle.net/Twisty/cdLn56f1/
     $(function() {
       var params = {
-        // Callback fired on rotation start.
-        startRotate:function(event, ui) {
-          console.log(event);
-          console.log(ui);
-        },
-        stopRotate:function(event, ui) {
-          console.log('stopRotate');
-          console.log(event);
-          console.log(ui);
-        },
-        wheelRotate:function(event,ui){
-          event.preventDefault();
-          event.stopPropagation();
-        },
         start:function(e){
           console.log(e);
         },
@@ -226,29 +225,54 @@ function selectNode(n){
           console.log(ui);
 
           // ui.angle.start = ui.angle.current;
-          selected_node.dataset["rotate"] = ui.angle.current;
-          save(selected_node);
+          _selected_node.dataset["rotate"] = ui.angle.current;
+          save(_selected_node);
         }
-    };
-    //$('#target').rotatable(params);
-        $(selected_node).rotatable(params
-        // {
-          // handles: {
-          //   'nw': '.tl',
-          //   'ne': '.tr',
-          //   'sw': '.bl',
-          //   'se': '.br',
-          //   'e': '.r',
-          //   'w': '.l'
-          // }
-      // }
-      );
-    });    
+       };
+
+       $(_selected_node).rotatable(params);
+
+      [].forEach.call(_selected_node.getElementsByTagName('img'),(img)=>{
+        console.log('resizable:');
+        console.log(img);
+        __IMG = img;
+        $(img).resizable({
+          aspectRatio: true,
+          start:function(e,ui){
+            console.log('resize start');
+            console.log(e);
+            console.log(ui);
+          },
+          stop:function(e,ui){
+            console.log('resize stop');
+            console.log(e);
+            console.log(ui);
+            _selected_node.dataset['fontSize'] = ui.size.height/(5*S);
+            updateNode(_selected_node);
+            // ui.originalElement.style.width='auto';
+            __X = ui;
+          }
+        });
+      })
+      $(_selected_node)
+        .find('.ui-resizable-handle')
+        .on('mousedown',function(e){
+          console.log('resize mouse down');
+          // e.stopPropagation();
+          __isResizing = true;
+        })
+        .on('mouseup',function(e){
+          console.log('resize mouse up');
+          // e.stopPropagation();
+        })
+      
+    });
+          
     //   
     _('#text').disabled = false;
     _('#fontSize').disabled = false;
-    _('#text').value = selected_node.dataset['text'];
-    _('#fontSize').value = selected_node.dataset['fontSize'];
+    _('#text').value = _selected_node.dataset['text'];
+    _('#fontSize').value = _selected_node.dataset['fontSize'];
     _('#fontSize').step = _('#fontSize').value * 0.25;
   }else{// just deselect => clear inputs
     
@@ -302,6 +326,7 @@ window.addEventListener('mouseup',function(e) {
     e.preventDefault();
   }
   
+  __isResizing = false;
 })
 
 
@@ -312,6 +337,7 @@ container.onmousemove = function(e){
       _isMouseDragging.dataset['y'] = _mouseDragPos[1] +  (e.clientY - _mouseDragStart[1])/S;
 
       updateNode(_isMouseDragging)
+    }else if(__isResizing){
     }else{
 
       // T[0] = _mouseDownT[0] -  (e.clientX - _mouseDownPos[0])/S;
@@ -546,6 +572,7 @@ function newNode(d){
 
 
   tn.innerHTML = getHTML(tn.dataset['text']);
+
   tn.style.transform="rotate("+tn.dataset["rotate"]+"rad)"
   
   // tn.innerHTML =  '';
@@ -586,6 +613,13 @@ function updateNode(n){
   n.style.left = (n.dataset["x"] - T[0])*S + 'px';
   n.style.top = (n.dataset["y"] - T[1])*S + 'px';
   n.style.fontSize = (n.dataset["fontSize"])*S + 'px';
+
+  [].forEach.call(n.getElementsByTagName('img'),(e)=>{
+    e.style.height = 5*(n.dataset["fontSize"])*S +'px';
+    e.style.transitionDuration='0.2s';
+    // e.setAttribute('draggable', false);
+    // e.onmousedown = (e)=>{e.preventDefault();};
+  })
 }
 
 
@@ -712,27 +746,27 @@ function getG(d){
 }
 
 function onFontSizeEdit(){
-  if(selected_node !== null){
-    selected_node.dataset['fontSize'] = this.value;
-    selected_node.classList.add('zoom');
-    updateNode(selected_node);
-    // selected_node.classList.remove('zoom');
+  if(_selected_node !== null){
+    _selected_node.dataset['fontSize'] = this.value;
+    _selected_node.classList.add('zoom');
+    updateNode(_selected_node);
+    // _selected_node.classList.remove('zoom');
 
     this.step = this.value*0.25;
 
-    save(selected_node);
+    save(_selected_node);
   }
 }
 
 function onTextEditChange(){
-  if(selected_node !== null){
-    selected_node.dataset['text'] = this.value;
-    newNode(selected_node);
+  if(_selected_node !== null){
+    _selected_node.dataset['text'] = this.value;
+    newNode(_selected_node);
 
     // this.style.height = "5px";
     // this.style.height = (this.scrollHeight)+"px";
 
-    save(selected_node);
+    save(_selected_node);
   }
 }
 

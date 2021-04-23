@@ -35,7 +35,7 @@ nodes_default = [
 ,{id: "25", x: "-136028953.80337054", y: "-12309370.929006876", fontSize: "42535295.86511732", text: "test25"}
 ,{id: "26", x: "-2239343664.138194", y: "-452770458.33262914", fontSize: "713623846.3529803", text: "test26"}
 ,{id: "28", x: "269", y: "266", fontSize: "20", text: "Just try double-clicking on empty space (or text?😊)"}
-,{id: "29", x: "360", y: "314", fontSize: "20", text: "Text is MarkDown:\n\n`#` For headlines\n`_`for _cursive_`_`\n`**`for **bold**`**`\n`[`Link`](`http://url`)` for [links]('https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet')"}
+,{id: "29", x: "360", y: "314", fontSize: "20", text: "Text is MarkDown:\n\n`#` For headlines\n`_`for _cursive_`_`\n`**`for **bold**`**`\n`[`Link`](`http://url`)` for [links](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)"}
 ,{id: "30", x: "26", y: "408", fontSize: "20", text: "Now try\nmouse-wheel-zooming\nin and out!"}
 ,{id: "31", x: "119.51171875", y: "505.8828125", fontSize: "4.882812499999999", text: "Or click [here](?Tx=0&Ty=-100&S=1) to zoom back"}
 ,{id: "32", x: "148", y: "-46", fontSize: "20", text: "Or click [here](?Tx=171.50172055191769&Ty=83.86545213452068&S=126765.06002282312) to navigate in deep"}
