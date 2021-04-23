@@ -1,13 +1,118 @@
 <!DOCTYPE html>
 <head>
-<!-- https://bl.ocks.org/mbostock/6123708 -->
-<meta charset="utf-8">
-<link rel="stylesheet" href="style.css" type="text/css" >
+  <title>Noteplace</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <script src="jquery.ui.rotatable.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+  <LINK rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body>
-  <div class="notification-bottom">
-    <p><textarea type="text" id="text"></textarea> FontSize:<input type="number" id="fontSize"><span id="status"></span></p>
+  <div id="container">
+    <div id="node_container">
+
+    </div>
   </div>
-<script src="https://d3js.org/d3.v3.min.js"></script>
-<script src="main.js"></script>
+  <div class="notification-top container-fluid justify-content-start navbar navbar-light bg-light">
+    <a onclick="zoomToURL('?Tx=0&Ty=0&S=1')" class="custom-file-upload">🏠</a>
+    <div class="d-flex">
+      <input type="number" id="number" value=1000>
+      <button id="btnAddLots" class="btn btn-outline-success">ADD!</button>
+    </div>
+    <!-- Example single danger button -->
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Menu
+      </button>
+      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        <a class="dropdown-item" id="save" data-toggle="modal" data-target="#exampleModal">Save to local file</a>
+        <a class="dropdown-item" href="">
+          <label for="file">
+            Load from a local file<input type="file" id="file" name="file">
+          </label>
+        </a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item"><img style="height: 32px;" src="https://firebasestorage.googleapis.com/v0/b/drive-assets.google.com.a.appspot.com/o/Asset%20-%20Google%20Drive%20Lockup.png?alt=media" alt="Google Drive™">:</a>
+        <a class="dropdown-item" id="authorize_button">Authorize</a>
+        <a class="dropdown-item authorize-only" id="save_gdrive" data-toggle="modal" data-target="#exampleModal"><img style="height:16px" src="https://fonts.gstatic.com/s/i/productlogos/drive_2020q4/v8/web-64dp/logo_drive_2020q4_color_2x_web_64dp.png" alt="Google Drive™"> Save</a>
+        <a class="dropdown-item authorize-only" id="load_gdrive" data-toggle="modal" data-target="#exampleModal"><img style="height:16px" src="https://fonts.gstatic.com/s/i/productlogos/drive_2020q4/v8/web-64dp/logo_drive_2020q4_color_2x_web_64dp.png" alt="Google Drive™"> Load</a>
+        <a class="dropdown-item" id="signout_button">Sign Out</a>
+      </div>
+    </div>
+    <button id="btnZoomIn" class="btn btn-outline-secondary">+</button>
+    <button id="btnZoomOut" class="btn btn-outline-secondary">-</button>
+  </div>
+  <div class="notification-bottom">
+    <p>
+      <textarea id="text"></textarea> 
+      FontSize:<input type="number" step="10" id="fontSize">
+      <span id="status"></span>
+    </p>
+  </div>
+  
+  <!-- Modal -->
+  <div class="modal fade" id="exampleModal" tabindex="-4" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Save file</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group" id="modal-input-group">
+            <label for="modal-input" class="col-form-label">Filename:</label>
+            <input type="text" class="form-control my-2" id="modal-input">
+          </div>
+          <div id="modal-list" class="container">
+            
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="document.getElementById('modal-save').style.display='block';">Close</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal" id="modal-save">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal -->
+  <div class="modal fade" id="modalYesNo" tabindex="-2" role="dialog" aria-labelledby="modalYesNoLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalYesNoLabel">Yes Or No?</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="modalYesNoBody">
+          Are you sure ??
+        </div>  
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" id="modalYesNo-No">No</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal" id="modalYesNo-Yes">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  <script src="jquery.mousewheel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/remarkable/1.7.1/remarkable.min.js"></script> -->
+
+  <script src="gdrive.js"></script>
+  <script async defer src="https://apis.google.com/js/api.js"
+    onload="this.onload=function(){};handleClientLoad()"
+    onreadystatechange="if (this.readyState === 'complete') this.onload()">
+  </script>
+  <script src="nodes_default.js"></script>
+  <script src="main.js"></script>
 </body>

@@ -1,9 +1,13 @@
 html, body {
     margin:0px;
     height:100%;
+    width:100%;
+    position:fixed;
     overflow: hidden; /* Hide scrollbars */ 
+    font-family: 'Open Sans';
+
   }
-  div{
+  div.node{
     display: inline-block;
     width:auto;
     
@@ -38,24 +42,53 @@ html, body {
     position: absolute;
     width:auto;
     /* text-align: left; */
-    overflow: hidden;
+    /* overflow: hidden; */
     white-space:nowrap;
     /* -webkit-user-modify: read-write;
       overflow-wrap: break-word;
       -webkit-line-break: after-white-space; */
   
-  
+    font-size: inherit;
   }
+
+  .node h1{
+    font-size: 1.5em;
+    font-weight: bold;
+  }
+  .node h2{
+    font-size: 1.4em;
+    font-weight: bold;
+  }
+  .node h3{
+    font-size: 1.35em;
+    font-weight: bold;
+  }
+  .node h4{
+    font-size: 1.3em;
+  }
+  .node h5{
+    font-size: 1.25em;
+    font-style:italic; 
+  }
+  .node h6{
+    font-size: 1.1em;
+    font-style:oblique; 
+  }
+
+
   .node.selected{
     /* fill:red;
     color:red; */
     border:1px solid black;
+    z-index: 1000;
   }
   
 .node blockquote{
     margin-inline-start: 1em;
+    margin-inline-end: 0px;
 }
 .node ol,ul{
+    padding-inline-start: 1em;
     padding-inline-start: 1em;
 }
 
@@ -81,7 +114,7 @@ html, body {
       padding: 6px 12px;
       cursor: pointer;
   }
-  input[type="file"],#save {
+  input[type="file"] {
       display: none;
   }
 
@@ -90,6 +123,16 @@ html, body {
 ===================================================================§§
   */
 
+  .notification-top {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    /* Rest of your styling */
+    border: 1px solid black;
+    background-color: white;
+    z-index: 1000;
+  }
   .notification-bottom {
     position: fixed;
     width: 100%;
@@ -98,6 +141,60 @@ html, body {
     /* Rest of your styling */
     border: 1px solid black;
     background-color: white;
-    z-index: -1;
+    z-index: 1000;
   }
   
+  #node_container{
+    /* transition-duration: 0.2s; */
+    display: block;
+    position: absolute;
+  }
+
+  .node{
+    /* display: block; */
+    /* white-space: pre; */
+    position: absolute;
+    /* transition-duration: 0.2s; */
+  }
+  .node.zoom{
+    transition-duration: 0.2s;
+  }
+
+  a.node_a{
+    color: inherit; /* blue colors for links too */
+    text-decoration: inherit; /* no underline */
+  }
+
+  a.local{
+    cursor:pointer;
+  }
+
+  .ui-rotatable-handle{
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    left:-20px;
+    bottom:-20px;
+    /* border-radius: 6px; */
+    /* border-width: 1.5px; */
+    /* border-style: solid; */
+    /* border-color: rgb(0,0,0); */
+
+    content: url(img/r.svg);
+
+    z-index: 10000;
+
+    cursor:grab;
+  }
+  .ui-rotatable-disabled .ui-rotatable-handle{
+    display: none;
+  }
+
+  .node img{
+    transition-duration:inherit;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none; 
+  }
