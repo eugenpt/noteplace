@@ -47,4 +47,7 @@ nodes_default = [
 ,{x: "585.974681854248", y: "191.39131927490234", rotate: "0", fontSize: "1.192092895507812", text: "(This place is practically inifinitely zoomable)"}
 ,{x: "605.9516071976361", y: "193.21158852783742", rotate: "0", fontSize: "0.11368683772161589", text: "I mean, seriously!"}
 ,{x: "606.7511873267723", y: "193.29315530012735", rotate: "1.6987763617720013", fontSize: "0.00173668223966733", text: "Just look a it!"}
+,{x: "1161.7756638639928", y: "159.90205224000033", rotate: "-0.6054638070325069", fontSize: "60.67819999999919", text: "![Minion](https://octodex.github.com/images/minion.png)"}
+,{x: "1126.3357461092987", y: "99.72472050558802", rotate: "undefined", fontSize: "31.999999999999762", text: "You can even embed images "}
+,{x: "982.9757461092998", y: "476.68472050558523", rotate: "undefined", fontSize: "31.999999999999762", text: "(double-click on it to see the code that shows the image)"}
 ];

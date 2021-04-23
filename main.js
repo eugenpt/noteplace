@@ -364,9 +364,11 @@ function save(node=null){
   if(node === null){
     // save all
     node_ids = [];
+    nodes = [];
     [].forEach.call(_(".node"),(node)=>{
       save(node);
       node_ids.push(node.dataset['id']);
+      nodes.push(JSON.parse(JSON.stringify(node.dataset)));
     });
     localStorage['noteplace.node_ids'] = JSON.stringify(node_ids);
   }else{
