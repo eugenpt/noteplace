@@ -400,6 +400,7 @@ function onNodeClick(e){
   selectNode(this);
 }
 
+<<<<<<< HEAD
 contentEditNode = null;
 contentEditMouseDown = false;
 contentEditTextarea = null;
@@ -412,6 +413,53 @@ function textareaAutoResize(e){
   }
   target.style.height = 'auto';
   target.style.height = target.scrollHeight + 'px';
+=======
+function redraw(){
+node = node.data(nodes);
+        node.enter()
+          .insert("g")
+          .attr("class","node")
+          .attr("id",(d)=>"node_"+d.id)
+          .call(drag) 
+            .append("text")
+            .on("dblclick", function(d){
+              console.log('aaa!');
+              // console.log(this);
+              select(d);
+              $('#text').select();
+              d3.event.stopPropagation();
+            })
+            // .append("text")
+            .text((d)=>d.text)
+            
+          node
+            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+            // .attr("x",(d)=>d.x).attr("y",(d)=>d.y)
+            .style("font-size",(d)=>d.fontSize)
+            // .on("mousedown",function(d){
+            //   selected_node = d;
+            //   redraw();
+            // })
+            .on("mousedown",function(d){
+              if(selected_node === d){
+                select_clear();
+              }else
+                select(d);
+              redraw();
+            })
+            .on("dblclick",function(d){
+              d3.event.stopPropagation();
+            })
+            
+  node.classed("selected", function(d) { return d === selected_node; })
+}
+redraw();
+
+function dottype(d) {
+  d.x = +d.x;
+  d.y = +d.y;
+  return d;
+>>>>>>> main
 }
 
 function textareaBtnDown(e){
@@ -685,6 +733,7 @@ function zoomToURL(s){
   redraw();
 }
 
+<<<<<<< HEAD
 function getHTML(text){
   return md.render(text)
             .slice(0, -1) // md.render adds newline (?)
@@ -762,6 +811,17 @@ function selectAllContent(el){
 
 function getNode(id){
   return document.getElementById('node_' + id);
+=======
+function dblclick(){
+    console.log("T="+T)  ;
+    console.log("S="+S);
+    console.log(d3.event.x+' '+d3.event.y);
+    var tnode = nodeFromMouse(this)
+    addNode(tnode);
+    select(tnode);
+    $('#text').select();
+    redraw()
+>>>>>>> main
 }
 
 function getG(d){
