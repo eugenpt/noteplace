@@ -191,10 +191,59 @@ container.onmousedown = function(e) {
 function selectNode(n){
   if(selected_node){ //remove class
     selected_node.classList.remove('selected');
+    $(selected_node).rotatable('destroy');
+
   }
   selected_node = n;
   if(selected_node){// apply class, setup editing tools
     selected_node.classList.add('selected');
+    //
+    //https://jsfiddle.net/Twisty/7zc36sug/
+    //https://stackoverflow.com/a/62379454/2624911
+    //https://jsfiddle.net/Twisty/cdLn56f1/
+    $(function() {
+      var params = {
+        // Callback fired on rotation start.
+        startRotate:function(event, ui) {
+          console.log(event);
+          console.log(ui);
+        },
+        stopRotate:function(event, ui) {
+          console.log('stopRotate');
+          console.log(event);
+          console.log(ui);
+        },
+        wheelRotate:function(event,ui){
+          event.preventDefault();
+          event.stopPropagation();
+        },
+        start:function(e){
+          console.log(e);
+        },
+        stop:function(e, ui){
+          console.log('stop');
+          console.log(e);
+          console.log(ui);
+
+          // ui.angle.start = ui.angle.current;
+          selected_node.dataset["rotate"] = ui.angle.current;
+          save(selected_node);
+        }
+    };
+    //$('#target').rotatable(params);
+        $(selected_node).rotatable(params
+        // {
+          // handles: {
+          //   'nw': '.tl',
+          //   'ne': '.tr',
+          //   'sw': '.bl',
+          //   'se': '.br',
+          //   'e': '.r',
+          //   'w': '.l'
+          // }
+      // }
+      );
+    });    
     //   
     _('#text').disabled = false;
     _('#fontSize').disabled = false;
@@ -379,9 +428,6 @@ function textareaBtnDown(e){
 }
 
 function onNodeDblClick(e){
-  console.log('double-clicked on ['+this.id+'] : '+this.innerText);
-  // console.log(e);
-
   if('preventDefault' in e){
     e.preventDefault();
     e.stopPropagation();
@@ -390,7 +436,10 @@ function onNodeDblClick(e){
   }else{
     contentEditNode = e;
   }
-  console.log(contentEditNode);
+  console.log('double-clicked on ['+contentEditNode.id+'] : '+contentEditNode.innerText);
+
+
+  // console.log(contentEditNode);
 
   contentEditTextarea = document.createElement('textarea');
   contentEditTextarea.id = 'contentEditTextarea';
@@ -422,6 +471,8 @@ function onNodeDblClick(e){
 
   textareaAutoResize(contentEditTextarea);
   contentEditTextarea.select();
+
+  selectNode(contentEditNode);
 }
 
 function onNodeMouseDown(e){
@@ -472,16 +523,18 @@ function newNode(d){
   }else{
     if (!('id' in d))
       d.id = newId()
+    if(!'rotate' in d)
+      d.rotate=0;
     NODES.push(d);
-
 
 
     tn = document.createElement('div')
     tn.id = 'node_'+d.id;
-    tn.className = "node";
+    tn.className = "node ui-rotatable";
     //  tn.contentEditable = true;
     tn.dataset["x"] = d.x;
     tn.dataset["y"] = d.y;
+    tn.dataset["rotate"] = d.rotate;
     tn.dataset["fontSize"] = d.fontSize;
     tn.dataset['text'] = d.text;
     tn.dataset['id'] = d.id;
@@ -490,7 +543,10 @@ function newNode(d){
   tn.onclick = onNodeClick;
   tn.ondblclick = onNodeDblClick;
   tn.onmousedown = onNodeMouseDown;
+
+
   tn.innerHTML = getHTML(tn.dataset['text']);
+  tn.style.transform="rotate("+tn.dataset["rotate"]+"rad)"
   
   // tn.innerHTML =  '';
   // ta = document.createElement('a');
@@ -1041,3 +1097,4 @@ $('#exampleModal').on('shown.bs.modal', function () {
   
   $('#modal-input').trigger('focus')
 })
+

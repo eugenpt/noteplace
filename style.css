@@ -40,7 +40,7 @@ html, body {
     position: absolute;
     width:auto;
     /* text-align: left; */
-    overflow: hidden;
+    /* overflow: hidden; */
     white-space:nowrap;
     /* -webkit-user-modify: read-write;
       overflow-wrap: break-word;
@@ -164,4 +164,63 @@ html, body {
 
   a.local{
     cursor:pointer;
+  }
+
+  .ui-rotatable-handle{
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    left:-20px;
+    bottom:-20px;
+    /* border-radius: 6px; */
+    /* border-width: 1.5px; */
+    /* border-style: solid; */
+    /* border-color: rgb(0,0,0); */
+
+    content: url(img/r.svg);
+  }
+  .ui-rotatable-disabled .ui-rotatable-handle{
+    display: none;
+  }
+/* 
+  .ui-rotatable-handle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: rgb(255, 0, 106);
+    border-width: 1.5px;
+    border-style: solid;
+    border-color: rgb(255, 255, 255);
+    border-image: initial;
+    border-radius: 999px;
+  }
+
+  .l {
+    left: -4px;
+    top: calc(50% - 10px);
+  }
+  
+  .r {
+    right: -4px;
+    top: calc(50% - 10px);
+  }
+  
+  .tl {
+    left: -6px;
+    top: -6px;
+  }
+  
+  .tr {
+    right: -6px;
+    top: -6px;
+  }
+  
+  .bl {
+    left: -6px;
+    bottom: -6px;
+  }
+  
+  .br {
+    right: -6px;
+    bottom: -6px; */
   }
