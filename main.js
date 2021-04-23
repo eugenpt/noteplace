@@ -144,6 +144,7 @@ function $(s){
 }
 
 
+
 function toStr(a){
   return(typeof(a)=="number")?
     a.toExponential(2)
