@@ -43,7 +43,8 @@ nodes_default = [
 ,{id: "27", x: "10.02900390624992", y: "248.26645507812503", fontSize: "16.875", text: "__Left__ mouse button down and drag\nto move around\n__Middle__ mouse button\n to drag text around"}
 ,{id: "34", x: "256", y: "544", fontSize: "20", text: "Click to select a note"}
 ,{id: "35", x: "146", y: "615", rotate: "0.4018327787670817", fontSize: "20", text: "drag rotate icon (left bottom corner) to rotate, the note"}
-,{x: "92", y: "900", rotate: "0", fontSize: "20", text: "Or you could use Google Drive if the page is run from gihub.io"}
+,{x: "80", y: "800", rotate: "0", fontSize: "20", text: "You can Save to/Load from local file,\nso you may just save the whole page and work without internet connection!"}
+,{x: "92", y: "900", rotate: "0", fontSize: "20", text: "Or you could use Google Drive if the page is run from eugenpt.gihub.io"}
 ,{x: "585.974681854248", y: "191.39131927490234", rotate: "0", fontSize: "1.192092895507812", text: "(This place is practically inifinitely zoomable)"}
 ,{x: "605.9516071976361", y: "193.21158852783742", rotate: "0", fontSize: "0.11368683772161589", text: "I mean, seriously!"}
 ,{x: "606.7511873267723", y: "193.29315530012735", rotate: "1.6987763617720013", fontSize: "0.00173668223966733", text: "Just look a it!"}
