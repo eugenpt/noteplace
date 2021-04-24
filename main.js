@@ -497,13 +497,26 @@ function textareaBtnDown(e){
     }
   }
 }
+
+function sameState(){
+  return ((history.state)
+        &&('T' in history.state)
+        &&(history.state.T[0] == T[0])
+        &&(history.state.T[1] == T[1])
+        &&('S' in history.state)
+        &&(history.state.S == S)
+  )
+}
+
 zoom_urlReplaceTimeout = setInterval(function(){
   // console.log('history replaced');
-  url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
-  window.history.replaceState(
-      {T:T,S:S}, 
-      'Noteplace', 
-      url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+  if(!sameState()){
+    url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
+    window.history.replaceState(
+        {T:T,S:S}, 
+        'Noteplace', 
+        url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+  }
 }, 200);
 
 function onNodeDblClick(e){
@@ -737,10 +750,10 @@ function isVisible(d){
   }
   return (
       (d.fontSize > 0.2/S)
-    &&(d.x<=T[0]+width/S)
-    &&(d.y<=T[1]+width/S)
-    &&(d.xMax>=T[0])
-    &&(d.yMax>=T[1])
+    &&(d.x<=T[0]+width*1.5/(1*S))
+    &&(d.y<=T[1]+width*1.5/(1*S))
+    &&(d.xMax>=T[0] - width*0.5/S)
+    &&(d.yMax>=T[1] - height*0.5/S)
   )  
 
 }
@@ -764,11 +777,33 @@ function calcVisible(d, onhide, onshow){
       // did not show before and not showing now, pass
     }
   }
+  d.vis = new_vis;
 }
 
 function redraw(){
-  _NODES.forEach(
-    updateNode)
+  _NODES.forEach((e)=>{
+    if(('vis' in e)&&(e.vis)){
+      updateNode(e);
+    }
+  })
+  
+  setTimeout(function(){
+    _NODES.forEach(function(e){
+      calcVisible(e
+      ,function(){ //onhide
+        e.node.style.opacity=0;
+        // e.node.style.display='none';
+      },function(){ //onshow
+        if('node' in e){
+          // e.node.style.display='none';
+        }
+        updateNode(e);
+        e.node.style.display='';
+        // e.node.style.transitionDuration='0.2s';
+        e.node.style.opacity=1;
+      })
+    })
+  }, 5)
 
   if(contentEditTextarea){
     console.log('redraw : contextEditTextarea');
