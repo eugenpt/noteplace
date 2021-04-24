@@ -11,7 +11,7 @@ S = 1;
 BODY = document.getElementsByTagName('body')[0];
 M = 0;
 
-NODES = [];
+_NODES = [];
 
 zoomMax = 1e14;
 zoomMin = 1e-15;
@@ -582,7 +582,7 @@ function newNode(d){
       d.id = newId()
     if(!'rotate' in d)
       d.rotate=0;
-    NODES.push(d);
+    // NODES.push(d);
 
 
     tn = document.createElement('div')
@@ -631,7 +631,9 @@ function newNode(d){
   //   e.stopPropagation();
   // }  
   // tn.appendChild(ta);
-  updateNode(tn);
+  d.node = tn;
+
+  updateNode(d);
 
   if(!('className' in d)){
     node_container.appendChild(tn);
@@ -652,7 +654,8 @@ function newNode(d){
 }
 
 
-function updateNode(n){
+function updateNode(d){
+  n = d.node
   n.style.left = (n.dataset["x"] - T[0])*S + 'px';
   n.style.top = (n.dataset["y"] - T[1])*S + 'px';
   n.style.fontSize = (n.dataset["fontSize"])*S + 'px';
@@ -667,7 +670,7 @@ function updateNode(n){
 
 
 function redraw(){
-  [].forEach.call(_('.node'),
+  _NODES.forEach(
     updateNode)
 
   if(contentEditTextarea){
@@ -900,13 +903,13 @@ function saveToG(){
   return {
     T:T,
     S:S,
-    nodes: [].map.call(_('.node'),
+    nodes: _NODES.map(
                       (d)=>{return {
-                        id:d.dataset['id'],
-                        x:d.dataset['x'],
-                        y:d.dataset['y'],
-                        fontSize:d.dataset['fontSize'],
-                        text:d.dataset['text']
+                        id:d['id'],
+                        x:d['x'],
+                        y:d['y'],
+                        fontSize:d['fontSize'],
+                        text:d['text']
                       }}
                     )
   }
@@ -921,8 +924,8 @@ function loadFromG(G){
   // applyZoom([1*G.T[0],1*G.T[1]], 1*G.S);
   $('.node').remove();
 
-  nodes = G.nodes;
-  nodes.forEach(newNode);
+  _NODES = G.nodes;
+  _NODES.forEach(newNode);
   redraw();
   console.log('Loading complete, now '+nodes.length+' nodes');
 }
@@ -1137,16 +1140,17 @@ if($(".node").length){
   try{
   //if(localStorage['noteplace.node_ids']){
     node_ids = JSON.parse(localStorage['noteplace.node_ids']);
-    nodes = node_ids.map(function(id){
+    _NODES = node_ids.map(function(id){
       console.log(id);
       console.log('noteplace.node_'+id);
       
       return JSON.parse(localStorage['noteplace.node_'+id]);
     });
   }catch{
-    nodes = nodes_default
+    console.log('no nodes in localStorage, loading default');
+    _NODES = nodes_default
   }
-  nodes.forEach(newNode);
+  _NODES.forEach(newNode);
 }
 
 save();
