@@ -967,14 +967,14 @@ function addOnContentChange(elt, fun){
 
 function addRandomNodes(N, Xlim, Ylim, FSLim){
   for(var j=0; j<N; j++){
-    id = newId();
-
+    var id = newId();
     newNode({
       x:Xlim[0]+Math.random()*(Xlim[1]-Xlim[0]),
       y:Ylim[0]+Math.random()*(Ylim[1]-Ylim[0]),
       fontSize:FSLim[0]+Math.random()*(FSLim[1]-FSLim[0]),
       text:'test__'+id,
-      id:id
+      id:id,
+      rotate:Math.random()*2*Math.PI
     });
   }
   redraw();
@@ -1251,12 +1251,7 @@ _('#text').oninput = onTextEditChange;
 _('#fontSize').onchange = onFontSizeEdit;
 
 _('#btnAddLots').onclick = function(){
-  addRandomNodes(
-    1*_('#number').value,
-    [T[0], T[0]+width/S],
-    [T[1], T[1]+height/S],
-    [0.02/S,20/S]
-  )
+  addRandomNodesToView(1*_('#number').value);
 }
 
 _('#btnZoomIn').onclick = function(){
@@ -1319,7 +1314,22 @@ $('#exampleModal').on('shown.bs.modal', function () {
   $('#modal-input').trigger('focus')
 })
 
+// :::    ::: ::::::::::: ::::::::::: :::        ::::::::::: ::::::::::: :::   ::: 
+// :+:    :+:     :+:         :+:     :+:            :+:         :+:     :+:   :+: 
+// +:+    +:+     +:+         +:+     +:+            +:+         +:+      +:+ +:+  
+// +#+    +:+     +#+         +#+     +#+            +#+         +#+       +#++:   
+// +#+    +#+     +#+         +#+     +#+            +#+         +#+        +#+    
+// #+#    #+#     #+#         #+#     #+#            #+#         #+#        #+#    
+//  ########      ###     ########### ########## ###########     ###        ###    
 
+function addRandomNodesToView(N){
+  addRandomNodes(
+    1*N,
+    [T[0], T[0]+width/S],
+    [T[1], T[1]+height/S],
+    [0.02/S,20/S]
+  )
+}
 
 function _RESTART(){
   _NODES = [];
