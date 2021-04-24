@@ -636,6 +636,18 @@ function newNode(d){
   if(!('className' in d)){
     node_container.appendChild(tn);
   }
+
+  [].forEach.call(tn.getElementsByTagName('a'),(elt)=>{
+    if(elt.href){
+      elt.onclick = (e)=>{
+        e.stopPropagation();
+      }
+      elt.onmousedown = (e)=>{
+        e.stopPropagation();
+      }
+    }
+  })
+
   return tn;
 }
 
@@ -697,7 +709,8 @@ function getHTML(text){
   return md.render(text)
             .slice(0, -1) // md.render adds newline (?)
             .replaceAll('\n', '<br />')
-            .replace(/href="(\?[^"]+)"/,/class="local" onclick="zoomToURL('$1')"/);  
+            .replace(/href="(\?[^"]+)"/,/class="local" onclick="zoomToURL('$1')"/);
+            // .replaceAll(/(href="[^\?])/g,'onclick="(e)=>{console.log(e);e.stopPropagation();}" $1');  
 }
 
 function getFontSize(d){
