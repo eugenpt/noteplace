@@ -12,6 +12,7 @@ BODY = document.getElementsByTagName('body')[0];
 M = 0;
 
 _NODES = [];
+_DOMId2node = new Map();
 
 zoomMax = 1e14;
 zoomMin = 1e-15;
@@ -84,27 +85,28 @@ container.ondblclick = function(e) {
   console.log('T='+T+' S='+S);
   // console.log(e);
   var id = newId();
-  var node = newNode({
+  var node = {
     id:id, 
     x:e.clientX/S + T[0], 
     y:e.clientY/S + T[1], 
     fontSize:20/S, 
     text:'test'+id
-  });
+  }
+  newdom = newNode(node);
   // no dblclick zoom!
   e.preventDefault();
   e.stopPropagation();
   
-  onNodeDblClick(node);
+  onNodeDblClick(newdom);
 }
 
 function zoomInOut(in_degree, clientPos=null){
   if(clientPos==null){
-    if(_selected_node){
+    if(_selected_DOM){
       // zoom to it!
       clientPos = [
-        (1*_selected_node.dataset['x']-T[0])*S,
-        (1*_selected_node.dataset['y']-T[1])*S,
+        (1*_selected_DOM.dataset['x']-T[0])*S,
+        (1*_selected_DOM.dataset['y']-T[1])*S,
       ]
     }else{
       // just center
@@ -159,7 +161,7 @@ _isMouseDragging = false;
 _mouseDragStart = [0,0];
 _mouseDragPos = [0,0];
 
-_selected_node = null;
+_selected_DOM = null;
 
 container.onmousedown = function(e) {
   console.log('container.onmousedown');
@@ -185,7 +187,7 @@ container.onmousedown = function(e) {
     }
 
 
-    if(_selected_node!==__nodeMouseDown){
+    if(_selected_DOM!==__nodeMouseDown){
       selectNode(null);
     }
   }
@@ -199,21 +201,22 @@ __isResizing = false;
 
 __X = null;
 function selectNode(n){
-  if(_selected_node){ //remove class
-    _selected_node.classList.remove('selected');
+  console.log('select : ['+(n?n.id:'null')+']')
+  if(_selected_DOM){ //remove class
+    _selected_DOM.classList.remove('selected');
     try{
-    $(_selected_node).rotatable('destroy');
+    $(_selected_DOM).rotatable('destroy');
     
-    [].forEach.call(_selected_node.getElementsByTagName('img'),(e)=>{
+    [].forEach.call(_selected_DOM.getElementsByTagName('img'),(e)=>{
       $(e).resizable('destroy').css('width','auto');
     });
     } catch{
 
     }
   }
-  _selected_node = n;
-  if(_selected_node){// apply class, setup editing tools
-    _selected_node.classList.add('selected');
+  _selected_DOM = n;
+  if(_selected_DOM){// apply class, setup editing tools
+    _selected_DOM.classList.add('selected');
     //
     //https://jsfiddle.net/Twisty/7zc36sug/
     //https://stackoverflow.com/a/62379454/2624911
@@ -229,14 +232,14 @@ function selectNode(n){
           console.log(ui);
 
           // ui.angle.start = ui.angle.current;
-          _selected_node.dataset["rotate"] = ui.angle.current;
-          save(_selected_node);
+          _DOMId2node.get(_selected_DOM.id)["rotate"] = ui.angle.current;
+          save(_selected_DOM);
         }
        };
 
-       $(_selected_node).rotatable(params);
+       $(_selected_DOM).rotatable(params);
 
-      [].forEach.call(_selected_node.getElementsByTagName('img'),(img)=>{
+      [].forEach.call(_selected_DOM.getElementsByTagName('img'),(img)=>{
         console.log('making that img resizable:');
         console.log(img);
         __IMG = img;
@@ -251,15 +254,15 @@ function selectNode(n){
             console.log('resize stop');
             console.log(e);
             console.log(ui);
-            _selected_node.dataset['fontSize'] = ui.size.height/(5*S);
-            save(_selected_node);
-            updateNode(_selected_node);
+            _selected_DOM.dataset['fontSize'] = ui.size.height/(5*S);
+            save(_selected_DOM);
+            updateNode(_selected_DOM);
             // ui.originalElement.style.width='auto';
             __X = ui;
           }
         });
       })
-      $(_selected_node)
+      $(_selected_DOM)
         .find('.ui-resizable-handle')
         .on('mousedown',function(e){
           console.log('resize mouse down');
@@ -276,8 +279,8 @@ function selectNode(n){
     //   
     _('#text').disabled = false;
     _('#fontSize').disabled = false;
-    _('#text').value = _selected_node.dataset['text'];
-    _('#fontSize').value = _selected_node.dataset['fontSize'];
+    _('#text').value = _DOMId2node.get(_selected_DOM.id)['text'];
+    _('#fontSize').value = _DOMId2node.get(_selected_DOM.id)['fontSize'];
     _('#fontSize').step = _('#fontSize').value * 0.25;
   }else{// just deselect => clear inputs
     
@@ -289,9 +292,36 @@ function selectNode(n){
 }
 
 
+_DOMId2nodej = new Map()
+function gen_DOMId2nodej(){
+  _DOMId2nodej = new Map()
+  for(var j=0;j<_NODES.length;j++){
+    _DOMId2nodej[_NODES[j].node.id] = j;
+  }
+}
+
+function deleteNode(d){
+  if('click' in d){
+    // DOM
+    deleteNode(_DOMId2node.get(d.id))
+  }else{
+    // _NODES
+    // ixs (TODO:optimize further)
+    gen_DOMId2nodej();
+    // remove rom _NODES
+    _NODES.splice(_DOMId2nodej.get(d.node.id),1);
+    // remove from index
+    _DOMId2node.delete(d.node.id);
+    // remove from DOM
+    node_container.removeChild(d.node);
+    // remove from saved
+    localStorage.removeItem('noteplace.'+d.node.id);
+  }
+}
+
 function stopEditing(){
   if(contentEditTextarea.value==''){
-    node_container.removeChild(contentEditTextarea.parentElement);
+    deleteNode(contentEditTextarea.parentElement);
   }else{
     newNode(contentEditTextarea.parentElement);
   }
@@ -340,8 +370,8 @@ window.addEventListener('mouseup',function(e) {
 container.onmousemove = function(e){
   if(_isMouseDown){
     if(_isMouseDragging){
-      _isMouseDragging.dataset['x'] = _mouseDragPos[0] +  (e.clientX - _mouseDragStart[0])/S;
-      _isMouseDragging.dataset['y'] = _mouseDragPos[1] +  (e.clientY - _mouseDragStart[1])/S;
+      _isMouseDragging['x'] = _mouseDragPos[0] +  (e.clientX - _mouseDragStart[0])/S;
+      _isMouseDragging['y'] = _mouseDragPos[1] +  (e.clientY - _mouseDragStart[1])/S;
 
       updateNode(_isMouseDragging)
     }else if(__isResizing){
@@ -360,26 +390,30 @@ container.onmousemove = function(e){
 }
 
 
-function save(node=null){
+function save(node=null, save_ids=true){
   if(node === null){
     // save all
     node_ids = [];
-    nodes = [];
-    [].forEach.call(_(".node"),(node)=>{
-      save(node);
-      node_ids.push(node.dataset['id']);
-      nodes.push(JSON.parse(JSON.stringify(node.dataset)));
+    _NODES.forEach((node)=>{
+      save(node, false);
+      node_ids.push(node['id']);
+      // nodes.push(JSON.parse(JSON.stringify(node.dataset)));
     });
     localStorage['noteplace.node_ids'] = JSON.stringify(node_ids);
   }else{
     // node provided, save only node
     if('x' in node){
       // original object
-      localStorage['noteplace.node_'+node.id] = JSON.stringify(node);
+      localStorage['noteplace.node_'+node.id] = JSON.stringify(stripNode(node));
     }else{
       // DOM node
-      localStorage['noteplace.'+node.id] = JSON.stringify(node.dataset);
+      localStorage['noteplace.'+node.id] = JSON.stringify(stripNode(_DOMId2node.get(node.id)));
     }
+  }
+  if(save_ids){
+    localStorage['noteplace.node_ids'] = JSON.stringify(
+      _NODES.map((node)=>node.id)
+    )
   }
 }
 
@@ -452,13 +486,15 @@ function textareaBtnDown(e){
   }
 
   //https://stackoverflow.com/a/3369624/2624911
-  if (e.key === "Escape") { // escape key maps to keycode `27`
-    
-    selectNode(contentEditNode);
-    
-    stopEditing();
-        
-    e.stopPropagation();    
+  if(contentEditNode){
+    if (e.key === "Escape") { // escape key maps to keycode `27`
+      
+      selectNode(contentEditNode);
+      
+      stopEditing();
+          
+      e.stopPropagation();    
+    }
   }
 }
 zoom_urlReplaceTimeout = setInterval(function(){
@@ -488,7 +524,7 @@ function onNodeDblClick(e){
 
   contentEditTextarea = document.createElement('textarea');
   contentEditTextarea.id = 'contentEditTextarea';
-  contentEditTextarea.value = contentEditNode.dataset['text'];
+  contentEditTextarea.value = _DOMId2node.get(contentEditNode.id)['text'];
   // contentEditTextarea.style.fontSize = contentEditNode.dataset['fontSize']*S+'px';
   // contentEditTextarea.style.fontFamily = 'Open Sans';
   contentEditTextarea.dataset['initS'] = S;
@@ -500,7 +536,7 @@ function onNodeDblClick(e){
   contentEditTextarea.onkeydown = textareaBtnDown;
   contentEditTextarea.onkeyup = textareaAutoResize;
   contentEditTextarea.oninput = function(e){
-    this.parentElement.dataset['text'] = this.value;
+    _DOMId2node.get(this.parentElement.id)['text'] = this.value;
   }
   
   contentEditTextarea.onmousedown = (e)=>{
@@ -529,13 +565,14 @@ __nodeMouseDown = null;
 
 function onNodeMouseDown(e){
   console.log('onNodeMouseBtn');
+  console.log(this.id);
 
-  __nodeMouseDown = this;
+  __nodeMouseDown = _DOMId2node.get(this.id);
   // console.log(e);
   if(e.button==1){
-    _isMouseDragging = this;
+    _isMouseDragging = __nodeMouseDown;
     _mouseDragStart = [e.clientX, e.clientY];
-    _mouseDragPos = [1*this.dataset['x'], 1*this.dataset['y']];
+    _mouseDragPos = [1*__nodeMouseDown['x'], 1*__nodeMouseDown['y']];
 
     e.preventDefault();
   }if(e.button==0){
@@ -571,40 +608,47 @@ function newId(){
 // ###    #### ##########   ###   ###   ###    ####  ########  #########  ########## 
 
 
-function newNode(d){
+function newNode(node){
   // console.log(d);
-  if('className' in d){
-    tn = d;
-    // console.log('newNode with DOM node provided:');
+  if('className' in node){
+    tdom = node;
+    console.log('newNode with DOM node provided:');
     // console.log(tn);
+    
   }else{
-    if (!('id' in d))
-      d.id = newId()
-    if(!'rotate' in d)
-      d.rotate=0;
-    // NODES.push(d);
+    console.log('newNode with node provided')
+    if (!('id' in node))
+      node.id = newId()
+    if(!'rotate' in node)
+      node.rotate=0;
+
+    tdom = document.createElement('div')
+    tdom.id = 'node_'+node.id;
+
+    _NODES.push(node);
+    _DOMId2node.set(tdom.id, node);
+    _DOMId2nodej.set(tdom.id, _NODES.length-1);
 
 
-    tn = document.createElement('div')
-    tn.id = 'node_'+d.id;
-    tn.className = "node ui-rotatable";
+    tdom.className = "node ui-rotatable";
+
     //  tn.contentEditable = true;
-    tn.dataset["x"] = d.x;
-    tn.dataset["y"] = d.y;
-    tn.dataset["rotate"] = d.rotate;
-    tn.dataset["fontSize"] = d.fontSize;
-    tn.dataset['text'] = d.text;
-    tn.dataset['id'] = d.id;
+    // tn.dataset["x"] = d.x;
+    // tn.dataset["y"] = d.y;
+    // tn.dataset["rotate"] = d.rotate;
+    // tn.dataset["fontSize"] = d.fontSize;
+    // tn.dataset['text'] = d.text;
+    // tn.dataset['id'] = d.id;
   }
-  tn.innerHTML = '';
-  tn.onclick = onNodeClick;
-  tn.ondblclick = onNodeDblClick;
-  tn.onmousedown = onNodeMouseDown;
+  tdom.innerHTML = '';
+  tdom.onclick = onNodeClick;
+  tdom.ondblclick = onNodeDblClick;
+  tdom.onmousedown = onNodeMouseDown;
 
 
-  tn.innerHTML = getHTML(tn.dataset['text']);
+  tdom.innerHTML = getHTML(_DOMId2node.get(tdom.id)['text']);
 
-  tn.style.transform="rotate("+tn.dataset["rotate"]+"rad)"
+  tdom.style.transform="rotate("+_DOMId2node.get(tdom.id)["rotate"]+"rad)"
   
   // tn.innerHTML =  '';
   // ta = document.createElement('a');
@@ -631,15 +675,16 @@ function newNode(d){
   //   e.stopPropagation();
   // }  
   // tn.appendChild(ta);
-  d.node = tn;
+  node.node = tdom;
 
-  updateNode(d);
+  updateNode(node);
 
-  if(!('className' in d)){
-    node_container.appendChild(tn);
+  if(!('className' in node)){
+    console.log("!('className' in node) , appending to DOM")
+    node_container.appendChild(tdom);
   }
 
-  [].forEach.call(tn.getElementsByTagName('a'),(elt)=>{
+  [].forEach.call(tdom.getElementsByTagName('a'),(elt)=>{
     if(elt.href){
       elt.onclick = (e)=>{
         e.stopPropagation();
@@ -650,24 +695,76 @@ function newNode(d){
     }
   })
 
-  return tn;
+  return tdom;
 }
 
 
 function updateNode(d){
-  n = d.node
-  n.style.left = (n.dataset["x"] - T[0])*S + 'px';
-  n.style.top = (n.dataset["y"] - T[1])*S + 'px';
-  n.style.fontSize = (n.dataset["fontSize"])*S + 'px';
+  //here, sadly, d s for _NODES element, and n is for DOM element..
+  if('node' in d){
+    n = d.node;
+  }else{
+    n=d;
+    d = _DOMId2node.get(n.id);
+  }
+
+  n.style.left = (d["x"] - T[0])*S + 'px';
+  n.style.top = (d["y"] - T[1])*S + 'px';
+  n.style.fontSize = (d["fontSize"])*S + 'px';
 
   [].forEach.call(n.getElementsByTagName('img'),(e)=>{
-    e.style.height = 5*(n.dataset["fontSize"])*S +'px';
+    e.style.height = 5*(d["fontSize"])*S +'px';
     e.style.transitionDuration='0.2s';
     // e.setAttribute('draggable', false);
     // e.onmousedown = (e)=>{e.preventDefault();};
   })
 }
 
+
+function calcBox(d){
+  if(d.text.indexOf('![')>=0){
+    d.xMax = d.x + d.fontSize * 10;
+    d.yMax = d.y + d.fontSize * 5;
+  }else{
+    d.xMax = d.x + d.text.length*d.fontSize*0.5;
+    d.yMax = d.y + d.text.split('\n').length * d.fontSize;
+  }
+}
+
+function isVisible(d){
+  if(!('xMax' in d)){
+    calcBox(d);
+  }
+  return (
+      (d.fontSize > 0.2/S)
+    &&(d.x<=T[0]+width/S)
+    &&(d.y<=T[1]+width/S)
+    &&(d.xMax>=T[0])
+    &&(d.yMax>=T[1])
+  )  
+
+}
+
+function calcVisible(d, onhide, onshow){
+  if(!('vis' in d)){
+    d.vis=0;
+  }
+  new_vis = isVisible(d);
+  if(d.vis){
+    if(new_vis){
+      //
+    }else{
+      onhide(d);
+    }
+  }else{
+    if(new_vis){
+      // 
+      onshow(d);
+    }else{
+      // did not show before and not showing now, pass
+    }
+  }
+}
 
 function redraw(){
   _NODES.forEach(
@@ -793,27 +890,27 @@ function getG(d){
 }
 
 function onFontSizeEdit(){
-  if(_selected_node !== null){
-    _selected_node.dataset['fontSize'] = this.value;
-    _selected_node.classList.add('zoom');
-    updateNode(_selected_node);
-    // _selected_node.classList.remove('zoom');
+  if(_selected_DOM !== null){
+    _DOMId2node.get(_selected_DOM.id)['fontSize'] = this.value;
+    _selected_DOM.classList.add('zoom');
+    updateNode(_selected_DOM);
+    // _selected_DOM.classList.remove('zoom');
 
     this.step = this.value*0.25;
 
-    save(_selected_node);
+    save(_selected_DOM);
   }
 }
 
 function onTextEditChange(){
-  if(_selected_node !== null){
-    _selected_node.dataset['text'] = this.value;
-    newNode(_selected_node);
+  if(_selected_DOM !== null){
+    _selected_DOM.dataset['text'] = this.value;
+    newNode(_selected_DOM);
 
     // this.style.height = "5px";
     // this.style.height = (this.scrollHeight)+"px";
 
-    save(_selected_node);
+    save(_selected_DOM);
   }
 }
 
@@ -903,16 +1000,20 @@ function saveToG(){
   return {
     T:T,
     S:S,
-    nodes: _NODES.map(
-                      (d)=>{return {
-                        id:d['id'],
-                        x:d['x'],
-                        y:d['y'],
-                        fontSize:d['fontSize'],
-                        text:d['text']
-                      }}
-                    )
+    nodes: _NODES.map(stripNode)
   }
+}
+
+function stripNode(d){
+  // strips only relevant data for nodes, also convert to numerical
+  return {
+    id:newId(),//('id' in d)?1*d['id']:newId(),
+    x:1*d['x'],
+    y:1*d['y'],
+    fontSize:1*d['fontSize'],
+    text:d['text'],
+    rotate:'rotate' in d?d.rotate:0
+  } 
 }
 
 // load everything from single object
@@ -923,11 +1024,13 @@ function loadFromG(G){
   S = 1*G.S;
   // applyZoom([1*G.T[0],1*G.T[1]], 1*G.S);
   $('.node').remove();
+  delete _NODES;
+  _NODES = [];
 
-  _NODES = G.nodes;
-  _NODES.forEach(newNode);
+  G.nodes.map(stripNode).forEach(newNode);
+  
   redraw();
-  console.log('Loading complete, now '+nodes.length+' nodes');
+  console.log('Loading complete, now '+_NODES.length+' nodes');
 }
 
 
@@ -1140,7 +1243,7 @@ if($(".node").length){
   try{
   //if(localStorage['noteplace.node_ids']){
     node_ids = JSON.parse(localStorage['noteplace.node_ids']);
-    _NODES = node_ids.map(function(id){
+    nodes = node_ids.map(function(id){
       console.log(id);
       console.log('noteplace.node_'+id);
       
@@ -1148,9 +1251,9 @@ if($(".node").length){
     });
   }catch{
     console.log('no nodes in localStorage, loading default');
-    _NODES = nodes_default
+    nodes = nodes_default
   }
-  _NODES.forEach(newNode);
+  nodes.map(stripNode).forEach(newNode);
 }
 
 save();
@@ -1181,3 +1284,10 @@ $('#exampleModal').on('shown.bs.modal', function () {
   $('#modal-input').trigger('focus')
 })
 
+
+
+function _RESTART(){
+  _NODES = [];
+  $('.node').remove();
+  nodes_default.map(stripNode).forEach(newNode);
+}
