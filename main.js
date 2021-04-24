@@ -23,6 +23,9 @@ let container = _("#container");
 let node_container = _("#node_container");
 
 
+let _selected_DOM = [];
+
+
 function toStr(a){
   return(typeof(a)=="number")?
     a.toExponential(2)
@@ -186,10 +189,15 @@ container.onmousedown = function(e) {
       }
     }
 
+    if(__nodeMouseDown){
 
-    if(_selected_DOM!==__nodeMouseDown){
+    }else{
       selectNode(null);
     }
+    
+    // if(_selected_DOM!==__nodeMouseDown){
+    //   selectNode(null);
+    // }
   }
 }
 
@@ -200,8 +208,126 @@ __isResizing = false;
 
 
 __X = null;
+
+function deselectOneDOM(dom){
+  dom.classList.remove('selected');
+  try{
+  $(dom).rotatable('destroy');
+  
+  [].forEach.call(dom.getElementsByTagName('img'),(e)=>{
+    $(e).resizable('destroy').css('width','auto');
+  });
+  } catch{
+
+  }
+}
+
+function selectOneDOM(dom){
+  dom.classList.add('selected');
+
+  node = _DOMId2node.get(dom.id);
+  node.startPos = [node.x, node.y];
+  //
+  //https://jsfiddle.net/Twisty/7zc36sug/
+  //https://stackoverflow.com/a/62379454/2624911
+  //https://jsfiddle.net/Twisty/cdLn56f1/
+  $(function() {
+    var params = {
+      start:function(e){
+        console.log(e);
+      },
+      stop:function(e, ui){
+        console.log('stop');
+        console.log(e);
+        console.log(ui);
+
+        // ui.angle.start = ui.angle.current;
+        _DOMId2node.get(e.target.id)["rotate"] = ui.angle.current;
+        save(e.target);
+      }
+     };
+
+     $(dom).rotatable(params);
+
+    [].forEach.call(dom.getElementsByTagName('img'),(img)=>{
+      console.log('making that img resizable:');
+      console.log(img);
+      img.dataset['parent_node_id'] = dom.id;
+      __IMG = img;
+      $(img).resizable({
+        aspectRatio: true,
+        start:function(e,ui){
+          console.log('resize start');
+          console.log(e);
+          console.log(ui);
+        },
+        stop:function(e,ui){
+          console.log('resize stop');
+          console.log(e);
+          console.log(ui);
+          var hid = ui.originalElement[0].dataset['id'];
+          _DOMId2node.get(hid)['fontSize'] = ui.size.height/(5*S);
+          save(_DOMId2node.get(hid));
+          updateNode(_('#'+hid));
+          // ui.originalElement.style.width='auto';
+          __X = ui;
+        }
+      });
+    })
+    $(dom)
+      .find('.ui-resizable-handle')
+      .on('mousedown',function(e){
+        console.log('resize mouse down');
+        // e.stopPropagation();
+        __isResizing = true;
+      })
+      .on('mouseup',function(e){
+        console.log('resize mouse up');
+        // e.stopPropagation();
+      })
+    
+  });
+}
+
 function selectNode(n){
   console.log('select : ['+(n?n.id:'null')+']')
+  if(n){
+    if(_selected_DOM){
+      if(!Array.isArray(n)){
+        n = [n];
+      }
+      // see how many are new ones
+      if(n.every((dom)=>dom.classList.contains('selected'))){
+        // if all are already selected - deselect them!
+        n.forEach(deselectOneDOM);
+        n.forEach((dom)=>{
+          _selected_DOM.splice(_selected_DOM.indexOf(dom));
+        })
+      }else{
+        // if only some are already selected - add all new ones
+        for(var dom of n){
+          if(dom.classList.contains('selected')){
+            continue;
+          }else{              
+            selectOneDOM(dom);
+            _selected_DOM.push(dom);
+          }
+        }
+      }
+    }else{
+      if(!Array.isArray(n)){
+        n = [n];
+      }
+      _selected_DOM = n.slice();
+      _selected_DOM.forEach(selectOneDOM);
+    }
+  }else{
+    if(_selected_DOM){
+      _selected_DOM.forEach(deselectOneDOM);
+      _selected_DOM = [];
+    }
+  }
+  return 0;
   if(_selected_DOM){ //remove class
     _selected_DOM.classList.remove('selected');
     try{
@@ -216,65 +342,7 @@ function selectNode(n){
   }
   _selected_DOM = n;
   if(_selected_DOM){// apply class, setup editing tools
-    _selected_DOM.classList.add('selected');
-    //
-    //https://jsfiddle.net/Twisty/7zc36sug/
-    //https://stackoverflow.com/a/62379454/2624911
-    //https://jsfiddle.net/Twisty/cdLn56f1/
-    $(function() {
-      var params = {
-        start:function(e){
-          console.log(e);
-        },
-        stop:function(e, ui){
-          console.log('stop');
-          console.log(e);
-          console.log(ui);
 
-          // ui.angle.start = ui.angle.current;
-          _DOMId2node.get(_selected_DOM.id)["rotate"] = ui.angle.current;
-          save(_selected_DOM);
-        }
-       };
-
-       $(_selected_DOM).rotatable(params);
-
-      [].forEach.call(_selected_DOM.getElementsByTagName('img'),(img)=>{
-        console.log('making that img resizable:');
-        console.log(img);
-        __IMG = img;
-        $(img).resizable({
-          aspectRatio: true,
-          start:function(e,ui){
-            console.log('resize start');
-            console.log(e);
-            console.log(ui);
-          },
-          stop:function(e,ui){
-            console.log('resize stop');
-            console.log(e);
-            console.log(ui);
-            _selected_DOM.dataset['fontSize'] = ui.size.height/(5*S);
-            save(_selected_DOM);
-            updateNode(_selected_DOM);
-            // ui.originalElement.style.width='auto';
-            __X = ui;
-          }
-        });
-      })
-      $(_selected_DOM)
-        .find('.ui-resizable-handle')
-        .on('mousedown',function(e){
-          console.log('resize mouse down');
-          // e.stopPropagation();
-          __isResizing = true;
-        })
-        .on('mouseup',function(e){
-          console.log('resize mouse up');
-          // e.stopPropagation();
-        })
-      
-    });
           
     //   
     _('#text').disabled = false;
@@ -370,10 +438,20 @@ window.addEventListener('mouseup',function(e) {
 container.onmousemove = function(e){
   if(_isMouseDown){
     if(_isMouseDragging){
-      _isMouseDragging['x'] = _mouseDragPos[0] +  (e.clientX - _mouseDragStart[0])/S;
-      _isMouseDragging['y'] = _mouseDragPos[1] +  (e.clientY - _mouseDragStart[1])/S;
-
-      updateNode(_isMouseDragging)
+      if(_isMouseDragging.node.classList.contains('selected')){
+        // move all selected
+        _selected_DOM.forEach(function(dom){
+          node = _DOMId2node.get(dom.id)
+          node['x'] = node.startPos[0] +  (e.clientX - _mouseDragStart[0])/S;
+          node['y'] = node.startPos[1] +  (e.clientY - _mouseDragStart[1])/S;
+          updateNode(node)
+        })
+      }else{
+        // move the node under the cursor
+        _isMouseDragging['x'] = _mouseDragPos[0] +  (e.clientX - _mouseDragStart[0])/S;
+        _isMouseDragging['y'] = _mouseDragPos[1] +  (e.clientY - _mouseDragStart[1])/S;
+        updateNode(_isMouseDragging)
+      }
     }else if(__isResizing){
     }else{
 
@@ -429,10 +507,6 @@ function save(node=null, save_ids=true){
 // #+#   #+#+# #+#    #+# #+#    #+# #+#             #+#        #+#    #+# #+#   #+#+# #+#    #+# #+#    #+# 
 // ###    ####  ########  #########  ##########      ###         ########  ###    ####  ########   ########  
 
-function onNodeClick(e){
-  console.log('clicked on ['+this.id+'] : '+this.innerText);
-  selectNode(this);
-}
 
 contentEditNode = null;
 contentEditMouseDown = false;
@@ -576,6 +650,10 @@ function now(){
 
 __nodeMouseDown = null;
 
+function domNode(dom){
+  return _DOMId2node.get(dom.id);
+}
+
 function onNodeMouseDown(e){
   console.log('onNodeMouseBtn');
   console.log(this.id);
@@ -587,16 +665,41 @@ function onNodeMouseDown(e){
     _mouseDragStart = [e.clientX, e.clientY];
     _mouseDragPos = [1*__nodeMouseDown['x'], 1*__nodeMouseDown['y']];
 
+    if(this.classList.contains('selected')){
+      // save all selected positions
+      _selected_DOM.forEach((dom)=>{
+        var node = domNode(dom);
+        node.startPos = [node.x, node.y];
+      })
+    }
+
     e.preventDefault();
   }if(e.button==0){
     // left mouse button
+    console.log(e);
+    
   }else{
+
   }
 
   if(e.ctrlKey){
     e.preventDefault();
   }
 }
+
+function onNodeClick(e){
+  console.log('clicked on ['+this.id+'] : '+this.innerText);
+
+  if(e.shiftKey){
+    // multiselect!
+    selectNode(this);
+    e.stopPropagation();
+  }else{
+    selectNode(null);
+    selectNode(this);
+  }
+}
+
 
 // https://stackoverflow.com/a/1535650/2624911
 function newId(){

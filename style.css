@@ -155,6 +155,10 @@ html, body {
     /* white-space: pre; */
     position: absolute;
     /* transition-duration: 0.2s; */
+    user-select: none; /* CSS3 (little to no support) */
+    -ms-user-select: none; /* IE 10+ */
+    -moz-user-select: none; /* Gecko (Firefox) */
+    -webkit-user-select: none; /* Webkit (Safari, Chrome) */  
   }
   .node.zoom{
     transition-duration: 0.2s;
