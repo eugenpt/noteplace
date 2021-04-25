@@ -174,6 +174,8 @@ _isMouseDragging = false;
 _mouseDragStart = [0,0];
 _mouseDragPos = [0,0];
 
+_isDragSelecting = false;
+
 container.onmousedown = function(e) {
   console.log('container.onmousedown');
   console.log('T='+T+' S='+S);
@@ -197,15 +199,207 @@ container.onmousedown = function(e) {
       }
     }
 
-    if(__nodeMouseDown){
+    if(e.shiftKey){
+      _isDragSelecting = true;
 
+      _('#select-box').style.display = 'block';
+      _('#select-box').style.width = 0;
+      _('#select-box').style.height = 0;
+      _('#select-box').style.top = e.clientX+'px';
+      _('#select-box').style.left = e.clientY+'px';
     }else{
-      selectNode(null);
+
+      if(__nodeMouseDown){
+
+      }else{
+        selectNode(null);
+      }
     }
-    
+      
     // if(_selected_DOM!==__nodeMouseDown){
     //   selectNode(null);
     // }
+  }
+}
+
+window.addEventListener('mouseup',function(e) {
+  console.log('window onmouseup');
+  // console.log(e);
+  console.log('T='+T+' S='+S);
+
+  __nodeMouseDown = null;
+
+  if(_isMouseDragging){
+    save(_isMouseDragging);
+
+    _isMouseDragging = false;
+  }else if(_isDragSelecting){
+    _('#select-box').style.display = 'none';
+    _('#select-box').style.width = 0;
+    _('#select-box').style.height = 0;
+    _('#select-box').style.top = 0;
+    _('#select-box').style.left = 0;
+
+    _isDragSelecting = false;
+
+    console.log('updating _dragSelected..');
+    updateDragSelect();
+    console.log('now ' + _dragSelected.length +' _dragSelected');
+
+    console.log('pushing _dragSelected doms to _selected_DOM')
+    _dragSelected.forEach((node)=>{
+      console.log(node.node.id);
+      _selected_DOM.push(node.node);
+    })
+    _dragSelected = [];
+  }else if(_isMouseDown){
+    // stop moving 
+    T[0] = _mouseDownT[0] - 1*node_container.dataset['x']/S;
+    T[1] = _mouseDownT[1] - 1*node_container.dataset['y']/S;
+
+    node_container.dataset['x'] = 0;
+    node_container.dataset['y'] = 0;
+    
+    node_container.style.left = 0;
+    node_container.style.top = 0;
+
+    replaceHistoryState();
+
+    redraw();
+  }
+
+  if(e.button==1){
+    e.preventDefault();
+  }
+  
+  __isResizing = false;
+  _isMouseDown = false;
+})
+
+
+_dragSelectingTimeout = null;
+_dragSelected = [];
+
+function tempSelect(node){
+  if(_selected_DOM.indexOf(node.node)>=0){
+    // already really selected
+  }else{
+    if(_dragSelected.indexOf(node)<0){
+      node.node.classList.add('selected');
+
+      _dragSelected.push(node);
+    }
+  }
+}
+
+function tempDeselect(node){
+  console.log('deselecting: '+node.node.id)
+  if(_selected_DOM.indexOf(node.node)>=0){
+    // selected previously..
+  }else{
+    node.node.classList.remove('selected');
+    _dragSelected.splice(_dragSelected.indexOf(node),1);
+  }
+}
+
+function updateDragSelect(){
+  // so the function os not run two times simultaneously
+  if(!('on' in updateDragSelect)){
+    updateDragSelect.on=true;    
+  }else{
+    if(updateDragSelect.on){
+      setTimeout(updateDragSelect,100);
+      return 0;
+    }
+  }
+  //
+  _dragSelected.forEach((node)=>{
+    node.stillSelected=false;
+  })
+  _NODES.forEach((node)=>{
+    // if(node.vis){
+      if(isNodeInClientBox(node, 
+          Math.min(_mousePos[0],_mouseDownPos[0]), Math.max(_mousePos[0],_mouseDownPos[0]),
+          Math.min(_mousePos[1],_mouseDownPos[1]), Math.max(_mousePos[1],_mouseDownPos[1])
+        )){
+        tempSelect(node);
+        node.stillSelected = true;
+      }
+    // }
+  })
+  //
+  _dragSelected.forEach((node)=>{
+    if(node.stillSelected == false){
+      tempDeselect(node);
+    }    
+  })
+  //
+  updateDragSelect.on = false;
+}
+
+function isNodeInBox(node, bxMin, bxMax, byMin, byMax){
+  return isInBox(
+      node.x, node.xMax, node.y, node.yMax, 
+      bxMin, bxMax, byMin, byMax
+    )
+}
+
+function clientToNode(pos){
+  return [T[0] + pos[0]/S, T[1] + pos[1]/S];
+}
+
+function isNodeInClientBox(node, cbxMin, cbxMax, cbyMin, cbyMax){
+  bMin = clientToNode([cbxMin, cbyMin])
+  bMax = clientToNode([cbxMax, cbyMax])
+  return isInBox(
+      node.x, node.xMax, node.y, node.yMax, 
+      bMin[0], bMax[0], bMin[1], bMax[1]
+    )
+}
+
+_mousePos = [0,0];
+container.onmousemove = function(e){
+  _mousePos = [e.clientX,e.clientY];
+  if(_isMouseDown){
+    if(_isMouseDragging){
+      if(_isMouseDragging.node.classList.contains('selected')){
+        // move all selected
+        _selected_DOM.forEach(function(dom){
+          node = _DOMId2node.get(dom.id)
+          node['x'] = node.startPos[0] +  (e.clientX - _mouseDragStart[0])/S;
+          node['y'] = node.startPos[1] +  (e.clientY - _mouseDragStart[1])/S;
+          calcBox(node);
+          updateNode(node)
+        })
+      }else{
+        // move the node under the cursor
+        _isMouseDragging['x'] = _mouseDragPos[0] +  (e.clientX - _mouseDragStart[0])/S;
+        _isMouseDragging['y'] = _mouseDragPos[1] +  (e.clientY - _mouseDragStart[1])/S;
+        calcBox(_isMouseDragging);
+        updateNode(_isMouseDragging)
+      }
+    }else if(__isResizing){
+
+    }else if(_isDragSelecting){
+      _('#select-box').style.left = Math.min(e.clientX, _mouseDownPos[0])+'px' 
+      _('#select-box').style.width = Math.abs(e.clientX  - _mouseDownPos[0])+'px';
+      _('#select-box').style.top = Math.min(e.clientY, _mouseDownPos[1])+'px' 
+      _('#select-box').style.height = Math.abs(e.clientY - _mouseDownPos[1])+'px';
+
+      updateDragSelect();
+      // clearTimeout(_dragSelectingTimeout);
+      // _dragSelectingTimeout = setTimeout(updateDragSelect, 500);
+    }else{
+
+      // T[0] = _mouseDownT[0] -  (e.clientX - _mouseDownPos[0])/S;
+      // T[1] = _mouseDownT[1] -  (e.clientY - _mouseDownPos[1])/S;
+      node_container.dataset['x'] = (e.clientX - _mouseDownPos[0]);
+      node_container.dataset['y'] = (e.clientY - _mouseDownPos[1]);
+      node_container.style.left = node_container.dataset['x'] + 'px';
+      node_container.style.top = node_container.dataset['y'] + 'px';
+
+      // redraw()
+    }
   }
 }
 
@@ -441,77 +635,6 @@ function stopEditing(){
     newNode(contentEditTextarea.parentElement);
   }
   contentEditTextarea = null;
-}
-
-window.addEventListener('mouseup',function(e) {
-  console.log('window onmouseup');
-  // console.log(e);
-  console.log('T='+T+' S='+S);
-
-  __nodeMouseDown = null;
-
-  if(_isMouseDragging){
-    save(_isMouseDragging);
-
-    _isMouseDragging = false;
-    _isMouseDown = false;
-
-  }else if(_isMouseDown){
-    // stop moving 
-    T[0] = _mouseDownT[0] - 1*node_container.dataset['x']/S;
-    T[1] = _mouseDownT[1] - 1*node_container.dataset['y']/S;
-
-    node_container.dataset['x'] = 0;
-    node_container.dataset['y'] = 0;
-    
-    node_container.style.left = 0;
-    node_container.style.top = 0;
-
-    replaceHistoryState();
-
-    redraw();
-
-    _isMouseDown = false;
-  }
-
-  if(e.button==1){
-    e.preventDefault();
-  }
-  
-  __isResizing = false;
-})
-
-
-container.onmousemove = function(e){
-  if(_isMouseDown){
-    if(_isMouseDragging){
-      if(_isMouseDragging.node.classList.contains('selected')){
-        // move all selected
-        _selected_DOM.forEach(function(dom){
-          node = _DOMId2node.get(dom.id)
-          node['x'] = node.startPos[0] +  (e.clientX - _mouseDragStart[0])/S;
-          node['y'] = node.startPos[1] +  (e.clientY - _mouseDragStart[1])/S;
-          updateNode(node)
-        })
-      }else{
-        // move the node under the cursor
-        _isMouseDragging['x'] = _mouseDragPos[0] +  (e.clientX - _mouseDragStart[0])/S;
-        _isMouseDragging['y'] = _mouseDragPos[1] +  (e.clientY - _mouseDragStart[1])/S;
-        updateNode(_isMouseDragging)
-      }
-    }else if(__isResizing){
-    }else{
-
-      // T[0] = _mouseDownT[0] -  (e.clientX - _mouseDownPos[0])/S;
-      // T[1] = _mouseDownT[1] -  (e.clientY - _mouseDownPos[1])/S;
-      node_container.dataset['x'] = (e.clientX - _mouseDownPos[0]);
-      node_container.dataset['y'] = (e.clientY - _mouseDownPos[1]);
-      node_container.style.left = node_container.dataset['x'] + 'px';
-      node_container.style.top = node_container.dataset['y'] + 'px';
-
-      // redraw()
-    }
-  }
 }
 
 
@@ -903,16 +1026,28 @@ function calcBox(d){
   }
 }
 
+function isInBox(xMin,xMax,yMin,yMax,bxMin,bxMax,byMin,byMax){
+  return (
+    (xMin <= bxMax)
+  &&(yMin <= byMax)
+  &&(xMax >= bxMin)
+  &&(yMax >= byMin)  
+  )
+}
+
 function isVisible(d){
   if(!('xMax' in d)){
     calcBox(d);
   }
   return (
       (d.fontSize > 0.2/S)
-    &&(d.x<=T[0]+width*1.5/(1*S))
-    &&(d.y<=T[1]+width*1.5/(1*S))
-    &&(d.xMax>=T[0] - width*0.5/S)
-    &&(d.yMax>=T[1] - height*0.5/S)
+    &&isInBox(d.x, d.xMax, d.y, d.yMax, 
+      T[0] - width*0.5/S, T[0]+width*1.5/(1*S),
+      T[1] - height*0.5/S, T[1]+width*1.5/(1*S))
+    // &&(d.x<=T[0]+width*1.5/(1*S))
+    // &&(d.y<=T[1]+width*1.5/(1*S))
+    // &&(d.xMax>=T[0] - width*0.5/S)
+    // &&(d.yMax>=T[1] - height*0.5/S)
   )  
 
 }

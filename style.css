@@ -202,3 +202,10 @@ html, body {
     -o-user-drag: none;
     user-drag: none; 
   }
+
+  #select-box{
+    position: absolute;
+    border: 1px solid black;
+    z-index: 10000;
+    display: none;
+  }
