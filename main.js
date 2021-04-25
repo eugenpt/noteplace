@@ -411,6 +411,28 @@ container.onmousemove = function(e){
 // #+#   #+#  #+#           #+#    #+#    #+# #+#    #+#  #+#+# #+#+#  #+#   #+#+# 
 // ###    ### ##########    ###    #########   ########    ###   ###   ###    #### 
 
+_clipBoard = []; // stores nodes with relative coordinates (x-centerX)*S
+
+function calcCenterPos(nodes){
+  var R=[0,0];
+  nodes.forEach(function(node){
+    R[0]+=node.x;
+    R[1]+=node.y;
+  })
+  return [R[0]/nodes.length, R[1]/nodes.length]
+}
+
+function copySelection(){
+  _clipBoard = _selected_DOM.map(domNode).map(stripNode);
+  var centerPos = calcCenterPos(_clipBoard);
+  _clipBoard.forEach((node)=>{
+    // yeah, my definition of S is counterintuitive here..
+    node.x = (node.x - centerPos[0])*S;
+    node.y = (node.y - centerPos[1])*S;
+    node.fontSize *= S;
+  })
+}
+
 window.addEventListener('keydown',(e)=>{
   console.log('keydown');
   console.log(e);
@@ -429,6 +451,41 @@ window.addEventListener('keydown',(e)=>{
         // stop so that Enter does not overwrite the node content
         e.stopPropagation();
         e.preventDefault();
+      }
+    }
+  }else if(e.key=='c'){
+    if(e.ctrlKey){
+      // Ctrl-C !
+      copySelection();
+    }
+  }else if(e.key=='x'){
+    if(e.ctrlKey){
+      // Ctrl-X
+      copySelection();
+      _selected_DOM.forEach(deleteNode);
+      _selected_DOM = [];
+    }
+  }else if(e.key=='v'){
+    if(e.ctrlKey){
+      // Ctrl-V !
+      // if anything is copied
+      if(_clipBoard.length>0){      
+        // deselect all
+        selectNode(null);
+        // paste Under the cursor?
+        
+        _clipBoard.forEach((node)=>{
+          var nnode = stripNode(node);
+          nnode.x /= S;
+          nnode.y /= S;
+          nnode.fontSize /= S;
+          var tmousePos = clientToNode(_mousePos);
+          nnode.x += tmousePos[0];
+          nnode.y += tmousePos[1];
+          
+          selectNode(newNode(nnode));
+        })
+
       }
     }
   }
@@ -1284,8 +1341,15 @@ function editFontSize(delta){
       onFontSizeEdit();
     }else{
       var k = Math.pow(1.25, delta);
+
+      var centerPos = calcCenterPos(_selected_DOM.map(domNode));
+
+
       _selected_DOM.forEach((dom)=>{
         domNode(dom).fontSize *= k;
+        domNode(dom).x = centerPos[0] + (domNode(dom).x - centerPos[0])*k;
+        domNode(dom).y = centerPos[1] + (domNode(dom).y - centerPos[1])*k;
+
         updateNode(dom);
       })
     }
