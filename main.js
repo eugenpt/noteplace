@@ -106,7 +106,7 @@ container.ondblclick = function(e) {
 function zoomInOut(in_degree, clientPos=null){
   if(clientPos==null){
     // basically - we pressed a +/- button
-    if(_selected_DOM){
+    if(_selected_DOM.length>0){
       // zoom to it!
       center_x = 0;
       center_y = 0;
@@ -174,8 +174,6 @@ _isMouseDragging = false;
 _mouseDragStart = [0,0];
 _mouseDragPos = [0,0];
 
-_selected_DOM = null;
-
 container.onmousedown = function(e) {
   console.log('container.onmousedown');
   console.log('T='+T+' S='+S);
@@ -223,7 +221,7 @@ window.addEventListener('keydown',(e)=>{
   console.log('keydown');
   console.log(e);
   if(e.key=="Delete"){
-    if(_selected_DOM){
+    if(_selected_DOM.length>0){
       _selected_DOM.forEach(deleteNode);
       save('ids');
     }
@@ -231,7 +229,7 @@ window.addEventListener('keydown',(e)=>{
     if(contentEditTextarea){
       return 0;
     }else{
-      if(_selected_DOM){
+      if(_selected_DOM.length>0){
         // select, start editing
         onNodeDblClick(_selected_DOM[0]);
         // stop so that Enter does not overwrite the node content
@@ -333,7 +331,7 @@ function selectOneDOM(dom){
 function selectNode(n){
   console.log('select : ['+(n?n.id:'null')+']')
   if(n){
-    if(_selected_DOM){
+    if(_selected_DOM.length>0){
       if(!Array.isArray(n)){
         n = [n];
       }
@@ -363,13 +361,26 @@ function selectNode(n){
       _selected_DOM.forEach(selectOneDOM);
     }
   }else{
-    if(_selected_DOM){
+    if(_selected_DOM.length>0){
       _selected_DOM.forEach(deselectOneDOM);
       _selected_DOM = [];
     }
   }
+
+  if(_selected_DOM.length==1){
+    _('#text').disabled = false;
+    _('#fontSize').disabled = false;
+    _('#text').value = domNode(_selected_DOM[0])['text'];
+    _('#fontSize').value = domNode(_selected_DOM[0])['fontSize'];
+    _('#fontSize').step = _('#fontSize').value * 0.25;
+  }else{
+    _('#text').disabled = true;
+    _('#fontSize').disabled = true;
+    _('#text').value = '';
+    _('#fontSize').value = '';   
+  }
   return 0;
-  if(_selected_DOM){ //remove class
+  if(_selected_DOM.length>0){ //remove class
     _selected_DOM.classList.remove('selected');
     try{
     $(_selected_DOM).rotatable('destroy');
@@ -382,15 +393,10 @@ function selectNode(n){
     }
   }
   _selected_DOM = n;
-  if(_selected_DOM){// apply class, setup editing tools
+  if(_selected_DOM.length>0){// apply class, setup editing tools
 
           
     //   
-    _('#text').disabled = false;
-    _('#fontSize').disabled = false;
-    _('#text').value = _DOMId2node.get(_selected_DOM.id)['text'];
-    _('#fontSize').value = _DOMId2node.get(_selected_DOM.id)['fontSize'];
-    _('#fontSize').step = _('#fontSize').value * 0.25;
   }else{// just deselect => clear inputs
     
     _('#text').disabled = true;
@@ -1078,15 +1084,15 @@ function getG(d){
 }
 
 function onFontSizeEdit(){
-  if(_selected_DOM !== null){
-    _DOMId2node.get(_selected_DOM.id)['fontSize'] = this.value;
-    _selected_DOM.classList.add('zoom');
-    updateNode(_selected_DOM);
+  if(_selected_DOM.length == 1){
+    domNode(_selected_DOM[0])['fontSize'] = _('#fontSize').value;
+    _selected_DOM[0].classList.add('zoom');
+    updateNode(_selected_DOM[0]);
     // _selected_DOM.classList.remove('zoom');
 
-    this.step = this.value*0.25;
+    _('#fontSize').step = _('#fontSize').value*0.25;
 
-    save(_selected_DOM);
+    save(_selected_DOM[0]);
   }
 }
 
@@ -1133,6 +1139,23 @@ function addRandomNodes(N, Xlim, Ylim, FSLim){
   redraw();
 }
 
+
+function editFontSize(delta){
+  if(_selected_DOM.length>0){
+    if(_selected_DOM.length==1){
+      // one element selected, fontSize input is related to it
+      input = _('#fontSize');
+      input.value *= Math.pow(1.25, delta);
+      onFontSizeEdit();
+    }else{
+      var k = Math.pow(1.25, delta);
+      _selected_DOM.forEach((dom)=>{
+        domNode(dom).fontSize *= k;
+        updateNode(dom);
+      })
+    }
+  }
+}
 
 // :::::::::: ::::::::::: :::        :::::::::: ::::::::  
 // :+:            :+:     :+:        :+:       :+:    :+: 
@@ -1412,6 +1435,13 @@ _('#btnZoomIn').onclick = function(){
 }
 _('#btnZoomOut').onclick = function(){
   zoomInOut(-1);
+}
+
+_('#btnFontMinus').onclick = function(){
+  editFontSize(-1);
+}
+_('#btnFontPlus').onclick = function(){
+  editFontSize(+1);
 }
 
 
