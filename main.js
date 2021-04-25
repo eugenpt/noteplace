@@ -105,11 +105,21 @@ container.ondblclick = function(e) {
 
 function zoomInOut(in_degree, clientPos=null){
   if(clientPos==null){
+    // basically - we pressed a +/- button
     if(_selected_DOM){
       // zoom to it!
+      center_x = 0;
+      center_y = 0;
+      _selected_DOM.forEach((dom)=>{
+        center_x += domNode(dom).x;
+        center_y += domNode(dom).y;
+      })
+      center_x/=_selected_DOM.length;
+      center_y/=_selected_DOM.length;
+
       clientPos = [
-        (1*_selected_DOM.dataset['x']-T[0])*S,
-        (1*_selected_DOM.dataset['y']-T[1])*S,
+        (center_x-T[0])*S,
+        (center_y-T[1])*S,
       ]
     }else{
       // just center
