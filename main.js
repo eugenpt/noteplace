@@ -51,18 +51,18 @@ function status() {
 width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
 height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
 
-// resizeWatchTimeout = null;
-// window.addEventListener('resize', function(event){
-//   // do stuff here
-//   clearTimeout(resizeWatchTimeout);
-//   resizeWatchTimeout = setTimeout(function(){
-//     width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
-//     height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
+resizeWatchTimeout = null;
+window.addEventListener('resize', function(event){
+  // do stuff here
+  clearTimeout(resizeWatchTimeout);
+  resizeWatchTimeout = setTimeout(function(){
+    width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
+    height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
     
-//     filterNodes2Draw();
-//     redraw();
-//   },100); // run update only every 100ms
-// });
+    // filterNodes2Draw();
+    // redraw();
+  },500); // run update only every 100ms
+});
 
 
    //yeah, I don't like limits, but..
@@ -210,6 +210,37 @@ container.onmousedown = function(e) {
     // }
   }
 }
+
+// :::    ::: :::::::::: :::   ::: :::::::::   ::::::::  :::       ::: ::::    ::: 
+// :+:   :+:  :+:        :+:   :+: :+:    :+: :+:    :+: :+:       :+: :+:+:   :+: 
+// +:+  +:+   +:+         +:+ +:+  +:+    +:+ +:+    +:+ +:+       +:+ :+:+:+  +:+ 
+// +#++:++    +#++:++#     +#++:   +#+    +:+ +#+    +:+ +#+  +:+  +#+ +#+ +:+ +#+ 
+// +#+  +#+   +#+           +#+    +#+    +#+ +#+    +#+ +#+ +#+#+ +#+ +#+  +#+#+# 
+// #+#   #+#  #+#           #+#    #+#    #+# #+#    #+#  #+#+# #+#+#  #+#   #+#+# 
+// ###    ### ##########    ###    #########   ########    ###   ###   ###    #### 
+
+window.addEventListener('keydown',(e)=>{
+  console.log('keydown');
+  console.log(e);
+  if(e.key=="Delete"){
+    if(_selected_DOM){
+      _selected_DOM.forEach(deleteNode);
+      save('ids');
+    }
+  }else if(e.key=='Enter'){
+    if(contentEditTextarea){
+      return 0;
+    }else{
+      if(_selected_DOM){
+        // select, start editing
+        onNodeDblClick(_selected_DOM[0]);
+        // stop so that Enter does not overwrite the node content
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    }
+  }
+})
 
 __IMG = null
 
@@ -374,7 +405,7 @@ _DOMId2nodej = new Map()
 function gen_DOMId2nodej(){
   _DOMId2nodej = new Map()
   for(var j=0;j<_NODES.length;j++){
-    _DOMId2nodej[_NODES[j].node.id] = j;
+    _DOMId2nodej.set(_NODES[j].node.id,j);
   }
 }
 
@@ -479,6 +510,11 @@ container.onmousemove = function(e){
 
 
 function save(node=null, save_ids=true){
+  // save node state to localStorage.
+  //  if node === null, saves all nodes
+  //  if node == 'ids', saves ids
+  // additional argument:
+  //  save_ids [bool] : true => save ids too
   if(node === null){
     // save all
     node_ids = [];
@@ -488,6 +524,8 @@ function save(node=null, save_ids=true){
       // nodes.push(JSON.parse(JSON.stringify(node.dataset)));
     });
     localStorage['noteplace.node_ids'] = JSON.stringify(node_ids);
+  }else if(node='ids'){
+    save_ids = true;
   }else{
     // node provided, save only node
     if('x' in node){
@@ -541,14 +579,16 @@ function textareaBtnDown(e){
     // Shift+Enter
     stopEditing();
 
+    selectNode(null);
+    tnode = domNode(contentEditNode)
     var new_node = newNode({
-      x:contentEditNode.dataset['x'],
-      y:1*contentEditNode.dataset['y']
-        // + 1*contentEditNode.dataset['fontSize']
+      x:tnode['x'],
+      y:1*tnode['y']
+        // + 1*tnode['fontSize']
         + (contentEditNode.getBoundingClientRect().height/S),
-      x:contentEditNode.dataset['x'],
+      x:tnode['x'],
       text:'',
-      fontSize:contentEditNode.dataset['fontSize'],
+      fontSize:tnode['fontSize'],
     })
     
     selectNode(new_node);
