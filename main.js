@@ -434,6 +434,8 @@ function copySelection(){
     node.y = (node.y - centerPos[1])*S;
     node.fontSize *= S;
   })
+
+  copyToClipboard(JSON.stringify(_clipBoard));
 }
 
 window.addEventListener('keydown',(e)=>{
@@ -475,7 +477,7 @@ window.addEventListener('keydown',(e)=>{
 
       }else{
         // if anything is copied
-        if(_clipBoard.length>0){      
+        if(0){//_clipBoard.length>0){      
           // deselect all
           selectNode(null);
           // paste Under the cursor?
@@ -506,14 +508,44 @@ window.addEventListener('keydown',(e)=>{
             setTimeout(function(){
               tstuff = _('#copydiv').innerHTML;
 
-              tstuff = tstuff.replaceAll(/font-size:[ 0-9]+(px)?;?/g,'')
-              tstuff = tstuff.replaceAll(/width:[ 0-9]+(px)?;?/g,'')
-              
+              json_parsed = false;
+              if(tstuff[0]=='['){
+                try{
+                  _clipBoard = JSON.parse(tstuff);
+                  json_parsed = true;
+                }catch{
+                  json_parsed = false;
+                }
+              }
 
-              console.log(tstuff);
-              selectNode(newNode({
-                text:tstuff
-              }))
+              if(json_parsed){
+                selectNode(null);
+                // paste Under the cursor?
+                
+                _clipBoard.forEach((node)=>{
+                  var nnode = stripNode(node);
+                  nnode.x /= S;
+                  nnode.y /= S;
+                  nnode.fontSize /= S;
+                  var tmousePos = clientToNode(_mousePos);
+                  nnode.x += tmousePos[0];
+                  nnode.y += tmousePos[1];
+                  
+                  selectNode(newNode(nnode));
+                })
+      
+              }else{
+
+                tstuff = tstuff.replaceAll(/font-size:[ 0-9]+(px)?;?/g,'')
+                tstuff = tstuff.replaceAll(/width:[ 0-9]+(px)?;?/g,'')
+                
+
+                console.log(tstuff);
+                selectNode(newNode({
+                  text:tstuff
+                }))
+
+              }
               node_container.removeChild(copydiv);
             },5);
             e.stopPropagation();
@@ -760,7 +792,7 @@ function save(node=null, save_ids=true){
       localStorage['noteplace.node_'+node.id] = JSON.stringify(stripNode(node));
     }else{
       // DOM node
-      localStorage['noteplace.'+node.id] = JSON.stringify(stripNode(domNode(node.id)));
+      localStorage['noteplace.'+node.id] = JSON.stringify(stripNode(domNode(node)));
     }
   }
   if(save_ids){
@@ -1081,7 +1113,7 @@ function newNode(node){
   updateNode(node);
 
   if(!('className' in node)){
-    console.log("!('className' in node) , appending to DOM")
+    // console.log("!('className' in node) , appending to DOM")
     node_container.appendChild(tdom);
   }
 
@@ -1122,6 +1154,22 @@ function updateNode(d){
   })
 }
 
+
+function updateSizes(){
+  if(!('S' in updateSizes)){
+
+  }
+  for(var j=0;j<_NODES.length; j++){
+    if(_NODES[j].vis){
+      d = _NODES[j]
+      d.xMax = d.x + d.node.clientWidth/S;
+      d.yMax = d.y + d.node.clientHeight/S;
+    }
+  }
+
+
+  setTimeout(updateSizes, 100);
+}
 
 function calcBox(d){
   if(d.text.indexOf('![')>=0){
@@ -1781,3 +1829,16 @@ window.addEventListener('cut', function(e){
 window.addEventListener('copy', function(e){
   console.log(e);
 });
+
+const copyToClipboard = str => {
+  const el = document.createElement('textarea');
+  el.value = str;
+  el.setAttribute('readonly', '');
+  el.style.position = 'absolute';
+  el.style.left = '-9999px';
+  el.style.opacity=0;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+};
