@@ -1,4 +1,7 @@
-var md = new Remarkable();
+var md = new Remarkable('full', {
+  html: true,
+  typographer: true,
+});
 
 // https://stackoverflow.com/a/17111220/2624911
 dragInitiated = false;
@@ -1718,3 +1721,14 @@ function _RESTART(){
   $('.node').remove();
   nodes_default.map(stripNode).forEach(newNode);
 }
+
+
+window.addEventListener('paste', function(e){
+  console.log(e);
+});
+window.addEventListener('cut', function(e){
+  console.log(e);
+});
+window.addEventListener('copy', function(e){
+  console.log(e);
+});
