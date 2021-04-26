@@ -426,6 +426,7 @@ function calcCenterPos(nodes){
 }
 
 function copySelection(){
+  copySelection.on=true;
   _clipBoard = _selected_DOM.map(domNode).map(stripNode);
   var centerPos = calcCenterPos(_clipBoard);
   _clipBoard.forEach((node)=>{
@@ -436,6 +437,8 @@ function copySelection(){
   })
 
   copyToClipboard(JSON.stringify(_clipBoard));
+
+  copySelection.on=false;
 }
 
 window.addEventListener('keydown',(e)=>{
@@ -461,14 +464,16 @@ window.addEventListener('keydown',(e)=>{
   }else if(e.key=='c'){
     if(e.ctrlKey){
       // Ctrl-C !
-      copySelection();
+      // moved to copy event
+      // copySelection();
     }
   }else if(e.key=='x'){
     if(e.ctrlKey){
       // Ctrl-X
-      copySelection();
-      _selected_DOM.forEach(deleteNode);
-      _selected_DOM = [];
+      // moved to cut event
+      // copySelection();
+      // _selected_DOM.forEach(deleteNode);
+      // _selected_DOM = [];
     }
   }else if(e.key=='v'){
     if(e.ctrlKey){
@@ -495,71 +500,7 @@ window.addEventListener('keydown',(e)=>{
           })
 
         }else{
-          // hmm, pasting something from the outside?
-          copydiv = document.createElement('div');
-          copydiv.id = "copydiv";
-          copydiv.contentEditable = "true";
-          node_container.appendChild(copydiv);
-          copydiv.focus();
-          copydiv.addEventListener('paste',function(e){
-            console.log('copydiv paste!');
-            console.log(e);
 
-            setTimeout(function(){
-              tstuff = _('#copydiv').innerHTML;
-
-              json_parsed = false;
-              if(tstuff[0]=='['){
-                try{
-                  _clipBoard = JSON.parse(
-                    // I know, right? 
-                    //  why does pasting JSON-encoded html 
-                    //    create this sort of nonsense?
-                    tstuff.replaceAll('&lt;','<')
-                          .replaceAll('&gt;','>')
-                          .replaceAll('&amp;','&')
-                          .replaceAll('&apos;',"'")
-                          .replaceAll('&quot;','"')
-                  );
-                  json_parsed = true;
-                }catch{
-                  json_parsed = false;
-                }
-              }
-
-              if(json_parsed){
-                console.log('Pasting JSON-parsed _clipBoard')
-                selectNode(null);
-                // paste Under the cursor?
-                
-                _clipBoard.forEach((node)=>{
-                  var nnode = stripNode(node);
-                  nnode.x /= S;
-                  nnode.y /= S;
-                  nnode.fontSize /= S;
-                  var tmousePos = clientToNode(_mousePos);
-                  nnode.x += tmousePos[0];
-                  nnode.y += tmousePos[1];
-                  
-                  selectNode(newNode(nnode));
-                })
-      
-              }else{
-
-                tstuff = tstuff.replaceAll(/font-size:[ 0-9]+(px)?;?/g,'')
-                tstuff = tstuff.replaceAll(/width:[ 0-9]+(px)?;?/g,'')
-                
-
-                console.log(tstuff);
-                selectNode(newNode({
-                  text:tstuff
-                }))
-
-              }
-              node_container.removeChild(copydiv);
-            },5);
-            e.stopPropagation();
-          })
           // setTimeout(function(){
           //   // read copied
           //   tstuff = _('#copydiv').innerHTML;
@@ -607,10 +548,11 @@ function selectOneDOM(dom){
   $(function() {
     var params = {
       start:function(e){
+        console.log('rotate start');
         console.log(e);
       },
       stop:function(e, ui){
-        console.log('stop');
+        console.log('rotate stop');
         console.log(e);
         console.log(ui);
 
@@ -1049,7 +991,7 @@ function newNode(node){
     tdom = node;
     console.log('newNode with DOM node provided:');
     // console.log(tn);
-    
+    node = domNode(tdom);
   }else{
     console.log('newNode with node provided')
     if (!('id' in node))
@@ -1089,9 +1031,12 @@ function newNode(node){
   tdom.onmousedown = onNodeMouseDown;
 
 
-  tdom.innerHTML = getHTML(_DOMId2node.get(tdom.id)['text']);
+  tdom.innerHTML = getHTML(node.text);
 
-  tdom.style.transform="rotate("+_DOMId2node.get(tdom.id)["rotate"]+"rad)"
+  if(node.rotate!=0){
+    tdom.style.transform="rotate("+node.rotate+"rad)"
+  }
+
   
   // tn.innerHTML =  '';
   // ta = document.createElement('a');
@@ -1804,6 +1749,10 @@ $('#exampleModal').on('shown.bs.modal', function () {
   $('#modal-input').trigger('focus')
 })
 
+
+// start updateSizes process
+updateSizes();
+
 // :::    ::: ::::::::::: ::::::::::: :::        ::::::::::: ::::::::::: :::   ::: 
 // :+:    :+:     :+:         :+:     :+:            :+:         :+:     :+:   :+: 
 // +:+    +:+     +:+         +:+     +:+            +:+         +:+      +:+ +:+  
@@ -1829,15 +1778,109 @@ function _RESTART(){
 
 
 window.addEventListener('paste', function(e){
+  console.log('window paste');
   console.log(e);
-  items = e.clipboardData.items;
-  console.log(items);
+  // items = e.clipboardData.items;
+  // console.log(items);
+          // hmm, pasting something from the outside?
+          copydiv = document.createElement('div');
+          copydiv.id = "copydiv";
+          copydiv.contentEditable = "true";
+          
+          node_container.appendChild(copydiv);
+          copydiv.focus();
+          // copydiv.addEventListener('paste',function(e){
+          addOnContentChange(copydiv,function(e){
+            console.log('copydiv paste!');
+            console.log(e);
+
+            setTimeout(function(){
+              tstuff = _('#copydiv').innerHTML;
+
+              json_parsed = false;
+              if(tstuff[0]=='['){
+                try{
+                  _clipBoard = JSON.parse(
+                    // I know, right? 
+                    //  why does pasting JSON-encoded html 
+                    //    create this sort of nonsense?
+                    tstuff.replaceAll('&lt;','<')
+                          .replaceAll('&gt;','>')
+                          .replaceAll('&amp;','&')
+                          // .replaceAll('&apos;',"'")
+                          // .replaceAll('&quot;','"')
+                  );
+                  json_parsed = true;
+                }catch{
+                  json_parsed = false;
+                }
+              }
+
+              if(json_parsed){
+                console.log('Pasting JSON-parsed _clipBoard')
+                selectNode(null);
+                // paste Under the cursor?
+                
+                _clipBoard.forEach((node)=>{
+                  var nnode = stripNode(node);
+                  nnode.x /= S;
+                  nnode.y /= S;
+                  nnode.fontSize /= S;
+                  var tmousePos = clientToNode(_mousePos);
+                  nnode.x += tmousePos[0];
+                  nnode.y += tmousePos[1];
+                  
+                  selectNode(newNode(nnode));
+                })
+      
+              }else{
+
+                // I know this is not perfect (HAHAHAHAHA!!...)
+                //  but it kinda works
+                tstuff = tstuff.replaceAll(/font-size:[ 0-9]+(px)?;?/g,'')
+                tstuff = tstuff.replaceAll(/width:[ 0-9]+(px)?;?/g,'')
+                tstuff = tstuff.replaceAll(/line-height:[ 0-9]+(px)?;?/g,'')
+                tstuff = tstuff.replaceAll(/height:[ 0-9]+(px)?;?/g,'')
+
+                console.log(tstuff);
+                selectNode(newNode({
+                  text:tstuff
+                }))
+
+              }
+              node_container.removeChild(copydiv);
+            },5);
+            e.stopPropagation();
+          })  
 });
 window.addEventListener('cut', function(e){
+  console.log('window cut');
   console.log(e);
+  if(contentEditTextarea){
+
+  }else{
+    e.stopPropagation();
+    e.preventDefault();
+    if(('on' in copySelection)&&(copySelection.on)){
+    }else{
+      copySelection();
+    }
+    _selected_DOM.forEach(deleteNode);
+    _selected_DOM = [];  
+    
+  }
 });
 window.addEventListener('copy', function(e){
+  console.log('window copy');
   console.log(e);
+  if(contentEditTextarea){
+
+  }else{
+    if(('on' in copySelection)&&(copySelection.on)){
+    }else{
+      copySelection();
+    }
+  }
 });
 
 const copyToClipboard = str => {
