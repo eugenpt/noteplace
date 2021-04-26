@@ -471,24 +471,62 @@ window.addEventListener('keydown',(e)=>{
   }else if(e.key=='v'){
     if(e.ctrlKey){
       // Ctrl-V !
-      // if anything is copied
-      if(_clipBoard.length>0){      
-        // deselect all
-        selectNode(null);
-        // paste Under the cursor?
-        
-        _clipBoard.forEach((node)=>{
-          var nnode = stripNode(node);
-          nnode.x /= S;
-          nnode.y /= S;
-          nnode.fontSize /= S;
-          var tmousePos = clientToNode(_mousePos);
-          nnode.x += tmousePos[0];
-          nnode.y += tmousePos[1];
-          
-          selectNode(newNode(nnode));
-        })
+      if(contentEditTextarea){
 
+      }else{
+        // if anything is copied
+        if(_clipBoard.length>0){      
+          // deselect all
+          selectNode(null);
+          // paste Under the cursor?
+          
+          _clipBoard.forEach((node)=>{
+            var nnode = stripNode(node);
+            nnode.x /= S;
+            nnode.y /= S;
+            nnode.fontSize /= S;
+            var tmousePos = clientToNode(_mousePos);
+            nnode.x += tmousePos[0];
+            nnode.y += tmousePos[1];
+            
+            selectNode(newNode(nnode));
+          })
+
+        }else{
+          // hmm, pasting something from the outside?
+          copydiv = document.createElement('div');
+          copydiv.id = "copydiv";
+          copydiv.contentEditable = "true";
+          node_container.appendChild(copydiv);
+          copydiv.focus();
+          copydiv.addEventListener('paste',function(e){
+            console.log('copydiv paste!');
+            console.log(e);
+
+            setTimeout(function(){
+              tstuff = _('#copydiv').innerHTML;
+
+              tstuff = tstuff.replaceAll(/font-size:[ 0-9]+(px)?;?/g,'')
+              tstuff = tstuff.replaceAll(/width:[ 0-9]+(px)?;?/g,'')
+              
+
+              console.log(tstuff);
+              selectNode(newNode({
+                text:tstuff
+              }))
+              node_container.removeChild(copydiv);
+            },5);
+            e.stopPropagation();
+          })
+          // setTimeout(function(){
+          //   // read copied
+          //   tstuff = _('#copydiv').innerHTML;
+          //   console.log(tstuff);
+          //   selectNode(newNode({
+          //     text:tstuff
+          //   }))
+          // },50)
+        }
       }
     }
   }
@@ -713,7 +751,7 @@ function save(node=null, save_ids=true){
       // nodes.push(JSON.parse(JSON.stringify(node.dataset)));
     });
     localStorage['noteplace.node_ids'] = JSON.stringify(node_ids);
-  }else if(node='ids'){
+  }else if(node=='ids'){
     save_ids = true;
   }else{
     // node provided, save only node
@@ -722,7 +760,7 @@ function save(node=null, save_ids=true){
       localStorage['noteplace.node_'+node.id] = JSON.stringify(stripNode(node));
     }else{
       // DOM node
-      localStorage['noteplace.'+node.id] = JSON.stringify(stripNode(_DOMId2node.get(node.id)));
+      localStorage['noteplace.'+node.id] = JSON.stringify(stripNode(domNode(node.id)));
     }
   }
   if(save_ids){
@@ -976,6 +1014,14 @@ function newNode(node){
       node.id = newId()
     if(!'rotate' in node)
       node.rotate=0;
+    if(!('x' in node)){
+      mouseXY = clientToNode(_mousePos);
+      node.x = mouseXY[0];
+      node.y = mouseXY[1];
+    }
+    if(!('fontSize' in node)){
+      node.fontSize = 20/S;
+    }
 
     tdom = document.createElement('div')
     tdom.id = 'node_'+node.id;
@@ -1068,6 +1114,7 @@ function updateNode(d){
   n.style.fontSize = (d["fontSize"])*S + 'px';
 
   [].forEach.call(n.getElementsByTagName('img'),(e)=>{
+    e.style.width='auto';
     e.style.height = 5*(d["fontSize"])*S +'px';
     e.style.transitionDuration='0.2s';
     // e.setAttribute('draggable', false);
@@ -1725,6 +1772,8 @@ function _RESTART(){
 
 window.addEventListener('paste', function(e){
   console.log(e);
+  items = e.clipboardData.items;
+  console.log(items);
 });
 window.addEventListener('cut', function(e){
   console.log(e);
