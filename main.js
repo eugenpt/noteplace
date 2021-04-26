@@ -511,7 +511,16 @@ window.addEventListener('keydown',(e)=>{
               json_parsed = false;
               if(tstuff[0]=='['){
                 try{
-                  _clipBoard = JSON.parse(tstuff);
+                  _clipBoard = JSON.parse(
+                    // I know, right? 
+                    //  why does pasting JSON-encoded html 
+                    //    create this sort of nonsense?
+                    tstuff.replaceAll('&lt;','<')
+                          .replaceAll('&gt;','>')
+                          .replaceAll('&amp;','&')
+                          .replaceAll('&apos;',"'")
+                          .replaceAll('&quot;','"')
+                  );
                   json_parsed = true;
                 }catch{
                   json_parsed = false;
@@ -519,6 +528,7 @@ window.addEventListener('keydown',(e)=>{
               }
 
               if(json_parsed){
+                console.log('Pasting JSON-parsed _clipBoard')
                 selectNode(null);
                 // paste Under the cursor?
                 
