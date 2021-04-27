@@ -18,37 +18,45 @@
     </div>
   </div>
   <div class="notification-top container-fluid justify-content-start navbar navbar-light bg-light">
-    <a onclick="zoomToURL('?Tx=0&Ty=0&S=1')" class="custom-file-upload">🏠</a>
-    <div class="d-flex">
-      <input type="number" id="number" value=100>
-      <button id="btnAddLots" class="btn btn-outline-success">ADD!</button>
-    </div>
-    <!-- Example single danger button -->
-    <div class="dropdown">
-      <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Menu
-      </button>
-      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-        <a class="dropdown-item" id="btnRestart" data-toggle="modal" data-target="#modalYesNo">New Noteplace</a>
-        <a class="dropdown-item" id="btnClear" data-toggle="modal" data-target="#modalYesNo">Clear Noteplace</a>
-        <div class="dropdown-divider"></div>
-        <a class="dropdown-item" id="save" data-toggle="modal" data-target="#exampleModal">Save to local file</a>
-        <a class="dropdown-item" href="">
-          <label for="file">
-            Load from a local file<input type="file" id="file" name="file">
-          </label>
-        </a>
-        <div class="dropdown-divider"></div>
-        <a class="dropdown-item"><img style="height: 32px;" src="https://firebasestorage.googleapis.com/v0/b/drive-assets.google.com.a.appspot.com/o/Asset%20-%20Google%20Drive%20Lockup.png?alt=media" alt="Google Drive™">:</a>
-        <a class="dropdown-item" id="authorize_button">Authorize</a>
-        <a class="dropdown-item authorize-only" id="save_gdrive" data-toggle="modal" data-target="#exampleModal"><img style="height:16px" src="https://fonts.gstatic.com/s/i/productlogos/drive_2020q4/v8/web-64dp/logo_drive_2020q4_color_2x_web_64dp.png" alt="Google Drive™"> Save</a>
-        <a class="dropdown-item authorize-only" id="load_gdrive" data-toggle="modal" data-target="#exampleModal"><img style="height:16px" src="https://fonts.gstatic.com/s/i/productlogos/drive_2020q4/v8/web-64dp/logo_drive_2020q4_color_2x_web_64dp.png" alt="Google Drive™"> Load</a>
-        <a class="dropdown-item" id="signout_button">Sign Out</a>
+      <a onclick="zoomToURL('?Tx=0&Ty=0&S=1')" class="custom-file-upload">🏠</a>
+      <div class="d-flex">
+        <input type="number" id="number" value=100>
+        <button id="btnAddLots" class="btn btn-outline-success">ADD!</button>
       </div>
-    </div>
-    <button id="btnZoomIn" class="btn btn-outline-secondary">+</button>
-    <button id="btnZoomOut" class="btn btn-outline-secondary">-</button>
-  </div>
+      <!-- Example single danger button -->
+      <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Menu
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          <a class="dropdown-item" id="btnRestart" data-bs-toggle="modal" data-bs-target="#modalYesNo">New Noteplace</a>
+          <a class="dropdown-item" id="btnClear" data-bs-toggle="modal" data-bs-target="#modalYesNo">Clear Noteplace</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" id="save" data-bs-toggle="modal" data-bs-target="#exampleModal">Save to local file</a>
+          <a class="dropdown-item" href="">
+            <label for="file">
+              Load from a local file<input type="file" id="file" name="file">
+            </label>
+          </a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item"><img style="height: 32px;" src="https://firebasestorage.googleapis.com/v0/b/drive-assets.google.com.a.appspot.com/o/Asset%20-%20Google%20Drive%20Lockup.png?alt=media" alt="Google Drive™">:</a>
+          <a class="dropdown-item" id="authorize_button">Authorize</a>
+          <a class="dropdown-item authorize-only" id="save_gdrive" data-bs-toggle="modal" data-bs-target="#exampleModal"><img style="height:16px" src="https://fonts.gstatic.com/s/i/productlogos/drive_2020q4/v8/web-64dp/logo_drive_2020q4_color_2x_web_64dp.png" alt="Google Drive™"> Save</a>
+          <a class="dropdown-item authorize-only" id="load_gdrive" data-bs-toggle="modal" data-bs-target="#exampleModal"><img style="height:16px" src="https://fonts.gstatic.com/s/i/productlogos/drive_2020q4/v8/web-64dp/logo_drive_2020q4_color_2x_web_64dp.png" alt="Google Drive™"> Load</a>
+          <a class="dropdown-item" id="signout_button">Sign Out</a>
+        </div>
+      </div>
+      <button id="btnZoomIn" class="btn btn-outline-secondary">+</button>
+      <button id="btnZoomOut" class="btn btn-outline-secondary">-</button>
+      <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+        Button with data-bs-target
+      </button>
+      <div class="collapse" id="collapseExample">
+        <div class="card card-body">
+          Some placeholder content for the collapse component. This panel is hidden by default but revealed when the user activates the relevant trigger.
+        </div>
+      </div>
+      </div>
   <div class="notification-bottom">
     <p>
       <textarea id="text"></textarea> 
@@ -65,7 +73,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="exampleModalLabel">Save file</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
@@ -79,8 +87,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="document.getElementById('modal-save').style.display='block';">Close</button>
-          <button type="button" class="btn btn-primary" data-dismiss="modal" id="modal-save">Save</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="document.getElementById('modal-save').style.display='block';">Close</button>
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="modal-save">Save</button>
         </div>
       </div>
     </div>
@@ -91,7 +99,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="modalYesNoLabel">Yes Or No?</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
@@ -99,8 +107,8 @@
           Are you sure ??
         </div>  
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal" id="modalYesNo-No">No</button>
-          <button type="button" class="btn btn-primary" data-dismiss="modal" id="modalYesNo-Yes">Yes</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="modalYesNo-No">No</button>
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="modalYesNo-Yes">Yes</button>
         </div>
       </div>
     </div>
@@ -108,10 +116,10 @@
   
 
   
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-  <script src="jquery.mousewheel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/remarkable/1.7.1/remarkable.min.js"></script> -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>  <script src="jquery.mousewheel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/remarkable/1.7.1/remarkable.min.js"></script>
 
   <script src="gdrive.js"></script>
   <script async defer src="https://apis.google.com/js/api.js"
