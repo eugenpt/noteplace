@@ -8,6 +8,7 @@
   <script src="jquery.ui.rotatable.min.js"></script>
   <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css">
   <LINK rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body>
@@ -17,7 +18,8 @@
 
     </div>
   </div>
-  <div class="notification-top container-fluid justify-content-start navbar navbar-light bg-light">
+  <div class="notification-top">
+    <div class=" container-fluid justify-content-start navbar navbar-light bg-light">
       <a onclick="zoomToURL('?Tx=0&Ty=0&S=1')" class="custom-file-upload">🏠</a>
       <div class="d-flex">
         <input type="number" id="number" value=100>
@@ -48,15 +50,26 @@
       </div>
       <button id="btnZoomIn" class="btn btn-outline-secondary">+</button>
       <button id="btnZoomOut" class="btn btn-outline-secondary">-</button>
-      <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-        Button with data-bs-target
+      <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePallette" aria-expanded="false" aria-controls="collapsePallette">
+        Pallette
       </button>
-      <div class="collapse" id="collapseExample">
+      <button id="btnSaveView" class="btn btn-secondary" type="button">
+        Save View
+      </button>
+    </div>
+    <div>
+      <div class="collapse" id="collapsePallette">
         <div class="card card-body">
-          Some placeholder content for the collapse component. This panel is hidden by default but revealed when the user activates the relevant trigger.
+          <div id="palette-row" class="row">
+            <div class="np-palette col" draggable="true">&amp;</div>
+            <div class="np-palette col" draggable="true"><i class="bi-alarm"></i></div>
+            <div class="np-palette col" draggable="true">aa</div>
+          </div>
+          <!-- 'Some placeholder content for the collapse component. This panel is hidden by default but revealed when the user activates the relevant trigger.' -->
         </div>
       </div>
-      </div>
+    </div>
+  </div>
   <div class="notification-bottom">
     <p>
       <textarea id="text"></textarea> 

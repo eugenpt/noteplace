@@ -275,9 +275,9 @@ window.addEventListener('mouseup',function(e) {
     redraw();
   }
 
-  if(e.button==1){
-    e.preventDefault();
-  }
+  // if(e.button==1){
+  //   e.preventDefault();
+  // }
   
   __isResizing = false;
   _isMouseDown = false;
@@ -1003,7 +1003,11 @@ function newNode(node){
     if(!'rotate' in node)
       node.rotate=0;
     if(!('x' in node)){
-      mouseXY = clientToNode(_mousePos);
+      var mousePos = _mousePos;
+      if('mousePos' in node){
+        mousePos = node.mousePos;
+      }
+      mouseXY = clientToNode(mousePos);
       node.x = mouseXY[0];
       node.y = mouseXY[1];
     }
@@ -1888,10 +1892,129 @@ _('#btnRestart').addEventListener('click', function(){
   )
 })
 
+image_file_types = [
+  'image/apng'
+  ,'image/avif'
+  ,'image/gif'
+  ,'image/jpeg'
+  ,'image/png'
+  ,'image/svg+xml'
+  ,'image/webp'
+  ,'image/bmp'
+  ,'image/x-icon'
+  ,'image/tiff'
+]
+function isImage(file){
+  return image_file_types.indexOf(file.type)>=0;
+}
+_fileList = null;
+container.addEventListener('drop',function(e){
+  console.log('container drop');
+  console.log(e);
+  e.stopPropagation();
+  e.preventDefault();
+
+  container.classList.remove('drag-hover');
+
+  if(e.dataTransfer.files.length > 0){
+    _fileList = e.dataTransfer.files;
+    console.log(_fileList);
+    // _fileList
+  }else{
+
+    selectNode(null);
+    selectNode(
+      newNode({
+        text:e.dataTransfer.getData('text')
+        ,mousePos:[e.clientX,e.clientY]
+      })
+    );
+  }
+
+
+})
+
+container.addEventListener('dragover',function(e){
+  // console.log('container dragover');
+  // console.log(e);
+  e.preventDefault();
+})
+
+container.addEventListener('dragenter',function(e){
+  console.log('container dragenter')
+  // console.log(e);
+  container.classList.add('drag-hover');
+  e.preventDefault();
+})
+container.addEventListener('dragleave',function(e){
+  console.log('container dragleave')
+  container.classList.remove('drag-hover');
+  // console.log(e);
+  e.preventDefault();
+})
+container.addEventListener('dragend',function(e){
+  console.log('container dragend')
+  // console.log(e);
+})
+
+function getStateURL(){
+  return '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S;
+}
+
+_('#btnSaveView').dataset['view'] = null;
+_('#btnSaveView').onclick = function(){
+  var btn = _('#btnSaveView');
+  btn.dataset['view'] = getStateURL();
+
+  btn.classList.remove('btn-secondary');
+  btn.classList.add('btn-success');
+
+  btn.innerHTML = 'Saved View '+btoa(Math.random()).slice(10,13);
+  btn.title = btn.dataset['view'];
+  btn.draggable = true;
+
+
+  btn.ondragstart = function(e){
+    console.log('btn drag start')
+    console.log(e);
+    e.dataTransfer.effectAllowed = 'all';
+    e.dataTransfer.setData('text', 'Tap to [View]('+this.dataset['view']+' "Saved View")');
+    console.log(e);
+  }
+
+  btn.ondragend = function(e){
+    console.log('btn ondragend');
+    console.log(e);
+  }
+  
+
+  btn.ondrop = function(e){
+    console.log('btn drop');
+    console.log(e);
+  }
+}
 
 // start updateSizes process
 updateSizes();
 
+palette_symbols = ['▶','☞']
+
+ts = "arrow-90deg-down arrow-90deg-left arrow-90deg-right arrow-90deg-up arrow-bar-down arrow-bar-left arrow-bar-right arrow-bar-up arrow-clockwise arrow-counterclockwise arrow-down arrow-down-circle arrow-down-circle-fill arrow-down-left-circle arrow-down-left-circle-fill arrow-down-left-square arrow-down-left-square-fill arrow-down-right-circle arrow-down-right-circle-fill arrow-down-right-square arrow-down-right-square-fill arrow-down-square arrow-down-square-fill arrow-down-left arrow-down-right arrow-down-short arrow-down-up arrow-left arrow-left-circle arrow-left-circle-fill arrow-left-square arrow-left-square-fill arrow-left-right arrow-left-short arrow-repeat arrow-return-left arrow-return-right arrow-right arrow-right-circle arrow-right-circle-fill arrow-right-square arrow-right-square-fill arrow-right-short arrow-up arrow-up-circle arrow-up-circle-fill arrow-up-left-circle arrow-up-left-circle-fill arrow-up-left-square arrow-up-left-square-fill arrow-up-right-circle arrow-up-right-circle-fill arrow-up-right-square arrow-up-right-square-fill arrow-up-square arrow-up-square-fill arrow-up-left arrow-up-right arrow-up-short arrows-angle-contract arrows-angle-expand arrows-collapse arrows-expand arrows-fullscreen arrows-move box-arrow-down-left box-arrow-down-right box-arrow-down box-arrow-in-down box-arrow-in-down-left box-arrow-in-down-right box-arrow-in-left box-arrow-in-right box-arrow-in-up box-arrow-in-up-left box-arrow-in-up-right box-arrow-left box-arrow-right box-arrow-up box-arrow-up-left box-arrow-up-right caret-down caret-down-fill caret-down-square caret-down-square-fill caret-left caret-left-fill caret-left-square caret-left-square-fill caret-right caret-right-fill caret-right-square caret-right-square-fill caret-up caret-up-fill caret-up-square caret-up-square-fill cloud-arrow-down cloud-arrow-down-fill cloud-arrow-up cloud-arrow-up-fill cloud-download cloud-download-fill download file-arrow-down file-arrow-down-fill file-arrow-up file-arrow-up-fill file-earmark-arrow-down file-earmark-arrow-down-fill file-earmark-arrow-up file-earmark-arrow-up-fill journal-arrow-down journal-arrow-up shuffle upload"
+
+bs_palette_codes = ts.split(' ');
+bs_palette_codes.forEach((s)=>{
+  _('#palette-row').innerHTML+='<div class="np-palette col" draggable="true"><i class="bi-'+s+'"></i></div>';
+});
+
+[].forEach.call(_('.np-palette'),function(dom){
+  dom.ondragstart = function(e){
+    console.log('dom drag start')
+    console.log(e);
+    e.dataTransfer.effectAllowed = 'all';
+    e.dataTransfer.setData('text', this.innerHTML);
+    console.log(e);
+  }
+})
 // :::    ::: ::::::::::: ::::::::::: :::        ::::::::::: ::::::::::: :::   ::: 
 // :+:    :+:     :+:         :+:     :+:            :+:         :+:     :+:   :+: 
 // +:+    +:+     +:+         +:+     +:+            +:+         +:+      +:+ +:+  
