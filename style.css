@@ -212,7 +212,7 @@ html, body {
 
   #copydiv{
     position: absolute;
-    left:-10000;
-    top:-100000;
+    left:-10000px;
+    top:-100000px;
     opacity: 0;
   }

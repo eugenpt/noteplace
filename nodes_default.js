@@ -21,7 +21,6 @@ nodes_default = [
 ,{id: "19", x: "-17675.906689190488", y: "-803.8054286378799", fontSize: "3044.3702144069366", text: "test19"}
 ,{id: "20", x: "-34529.21208752887", y: "-3879.757393564678", fontSize: "6088.740428813872", text: "test20"}
 ,{id: "113", x: "10412901562002.574", y: "1891828629789.287", fontSize: "2311438465816.513", text: "WOW you're far from home."}
-,{id: "114", x: "956.2981272544432", y: "633.7774233977385", fontSize: "159.99999999999832", text: "test114"}
 ,{id: "115", x: "214123162955070.66", y: "10711632881380.672", fontSize: "31098885119754.062", text: "I mean. WOW."}
 ,{id: "116", x: "1104592423952645", y: "-81819586322754.16", fontSize: "209207528124706.03", text: "Is anyone seeing this??"}
 ,{id: "117", x: "27359550959356268", y: "-1764328513537750", fontSize: "3980657295328512.5", text: "Here's a heart for ya:\n❤️"}
@@ -35,11 +34,11 @@ nodes_default = [
 ,{id: "25", x: "-136028953.80337054", y: "-12309370.929006876", fontSize: "42535295.86511732", text: "test25"}
 ,{id: "26", x: "-2239343664.138194", y: "-452770458.33262914", fontSize: "713623846.3529803", text: "test26"}
 ,{id: "28", x: "269", y: "266", fontSize: "20", text: "Just try double-clicking on empty space (or text?😊)"}
-,{id: "29", x: "360", y: "314", fontSize: "20", text: "Text is MarkDown:\n\n`#` For headlines\n`_`for _cursive_`_`\n`**`for **bold**`**`\n`[`Link`](`http://url`)` for [links](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)"}
+,{x: 360, y: 314, fontSize: 20, text: 'Text is MarkDown:\n\n`#` For headlines\n`_`for _cursive_`_`\n`**`for **bold**`**`\n`[`Link`](`http://url` ` ` `"`title`"``)` for [links](https://jonschlinkert.github.io/remarkable/demo/ "See Markdown spec here")'}
 ,{id: "30", x: "26", y: "408", fontSize: "20", text: "Now try\nmouse-wheel-zooming\nin and out!"}
 ,{id: "31", x: "119.51171875", y: "505.8828125", fontSize: "4.882812499999999", text: "Or click [here](?Tx=0&Ty=-100&S=1) to zoom back"}
 ,{id: "32", x: "148", y: "-46", fontSize: "20", text: "Or click [here](?Tx=171.50172055191769&Ty=83.86545213452068&S=126765.06002282312) to navigate in deep"}
-,{id: "33", x: "171.50354230839773", y: "83.86848513630132", fontSize: "0.00015777218104420212", text: "[Or click here to go back](?Tx=0&Ty=0&S=1)"}
+,{id: "33", x: "171.50354230839773", y: "83.86848513630132", fontSize: "0.00015777218104420212", text: "Or click [here](?Tx=0&Ty=0&S=1) to go back"}
 ,{id: "27", x: "10.02900390624992", y: "248.26645507812503", fontSize: "16.875", text: "__Left__ mouse button down and drag\nto move around\n__Middle__ mouse button\n to drag text around"}
 ,{id: "34", x: "256", y: "544", fontSize: "20", text: "Click to select a note"}
 ,{id: "35", x: "146", y: "615", rotate: "0.4018327787670817", fontSize: "20", text: "drag rotate icon (left bottom corner) to rotate, the note"}
@@ -49,6 +48,11 @@ nodes_default = [
 ,{x: "605.9516071976361", y: "193.21158852783742", rotate: "0", fontSize: "0.11368683772161589", text: "I mean, seriously!"}
 ,{x: "606.7511873267723", y: "193.29315530012735", rotate: "1.6987763617720013", fontSize: "0.00173668223966733", text: "Just look a it!"}
 ,{x: "1161.7756638639928", y: "159.90205224000033", rotate: "-0.6054638070325069", fontSize: "60.67819999999919", text: "![Minion](https://octodex.github.com/images/minion.png)"}
-,{x: "1126.3357461092987", y: "99.72472050558802", rotate: "undefined", fontSize: "31.999999999999762", text: "You can even embed images "}
-,{x: "982.9757461092998", y: "476.68472050558523", rotate: "undefined", fontSize: "31.999999999999762", text: "(double-click on it to see the code that shows the image)"}
+,{x: "1126.3357461092987", y: "99.72472050558802", rotate: "0", fontSize: "31.999999999999762", text: "You can even embed images "}
+,{x: "982.9757461092998", y: "476.68472050558523", rotate: "0", fontSize: "31.999999999999762", text: "(double-click on it to see the code that shows the image)"}
+,{x: 1033.4454329600035, y: 742.3029999999987, fontSize: "26.21440000000001", text: "And copy-paste"}
+,{x: 894.8548763193781, y: 606.4862402343737, fontSize: "31.249999999999996", text: "You can also select multiple notes\nwith a rectangle ~using~ ~shift-drag~"}
+,{text: "(including images!)", x: 1138.3080763193782, y: 821.1506402343733, fontSize: "26.214399999999998"}
+,{text: "(including from ++outside++ ***Noteplace***!)", x: 954.8230763193785, y: 785.3856402343732, fontSize: "24.999999999999996"}
+,{x: 528.92, y: 505.31999999999994, fontSize: "12.8", text: "(for full **MarkDown** spec follow that link)"}
 ];
