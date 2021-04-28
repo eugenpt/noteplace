@@ -1961,6 +1961,8 @@ function getStateURL(){
   return '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S;
 }
 
+__previewOldState = {T:[0,0],S:1}
+
 _('#btnSaveView').dataset['view'] = null;
 _('#btnSaveView').onclick = function(){
   var btn = _('#btnSaveView');
@@ -1969,7 +1971,29 @@ _('#btnSaveView').onclick = function(){
   btn.classList.remove('btn-secondary');
   btn.classList.add('btn-success');
 
-  btn.innerHTML = 'Saved View '+btoa(Math.random()).slice(10,13);
+  btn.innerHTML = 'Saved View '+btoa(Math.random()).slice(10,13)+'&nbsp';
+
+  telt = document.createElement('i');
+  telt.className = "bi-fullscreen";
+
+  telt.addEventListener('mouseenter', e => {
+    __previewOldState = {T:T,S:S};
+    zoomToURL(_('#btnSaveView').dataset['view'], false);
+  });
+  telt.addEventListener('mouseleave', e=>{
+    applyZoom(__previewOldState.T,__previewOldState.S, false);
+  });
+  telt.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    __previewOldState = {T:T,S:S};
+  },false);
+  telt.title = "Preview";
+
+  btn.appendChild(telt);
+
+  
+  
+
   btn.title = btn.dataset['view'];
   btn.draggable = true;
 
