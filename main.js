@@ -152,7 +152,8 @@ function onMouseWheel(e){
 // safari?
 window.addEventListener("wheel",onMouseWheel);
 
-function applyZoom(T_, S_, smooth=true){
+__previewOldState = {T:[0,0],S:1}
+function applyZoom(T_, S_, smooth=true, no_temp){
   console.log('S='+S+' S_='+S_);
   T = T_;
 
@@ -171,6 +172,10 @@ function applyZoom(T_, S_, smooth=true){
   status({T:T,S:S});
 
   redraw();
+
+  if(no_temp){
+    __previewOldState = {T:T,S:S};
+  }
 }
 
 
@@ -1247,12 +1252,13 @@ function _(s){
 }
 
 
-function zoomToURL(s, smooth=true){
+function zoomToURL(s, smooth=true, no_temp=false){
   urlParams = new URLSearchParams(s);  
   applyZoom(
     [1*urlParams.get('Tx'),1*urlParams.get('Ty')]
     ,1*urlParams.get('S') ? 1*urlParams.get('S') : 1
     ,smooth
+    ,no_temp
   );
 }
 
@@ -1961,8 +1967,6 @@ function getStateURL(){
   return '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S;
 }
 
-__previewOldState = {T:[0,0],S:1}
-
 _('#btnSaveView').dataset['view'] = null;
 _('#btnSaveView').onclick = function(){
   var btn = _('#btnSaveView');
@@ -2046,104 +2050,345 @@ function _ce(tag, plopName="className", plopVal="class"){
   return elt;
 }
 
+// returns _PLACES for path
+function pathPlace(path){
+  var p = _PLACES;
+  path = ((typeof(path)=="string")?JSON.parse(path):path).forEach((e)=>{
+    p=p.items[p.items.map(jp=>jp.name).indexOf(e)];
+  })
+  return p;
+}
 
-function rec_fillPlace(places, root_dom){
+
+function addPlaceFolder(path){
+  console.log('addPlaceFolder path='+path);
+  var place = {'name':'New Folder', items:[]}
+  var hpath = JSON.parse(path);
+  hpath.push(place.name);  
+  
+  rli = createPlaceFolderDOM(place,JSON.stringify(hpath));
+
+  pathPlace(path).dom.ul.appendChild(rli);
+  pathPlace(path).items.push(place);
+
+  place.dom.btnEdit.click();
+}
+
+function addPlace(path){
+  console.log('addPlace path='+path);
+
+  var place = {'name':'New Place', state:{T:T,S:S}}
+  var hpath = JSON.parse(path);
+  hpath.push(place.name);  
+  
+  rli = createPlaceDOM(place,JSON.stringify(hpath));
+
+  pathPlace(path).dom.ul.appendChild(rli);
+  pathPlace(path).items.push(place);
+
+  place.dom.btnEdit.click();
+}
+
+function placesUpdatePaths(places=null, _path=[]){
+  if(!places){
+    places = _PLACES.items;
+    path = [];
+  }
+  path = JSON.parse(path);
   for(var place of places){
-    var rli = document.createElement('li');
+    var path = _path.slice();
+    path.push(place.name);
     if('items' in place){
-      // folder!
-      rec_fillPlace.N++;
-      var hid = 'places-collapse-'+rec_fillPlace.N;
+      place.dom.hBtn.dataset['path'] = JSON.stringify(path);
 
-      var hdiv = _ce('div');
-
-      var hBtn = _ce('button'
-        ,'className','btn btn-toggle align-items-center collapsed'
-        ,'ariaExpanded','false'
-        ,'innerHTML',place.name
-      );
-      hBtn.dataset['bsToggle']='collapse';
-      hBtn.dataset['bsTarget']='#'+hid;
-
-      var btnDel = _ce('button'
-        ,'className',"btn btn-outline-danger"
-        ,'innerHTML','<i class="bi-folder-x"></i>'
-      );
-
-      var btnAddFolder = _ce('button'
-        ,'className',"btn"
-        ,'innerHTML','<i class="bi-folder-plus"></i>'
-      );      
-      
-      var btnAddPlace = _ce('button'
-        ,'className',"btn"
-        ,'innerHTML','<i class="bi-plus-square-dotted"></i>'
-      );      
-
-
-      var bdiv = _ce('div'
-        ,'className','collapse'
-        ,'id',hid
-      )
-
-      var tul = _ce('ul'
-        ,'className', "btn-toggle-nav list-unstyled fw-normal pb-1 small"
-      )
-      rec_fillPlace(place.items, tul);
-      bdiv.appendChild(tul);
-
-      hdiv.appendChild(hBtn);
-      hdiv.appendChild(btnDel);
-      hdiv.appendChild(btnAddFolder);
-      hdiv.appendChild(btnAddPlace);
-
-      rli.appendChild(hdiv);
-      rli.appendChild(bdiv);
-    }else{  
-      // not a folder!
-      var ta = _ce('a'
-        ,'className',"btn align-items-center"
-        'innerHTML',place.name
-      )
-
-      var btnEdit = _ce('button'
-        ,'className','btn'
-        ,'innerHTML','<i class="bi-pencil"></i>'
-        ,'onclick',function(e){
-            var elt = this.parentNode.getElementsByClassName('btn')[0];
-            console.log(elt);
-            elt.contentEditable="true";
-            elt.dataset['originalName'] = elt.innerHTML;
-            elt.focus();
-            elt.addEventListener('focusout', function(){
-              console.log('focusout1!');
-              console.log(this);
-              this.contentEditable = "false";
-              this.innerHTML = this.dataset['originalName'];
-            })
-          }
-      );
-      rli.appendChild(ta);
-      rli.appendChild(btnEdit);
+      placesUpdatePaths(place.items, path);
+    }else{
+      place.dom.a.dataset['path'] = JSON.stringify(path);
     }
-    root_dom.appendChild(rli);
+  }
+
+}
+
+function createPlaceFolderDOM(place, path){
+  createPlaceFolderDOM.N++;
+
+  var rli = document.createElement('li');
+  var hid = 'places-collapse-'+createPlaceFolderDOM.N;
+
+  var hdiv = _ce('div');
+
+  var hBtn = _ce('button'
+    ,'className','btn btn-toggle align-items-center collapsed places-folder places-name'
+    ,'ariaExpanded','false'
+    ,'innerHTML',place.name
+    ,'title', 'Edit name'
+  );
+  hBtn.dataset['bsToggle'] = 'collapse';
+  hBtn.dataset['bsTarget'] = '#' + hid;
+  hBtn.dataset['path'] = path;
+
+
+  var btnEdit = _ce('button'
+    ,'className',"btn p-1"
+    ,'innerHTML','<i class="bi-pencil"></i>'
+    ,'onclick',function(e){
+      var elt = this.parentNode.getElementsByClassName('places-name')[0];
+      elt.contentEditable="true";
+      elt.dataset['originalName'] = elt.innerHTML;
+      elt.focus();
+      elt.addEventListener('focusout', function(){
+        console.log('focusout1!');
+        console.log(this);
+        console.log(this.innerHTML);
+        this.contentEditable = "false";
+        // TODO:
+        //if(collision_check)
+        //  this.innerHTML = this.dataset['originalName'];
+        var thisplace = pathPlace(this.dataset['path']);
+        thisplace.name = this.innerHTML;
+        var tpath = JSON.parse(this.dataset['path']).slice(0,-1);
+        tpath.push(this.innerHTML);
+        this.dataset['path'] = JSON.stringify(tpath);
+        placesUpdatePaths(thisplace.items, tpath);
+      })
+      elt.addEventListener('keydown', function(e){
+        if(e.key=='Enter'){
+          // end editing
+          this.contentEditable = "false";
+        }
+      });
+    }
+  );
+
+  var btnDel = _ce('button'
+    ,'className',"btn text-danger p-1"
+    ,'innerHTML','<i class="bi-folder-x"></i>'
+    ,'title','Delete folder'
+    ,'onclick', function(e){
+      showModalYesNo(
+        'Really?'
+        ,'Are you sure you want to delete folder <b>' + place.name+'</b> with <i>all</i> it\'s contents???'
+        ,function(){
+          // find parent place
+          var path = place.dom.hBtn.dataset['path'];
+          parent_place = pathPlace(JSON.parse(path).slice(0,-1));
+
+          if('items' in parent_place){
+            parent_place = parent_place.items;
+          }
+          // remove place
+          parent_place.splice(parent_place.indexOf(place),1);
+          
+          //remove dom
+          place.dom.hBtn.parentNode.parentNode.parentNode.removeChild(place.dom.hBtn.parentNode.parentNode);
+        }
+      )
+    }
+  );
+
+  var btnAddFolder = _ce('button'
+    ,'className',"btn p-1"
+    ,'innerHTML','<i class="bi-folder-plus"></i>'
+    ,'title','Add sub-folder'
+    ,'onclick', function(e){
+      if(hBtn.ariaExpanded=="false"){
+        hBtn.click();
+      }
+      addPlaceFolder(place.dom.hBtn.dataset['path']);
+    }
+  );      
+
+  var btnAddPlace = _ce('button'
+    ,'className',"btn p-1"
+    ,'innerHTML','<i class="bi-plus-square-dotted"></i>'
+    ,'title','Add place to folder'
+    ,'onclick', function(e){
+      if(hBtn.ariaExpanded=="false"){
+        hBtn.click();
+      }
+      addPlace(place.dom.hBtn.dataset['path']);
+    }
+  );      
+
+
+  var bdiv = _ce('div'
+    ,'className','collapse'
+    ,'id',hid
+  )
+
+  var tul = _ce('ul'
+    ,'className', "btn-toggle-nav list-unstyled fw-normal pb-1 small"
+  )
+  bdiv.appendChild(tul);
+
+  hdiv.appendChild(hBtn);
+  hdiv.appendChild(btnEdit);
+  hdiv.appendChild(btnDel);
+  hdiv.appendChild(btnAddFolder);
+  hdiv.appendChild(btnAddPlace);
+
+  place.dom = {
+    hBtn:hBtn
+    ,btnEdit:btnEdit
+    ,btnDel:btnDel
+    ,btnAddFolder:btnAddFolder
+    ,btnAddPlace:btnAddPlace
+    ,ul:tul
+  }
+  rli.appendChild(hdiv);
+  rli.appendChild(bdiv);
+
+  return rli;
+}
+
+function createPlaceDOM(place, path){
+  var rli = document.createElement('li');
+
+  var ta = _ce('a'
+    ,'className', "btn align-items-center places-place places-name"
+    ,'innerHTML', place.name
+    ,'onclick', function(e){
+      var pl = pathPlace(this.dataset['path']);
+      applyZoom(pl.state.T,pl.state.S,smooth=false,no_temp=true);
+    }
+    ,'onmouseenter', function(e){
+      console.log('enter');
+    }
+  )
+  ta.dataset['path'] = path;
+
+
+  var btnEdit = _ce('button'
+    ,'className','btn'
+    ,'innerHTML','<i class="bi-pencil"></i>'
+    ,'title', 'Edit name'
+    ,'onclick',function(e){
+        var elt = this.parentNode.getElementsByClassName('places-name')[0];
+        elt.contentEditable="true";
+        //save for probable collision check
+        elt.dataset['originalName'] = elt.innerHTML;
+        elt.focus();
+        elt.addEventListener('focusout', function(){
+          console.log('focusout1!');
+          console.log(this);
+          this.contentEditable = "false";
+          // TODO: 
+          // if(collision check)
+          //   this.innerHTML = this.dataset['originalName'];
+          var thisplace = pathPlace(this.dataset['path']);
+          thisplace.name = this.innerHTML;
+          var tpath = JSON.parse(this.dataset['path']).slice(0,-1);
+          tpath.push(this.innerHTML);
+          this.dataset['path'] = JSON.stringify(tpath);
+        });
+        elt.addEventListener('keydown', function(e){
+          if(e.key=='Enter'){
+            // end editing
+            this.contentEditable = "false";
+          }
+        });
+      }
+  );
+
+  var btnDel = _ce('button'
+    ,'className',"btn text-danger p-1"
+    ,'innerHTML','<i class="bi-file-x"></i>'
+    ,'title','Delete place'
+    ,'onclick', function(e){
+      showModalYesNo(
+        'Really?'
+        ,'Are you sure you want to delete <b>' + place.name+'</b>?'
+        ,function(){
+          // find parent place
+          var path = place.dom.a.dataset['path'];
+          parent_place = pathPlace(JSON.parse(path).slice(0,-1));
+
+          if('items' in parent_place){
+            parent_place = parent_place.items;
+          }
+          // remove place
+          parent_place.splice(parent_place.indexOf(place),1);
+          
+          //remove dom
+          place.dom.a.parentNode.parentNode.removeChild(place.dom.a.parentNode);
+        }
+      )
+    }
+  );
+
+  var btnSubs = _ce('button'
+    ,'className','btn'
+    ,'innerHTML','<i class="bi-fullscreen"></i>'
+    ,'title','Save current here'
+    ,'onclick', function(e){
+      showModalYesNo(
+        'Rewrite?'
+        ,'Are you sure you want to save current position as <b>' + place.name + "</b>?"
+        ,function(){
+          place.state={T:T, S:S};
+        }
+      )
+    }
+  )
+
+  rli.appendChild(ta);
+  rli.appendChild(btnEdit);
+  rli.appendChild(btnDel);
+  rli.appendChild(btnSubs);
+
+  place.dom = {
+     a:ta
+    ,btnEdit:btnEdit
+    ,btnDel:btnDel
+    ,btnSubs:btnSubs
+  };
+
+  return rli;
+}
+
+
+function rec_fillPlace(places, root_dom, _P_path=''){
+  console.log('rec_fillPlace path='+_P_path)
+  for(var place of places){
+    var path = _P_path?JSON.parse(_P_path):[]
+    path.push(place.name);
+    path = JSON.stringify(path);
+
+    if('items' in place){
+      // Folder
+      var rli = createPlaceFolderDOM(place, path);
+
+      console.log(' >rec_fillPlace with path='+path);
+      rec_fillPlace(place.items, place.dom.ul, path);
+
+      root_dom.appendChild(rli);
+    }else{
+      // place, not a Folder
+      root_dom.appendChild(createPlaceDOM(place, path));
+    }
   }
 }
-rec_fillPlace.N=0;
 
 
-_PLACES = [ 
+function fillPlaces(){
+  createPlaceFolderDOM.N=0;
+  _('#places-root').innerHTML = "";
+  rec_fillPlace(_PLACES.items, _('#places-root'));
+}
+
+_PLACES = {name:'Places',items:[ 
   {name:'Home?', state:{T:[0,0],S:1}},
   {name:'Test folder', items:[
-    {name:'test 1', state:{T:[-100,-100], S:0.1}},
+    {name:'test 1', state:{T:[-4000,-2000], S:0.1}},
     {name:'Test sub-folder..', items:[
-      {name:'test 2', state:{T:[-1000,-1000], S:0.001}},
-      {name:'test 3', state:{T:[-1200,-1000], S:0.001}},
+      {name:'test 2', state:{T:[-400000,-200000], S:0.001}},
+      {name:'test 3', state:{T:[-400000,-250000], S:0.001}},
     ]}
   ]}
-]
+]}
 
-rec_fillPlace(_PLACES, _('#places-root'));
+
+fillPlaces();
 
 // :::    ::: ::::::::::: ::::::::::: :::        ::::::::::: ::::::::::: :::   ::: 
 // :+:    :+:     :+:         :+:     :+:            :+:         :+:     :+:   :+: 

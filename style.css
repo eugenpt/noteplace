@@ -371,3 +371,15 @@ body > * {
 
 .fw-semibold { font-weight: 600; }
 .lh-tight { line-height: 1.25; }
+
+
+
+/* ------------------------------- */
+.places-place{
+  max-width: 8em;
+  overflow: hidden;
+}
+.places-folder{
+  max-width: 8em;
+  overflow: hidden;
+}
