@@ -20,16 +20,16 @@
       <ul class="list-unstyled ps-0 d-grid gap-2">
         <li class="mb-1 d-grid gap-2">
           <div>
-            <button class="btn btn-toggle align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#places-collapse" aria-expanded="false">
+            <button id="btnPlaces" class="btn btn-toggle align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#places-collapse" aria-expanded="false">
               Places
             </button>
             <button class="btn" onclick="applyZoom([0,0],1,0);" title="Home">
               <i class="bi-house-door"></i>
             </button>
-            <button class="btn" title="New folder">
+            <button class="btn" title="New folder" id="btnNewHomeSubFolder">
               <i class="bi-folder-plus"></i>
             </button>
-            <button class="btn" title="New place">
+            <button class="btn" title="New place" id="btnNewHomeSubPlace">
               <i class="bi-plus-square-dotted"></i>
             </button>
           </div>

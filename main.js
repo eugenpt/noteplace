@@ -2074,6 +2074,24 @@ function addPlaceFolder(path){
   place.dom.btnEdit.click();
 }
 
+_('#btnNewHomeSubFolder').addEventListener('click',(e)=>{
+  
+  domwpath = _('#btnPlaces');
+  if(domwpath.ariaExpanded=='false'){
+    domwpath.click();
+  }
+
+  addPlaceFolder('[]');
+})
+
+_('#btnNewHomeSubPlace').addEventListener('click',(e)=>{
+  domwpath = _('#btnPlaces');
+  if(domwpath.ariaExpanded=='false'){
+    domwpath.click();
+  }
+  addPlace('[]');
+})
+
 function addPlace(path){
   console.log('addPlace path='+path);
 
@@ -2092,9 +2110,7 @@ function addPlace(path){
 function placesUpdatePaths(places=null, _path=[]){
   if(!places){
     places = _PLACES.items;
-    path = [];
   }
-  path = JSON.parse(path);
   for(var place of places){
     var path = _path.slice();
     path.push(place.name);
@@ -2387,6 +2403,10 @@ _PLACES = {name:'Places',items:[
   ]}
 ]}
 
+_PLACES.dom = {
+  hBtn:_('#btnPlaces')
+  ,ul:_('#places-root')
+}
 
 fillPlaces();
 
