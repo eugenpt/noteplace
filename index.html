@@ -13,15 +13,94 @@
   <script defer src="bs_icons.js"></script>  
 </head>
 <body>
-  <div id="container">
-    <div id="select-box"></div>
-    <div id="node_container">
-
+  <!-- https://startbootstrap.com/previews/simple-sidebar -->
+  <div class="d-flex" id="wrapper">
+    <div class="bg-light border-right" id="sidebar-wrapper">
+      <div class="sidebar-heading">Start Bootstrap </div>
+      <ul class="list-unstyled ps-0 d-grid gap-2">
+        <li class="mb-1 d-grid gap-2">
+          <div>
+            <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#home-collapse" aria-expanded="false">
+              Places
+            </button>
+            <button class="btn">
+              <i class="bi-folder-plus"></i>
+            </button>
+          </div>
+          <div class="collapse" id="home-collapse" style="">
+            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+              <li>
+                <div>
+                  <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#place_f1" aria-expanded="false">
+                    Places
+                  </button>
+                  <button class="btn">
+                    <i class="bi-folder-plus"></i>
+                  </button>
+                </div>
+                <div class="collapse" id="place_f1" style="">
+                  <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                    <li><a href="#" class="link-dark rounded">Updates</a></li>
+                    <li><a href="#" class="link-dark rounded">Reports</a></li>
+                  </ul>
+                </div>
+              </li>
+              <li><a href="#" class="link-dark rounded">Updates</a></li>
+              <li><a href="#" class="link-dark rounded">Reports</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="mb-1">
+          <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#dashboard-collapse" aria-expanded="false">
+            Dashboard
+          </button>
+          <div class="collapse" id="dashboard-collapse">
+            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+              <li><a href="#" class="link-dark rounded">Overview</a></li>
+              <li><a href="#" class="link-dark rounded">Weekly</a></li>
+              <li><a href="#" class="link-dark rounded">Monthly</a></li>
+              <li><a href="#" class="link-dark rounded">Annually</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="mb-1">
+          <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#orders-collapse" aria-expanded="false">
+            Orders
+          </button>
+          <div class="collapse" id="orders-collapse">
+            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+              <li><a href="#" class="link-dark rounded">New</a></li>
+              <li><a href="#" class="link-dark rounded">Processed</a></li>
+              <li><a href="#" class="link-dark rounded">Shipped</a></li>
+              <li><a href="#" class="link-dark rounded">Returned</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="border-top my-3"></li>
+        <li class="mb-1">
+          <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#account-collapse" aria-expanded="false">
+            Account
+          </button>
+          <div class="collapse" id="account-collapse">
+            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+              <li><a href="#" class="link-dark rounded">New...</a></li>
+              <li><a href="#" class="link-dark rounded">Profile</a></li>
+              <li><a href="#" class="link-dark rounded">Settings</a></li>
+              <li><a href="#" class="link-dark rounded">Sign out</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="mb-1">
+          <a href="https://github.com/eugenpt/noteplace" class="list-group-item list-group-item-action bg-light pb-4"><i class="bi-github"></i>&nbspNoteplace on GitHub</a>
+        </li>
+      </ul>
     </div>
-  </div>
-  <div class="notification-top">
-    <div class=" container-fluid justify-content-start navbar navbar-light bg-light">
-      <a onclick="zoomToURL('?Tx=0&Ty=0&S=1')" class="custom-file-upload">🏠</a>
+  <div id="page-content-wrapper">  
+
+  <!-- <div class="notification-top"> -->
+    <nav id="navbar" class="navbar navbar-light bg-light container-fluid justify-content-start">
+      <a id="menu-toggle" class="btn btn-outline-secondary"><i class="bi-list-ul"></i></a>
+      <a onclick="zoomToURL('?Tx=0&Ty=0&S=1')" class="btn btn-outline-secondary">🏠</a>
       <div class="d-flex">
         <input type="number" id="number" value=100>
         <button id="btnAddLots" class="btn btn-outline-success">ADD!</button>
@@ -57,7 +136,7 @@
       <button id="btnSaveView" class="btn btn-secondary" type="button">
         Save View
       </button>
-    </div>
+    <!-- </div> -->
     <div>
       <div class="collapse" id="collapsePallette">
         <div class="card card-body">
@@ -74,8 +153,14 @@
         </div>
       </div>
     </div>
+  </nav>
+  <div id="container" class="container-fluid">
+    <div id="select-box"></div>
+    <div id="node_container">
+
+    </div>
   </div>
-  <div class="notification-bottom">
+  <div class="notification-bottom" style="display: none;">
     <p>
       <textarea id="text"></textarea> 
       FontSize:<input type="number" step="10" id="fontSize">
@@ -84,7 +169,12 @@
       <span id="status"></span>
     </p>
   </div>
+
+
   
+</div>
+  <!-- </div> -->
+
   <!-- Modal -->
   <div class="modal fade" id="exampleModal" tabindex="-4" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">

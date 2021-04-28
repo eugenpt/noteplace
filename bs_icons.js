@@ -327,9 +327,9 @@ emoji_codes=[
         
 ].join('|').split('|');
 
-__palette_div_html = (code,html)=>'<div class="np-palette col" data-code="'+code+'" draggable="true" title="'+code+'">'+html+'</div>'
+__palette_div_html = (code,html)=>'<div class="np-palette col" data-code="'+code+'" draggable="true" title="'+code+'" style="display:none;">'+html+'</div>'
 
-setTimeout(function(){
+// setTimeout(function(){
 
     // https://icons.getbootstrap.com/#icons
     //const array_chunks = (array, chunk_size) => Array(Math.ceil(array.length / chunk_size)).fill().map((_, index) => index * chunk_size).map(begin => array.slice(begin, begin + chunk_size));
@@ -349,8 +349,17 @@ setTimeout(function(){
         e.dataTransfer.setData('text', this.innerHTML);
         console.log(e);
     }
-    })
-}, 1)
+    });
+// }, 1)
+function randomizePalette(N=100){
+    elts = $('.np-palette');
+    elts.css('display','none');
+    for(var j=0;j<N;j++){
+        elts[Math.floor(Math.random()*elts.length)].style.display = '';
+    }
+}
+
+randomizePalette();
 
 __isin = (q, s)=>s.indexOf(q)>=0;
 __isin_all = (q,s)=>q.split(' ').every(jq=>__isin(jq, s));

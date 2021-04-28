@@ -2027,9 +2027,14 @@ _('#btnPaletteToggle').onclick = function(){
     _('#btnPaletteToggle').innerHTML = '<i class="bi-arrow-down"></i>';
   }else{
     _('#btnPaletteToggle').innerHTML = '<i class="bi-palette"></i>';
+    randomizePalette();
   }
 }
 
+$("#menu-toggle").click(function(e) {
+  e.preventDefault();
+  $("#wrapper").toggleClass("toggled");
+});
 
 // :::    ::: ::::::::::: ::::::::::: :::        ::::::::::: ::::::::::: :::   ::: 
 // :+:    :+:     :+:         :+:     :+:            :+:         :+:     :+:   :+: 
