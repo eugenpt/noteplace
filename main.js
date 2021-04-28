@@ -2162,11 +2162,19 @@ function createPlaceFolderDOM(place, path){
 
   var hdiv = _ce('div');
 
-  var hBtn = _ce('button'
+  var hBtn = _ce('span'
     ,'className','btn btn-toggle align-items-center collapsed places-folder places-name'
     ,'ariaExpanded','false'
     ,'innerHTML',place.name
     ,'title', 'Edit name'
+    ,'onmouseenter',function(e){
+      console.log('mouseenter');
+      console.log(e);
+    }
+    ,'onmouseleave',function(e){
+      console.log('onmouseleave');
+      console.log(e);
+    }
   );
   hBtn.dataset['bsToggle'] = 'collapse';
   hBtn.dataset['bsTarget'] = '#' + hid;
@@ -2197,9 +2205,14 @@ function createPlaceFolderDOM(place, path){
         placesUpdatePaths(thisplace.items, tpath);
       })
       elt.addEventListener('keydown', function(e){
+        console.log(e);
         if(e.key=='Enter'){
           // end editing
           this.contentEditable = "false";
+        }else if(e.key==' '){
+          // e.preventDefault();
+          // this.innerHTML+=' ';
+          // e.stopPropagation();
         }
       });
     }
@@ -2298,6 +2311,13 @@ function createPlaceDOM(place, path){
     }
     ,'onmouseenter', function(e){
       console.log('enter');
+      __previewOldState = {T:T,S:S};
+      state = pathPlace(this.dataset['path']).state;
+      applyZoom(state.T,state.S,false);
+    }
+    ,'onmouseleave', function(e){
+      console.log('leave');
+      applyZoom(__previewOldState.T,__previewOldState.S,false)
     }
   )
   ta.dataset['path'] = path;
@@ -2427,7 +2447,7 @@ _PLACES = _PLACES_default;
 _PLACES.dom = {
   hBtn:_('#btnPlaces')
   ,ul:_('#places-root')
-}
+} 
 
 fillPlaces();
 

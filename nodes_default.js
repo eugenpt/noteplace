@@ -59,12 +59,12 @@ nodes_default = [
 
 _PLACES_default = {name:'Places',items:[ 
     {name:'Home?', state:{T:[0,0],S:1}},
-    {name:'Test folder', items:[
-      {name:'test 1', state:{T:[-4000,-2000], S:0.1}},
-      {name:'Test sub-folder..', items:[
-        {name:'test 2', state:{T:[-400000,-200000], S:0.001}},
-        {name:'test 3', state:{T:[-400000,-250000], S:0.001}},
-      ]}
-    ]}
+    // {name:'Test folder', items:[
+    //   {name:'test 1', state:{T:[-4000,-2000], S:0.1}},
+    //   {name:'Test sub-folder..', items:[
+    //     {name:'test 2', state:{T:[-400000,-200000], S:0.001}},
+    //     {name:'test 3', state:{T:[-400000,-250000], S:0.001}},
+    //   ]}
+    // ]}
   ]}
   
