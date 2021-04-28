@@ -20,59 +20,109 @@
       <ul class="list-unstyled ps-0 d-grid gap-2">
         <li class="mb-1 d-grid gap-2">
           <div>
-            <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#home-collapse" aria-expanded="false">
+            <button class="btn btn-toggle align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#places-collapse" aria-expanded="false">
               Places
             </button>
-            <button class="btn">
+            <button class="btn" onclick="applyZoom([0,0],1,0);" title="Home">
+              <i class="bi-house-door"></i>
+            </button>
+            <button class="btn" title="New folder">
               <i class="bi-folder-plus"></i>
             </button>
+            <button class="btn" title="New place">
+              <i class="bi-plus-square-dotted"></i>
+            </button>
           </div>
-          <div class="collapse" id="home-collapse" style="">
-            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+          <div class="collapse" id="places-collapse" style="">
+            <ul id="places-root" class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
               <li>
                 <div>
-                  <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#place_f1" aria-expanded="false">
-                    Places
+                  <a class="btn align-items-center">
+                    Home
+                  </a>
+                  <button class="btn">
+                    <i class="bi-pencil"></i>
+                  </button>
+                  <button class="btn">
+                    <i class="bi-x-square"></i>
+                  </button>
+                  <button class="btn">
+                    <i class="bi-fullscreen"></i>
+                  </button>
+                </div>
+              </li>              
+              <li>
+                <div>
+                  <button class="btn btn-toggle align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#place_f1" aria-expanded="false">
+                    Common places
+                  </button>
+                  <button class="btn btn-outline-danger">
+                    <i class="bi-folder-x"></i>
                   </button>
                   <button class="btn">
                     <i class="bi-folder-plus"></i>
                   </button>
+                  <button class="btn">
+                    <i class="bi-plus-square-dotted"></i>
+                  </button>
                 </div>
                 <div class="collapse" id="place_f1" style="">
                   <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                    <li><a href="#" class="link-dark rounded">Updates</a></li>
-                    <li><a href="#" class="link-dark rounded">Reports</a></li>
+                    <li>
+                      <div>
+                        <button class="btn btn-toggle align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#place_f2" aria-expanded="false">
+                          VIP Common places
+                        </button>
+                        <button class="btn">
+                          <i class="bi-folder-plus"></i>
+                        </button>
+                      </div>
+                      <div class="collapse" id="place_f2" style="">
+                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                          <li>
+                            <a href="#" class="link-dark rounded">VIP common 1</a>
+                          </li>
+                          <li><a href="#" class="link-dark rounded">VIP common 2</a></li>
+                        </ul>
+                      </div>
+                    </li>
+                    <li><a href="#" class="link-dark rounded">common 2</a></li>
                   </ul>
                 </div>
               </li>
-              <li><a href="#" class="link-dark rounded">Updates</a></li>
-              <li><a href="#" class="link-dark rounded">Reports</a></li>
+              <li>
+                <div>
+                  <button class="btn align-items-center">
+                    <a href="#" class="link-dark rounded">Place 1</a>
+                  </button>
+                  <button class="btn">
+                    <i class="bi-x-square"></i>
+                  </button>
+                  <button class="btn">
+                    <i class="bi-fullscreen"></i>
+                  </button>
+                </div>
+              </li>
             </ul>
           </div>
         </li>
         <li class="mb-1">
           <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#dashboard-collapse" aria-expanded="false">
-            Dashboard
+            Landmarks
           </button>
           <div class="collapse" id="dashboard-collapse">
             <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-              <li><a href="#" class="link-dark rounded">Overview</a></li>
-              <li><a href="#" class="link-dark rounded">Weekly</a></li>
-              <li><a href="#" class="link-dark rounded">Monthly</a></li>
-              <li><a href="#" class="link-dark rounded">Annually</a></li>
+              <li><a href="#" class="link-dark rounded">TODO</a></li>
             </ul>
           </div>
         </li>
         <li class="mb-1">
           <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#orders-collapse" aria-expanded="false">
-            Orders
+            History
           </button>
           <div class="collapse" id="orders-collapse">
             <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-              <li><a href="#" class="link-dark rounded">New</a></li>
-              <li><a href="#" class="link-dark rounded">Processed</a></li>
-              <li><a href="#" class="link-dark rounded">Shipped</a></li>
-              <li><a href="#" class="link-dark rounded">Returned</a></li>
+              <li><a href="#" class="link-dark rounded">TODO</a></li>
             </ul>
           </div>
         </li>
@@ -90,7 +140,7 @@
             </ul>
           </div>
         </li>
-        <li class="mb-1">
+        <li class="mb-1 mt-auto">
           <a href="https://github.com/eugenpt/noteplace" class="list-group-item list-group-item-action bg-light pb-4"><i class="bi-github"></i>&nbspNoteplace on GitHub</a>
         </li>
       </ul>

@@ -2036,6 +2036,115 @@ $("#menu-toggle").click(function(e) {
   $("#wrapper").toggleClass("toggled");
 });
 
+
+// create element
+function _ce(tag, plopName="className", plopVal="class"){
+  var elt = document.createElement(tag);
+  for(var j=1; j<arguments.length; j+=2){
+    elt[arguments[j]] = arguments[j+1];
+  }
+  return elt;
+}
+
+
+function rec_fillPlace(places, root_dom){
+  for(var place of places){
+    var rli = document.createElement('li');
+    if('items' in place){
+      // folder!
+      rec_fillPlace.N++;
+      var hid = 'places-collapse-'+rec_fillPlace.N;
+
+      var hdiv = _ce('div');
+
+      var hBtn = _ce('button'
+        ,'className','btn btn-toggle align-items-center collapsed'
+        ,'ariaExpanded','false'
+        ,'innerHTML',place.name
+      );
+      hBtn.dataset['bsToggle']='collapse';
+      hBtn.dataset['bsTarget']='#'+hid;
+
+      var btnDel = _ce('button'
+        ,'className',"btn btn-outline-danger"
+        ,'innerHTML','<i class="bi-folder-x"></i>'
+      );
+
+      var btnAddFolder = _ce('button'
+        ,'className',"btn"
+        ,'innerHTML','<i class="bi-folder-plus"></i>'
+      );      
+      
+      var btnAddPlace = _ce('button'
+        ,'className',"btn"
+        ,'innerHTML','<i class="bi-plus-square-dotted"></i>'
+      );      
+
+
+      var bdiv = _ce('div'
+        ,'className','collapse'
+        ,'id',hid
+      )
+
+      var tul = _ce('ul'
+        ,'className', "btn-toggle-nav list-unstyled fw-normal pb-1 small"
+      )
+      rec_fillPlace(place.items, tul);
+      bdiv.appendChild(tul);
+
+      hdiv.appendChild(hBtn);
+      hdiv.appendChild(btnDel);
+      hdiv.appendChild(btnAddFolder);
+      hdiv.appendChild(btnAddPlace);
+
+      rli.appendChild(hdiv);
+      rli.appendChild(bdiv);
+    }else{  
+      // not a folder!
+      var ta = _ce('a'
+        ,'className',"btn align-items-center"
+        'innerHTML',place.name
+      )
+
+      var btnEdit = _ce('button'
+        ,'className','btn'
+        ,'innerHTML','<i class="bi-pencil"></i>'
+        ,'onclick',function(e){
+            var elt = this.parentNode.getElementsByClassName('btn')[0];
+            console.log(elt);
+            elt.contentEditable="true";
+            elt.dataset['originalName'] = elt.innerHTML;
+            elt.focus();
+            elt.addEventListener('focusout', function(){
+              console.log('focusout1!');
+              console.log(this);
+              this.contentEditable = "false";
+              this.innerHTML = this.dataset['originalName'];
+            })
+          }
+      );
+      rli.appendChild(ta);
+      rli.appendChild(btnEdit);
+    }
+    root_dom.appendChild(rli);
+  }
+}
+rec_fillPlace.N=0;
+
+
+_PLACES = [ 
+  {name:'Home?', state:{T:[0,0],S:1}},
+  {name:'Test folder', items:[
+    {name:'test 1', state:{T:[-100,-100], S:0.1}},
+    {name:'Test sub-folder..', items:[
+      {name:'test 2', state:{T:[-1000,-1000], S:0.001}},
+      {name:'test 3', state:{T:[-1200,-1000], S:0.001}},
+    ]}
+  ]}
+]
+
+rec_fillPlace(_PLACES, _('#places-root'));
+
 // :::    ::: ::::::::::: ::::::::::: :::        ::::::::::: ::::::::::: :::   ::: 
 // :+:    :+:     :+:         :+:     :+:            :+:         :+:     :+:   :+: 
 // +:+    +:+     +:+         +:+     +:+            +:+         +:+      +:+ +:+  
