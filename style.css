@@ -219,3 +219,15 @@ html, body {
     top:-100000px;
     opacity: 0;
   }
+
+
+.horizontal-scrollable > .row {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+}
+  
+.horizontal-scrollable > .row > .col {
+    display: inline-block;
+    float: none;
+}
