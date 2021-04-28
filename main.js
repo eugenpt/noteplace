@@ -728,6 +728,22 @@ function stopEditing(){
   contentEditTextarea = null;
 }
 
+_PLACES = {};
+function stripPlaces(_p=null){
+  p = _p?_p:_PLACES;
+  console.log(p);
+  if('items' in p){
+    return {
+      name:p.name
+      ,items:p.items.map(stripPlaces)
+    }
+  }else{
+    return {
+      name:p.name
+      ,state:p.state
+    }
+  }
+}
 
 function save(node=null, save_ids=true){
   // save node state to localStorage.
@@ -761,6 +777,9 @@ function save(node=null, save_ids=true){
       _NODES.map((node)=>node.id)
     )
   }
+  localStorage['noteplace.places'] = JSON.stringify(
+    stripPlaces()
+  )
 }
 
 
@@ -1502,7 +1521,8 @@ function saveToG(){
   return {
     T:T,
     S:S,
-    nodes: _NODES.map(stripNode)
+    nodes: _NODES.map(stripNode),
+    places: stripPlaces()
   }
 }
 
@@ -1524,6 +1544,15 @@ function loadFromG(G){
 
   T = [1*G.T[0],1*G.T[1]];
   S = 1*G.S;
+
+  delete _PLACES;
+  if('places' in G){
+    _PLACES = G.places;
+  }else{
+    _PLACES = _PLACES_default;
+  }
+  fillPlaces();
+
   // applyZoom([1*G.T[0],1*G.T[1]], 1*G.S);
   $('.node').remove();
   delete _NODES;
@@ -2392,16 +2421,8 @@ function fillPlaces(){
   rec_fillPlace(_PLACES.items, _('#places-root'));
 }
 
-_PLACES = {name:'Places',items:[ 
-  {name:'Home?', state:{T:[0,0],S:1}},
-  {name:'Test folder', items:[
-    {name:'test 1', state:{T:[-4000,-2000], S:0.1}},
-    {name:'Test sub-folder..', items:[
-      {name:'test 2', state:{T:[-400000,-200000], S:0.001}},
-      {name:'test 3', state:{T:[-400000,-250000], S:0.001}},
-    ]}
-  ]}
-]}
+
+_PLACES = _PLACES_default;
 
 _PLACES.dom = {
   hBtn:_('#btnPlaces')
