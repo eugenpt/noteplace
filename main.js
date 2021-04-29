@@ -28,29 +28,6 @@ let node_container = _("#node_container");
 
 let _selected_DOM = [];
 
-
-function toStr(a){
-  return(typeof(a)=="number")?
-    a.toExponential(2)
-    :
-    (Array.isArray(a)?
-      ('['+a.map(toStr).join(', ')+']')
-      :
-      ((typeof(a)=='object')?
-      '{'+Object.keys(a).map((k)=>k+':'+toStr(a[k])).join(', ')+'}'
-      :a)
-    );
-}
-
-
-function status() {
-  if((arguments.length==1)&&(typeof(arguments[0])=='object')){
-    var s = toStr(arguments[0]);
-    _('#status').innerText = s.slice(1,s.length-1);
-  }else
-    _('#status').innerText = [... Array(arguments.length).keys()].map((j)=>toStr(arguments[j])).join(', ');
-}
-
 width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
 height = window.innerHeight|| document.documentElement.clientHeight|| BODY.clientHeight;
 
@@ -133,7 +110,8 @@ function zoomInOut(in_degree, clientPos=null){
   S = Math.min(zoomMax,Math.max(zoomMin, S*Math.pow(zoomK,in_degree)))
   applyZoom(
     [mousePos[0] - clientPos[0]/S, mousePos[1]-clientPos[1]/S],
-    S
+    S,
+    true
   );
 }
 
@@ -152,23 +130,26 @@ function onMouseWheel(e){
 // safari?
 window.addEventListener("wheel",onMouseWheel);
 
+function setTransitionDur(s){
+  $('.node').css('transition-duration',s+'s');
+  $('#container img').css('transition-duration',s+'s');
+  $('#container .ui-wrapper').css('transition-duration',s+'s');
+}
+
 __previewOldState = {T:[0,0],S:1}
+
 function applyZoom(T_, S_, smooth=true, no_temp){
   console.log('S='+S+' S_='+S_);
   T = T_;
 
-  ds = Math.abs(Math.log10(S/S_));
+  ds = 0.2 + Math.abs(Math.log10(S/S_));
   console.log('ds='+ds);
   S = S_;
 
   if(smooth){
-    $('.node').css('transition-duration',(0.2+ds)+'s');
-  }else{
-    $('.node').css('transition-duration','0s');
+    setTransitionDur(ds);
   }
 
-  // $('.node').addClass('zoom');
-  
   status({T:T,S:S});
 
   redraw();
@@ -176,7 +157,16 @@ function applyZoom(T_, S_, smooth=true, no_temp){
   if(no_temp){
     __previewOldState = {T:T,S:S};
   }
+  
+  if(smooth){
+    clearTimeout(applyZoom.zoomResetTimeout)
+    applyZoom.zoomResetTimeout = setTimeout(function(){
+      setTransitionDur(0);
+    },1000*ds)
+  }
 }
+applyZoom.zoomResetTimeout=null;
+applyZoom.lastSmooth=false;
 
 
 _isMouseDown = false;
@@ -191,7 +181,7 @@ _isDragSelecting = false;
 container.onmousedown = function(e) {
   console.log('container.onmousedown');
   console.log('T='+T+' S='+S);
-  $('.node').css('transition-duration','0s');
+  // $('.node').css('transition-duration','0s');
   // $('.node').removeClass('zoom'); // disable visible transition
   if(__isResizing){
     console.log('resizing..');
@@ -559,6 +549,7 @@ function selectOneDOM(dom){
       start:function(e){
         console.log('rotate start');
         console.log(e);
+        
       },
       stop:function(e, ui){
         console.log('rotate stop');
@@ -577,6 +568,7 @@ function selectOneDOM(dom){
       console.log('making that img resizable:');
       console.log(img);
       img.dataset['parent_node_id'] = dom.id;
+      img.dataset['origS'] = S;
       __IMG = img;
       $(img).resizable({
         aspectRatio: true,
@@ -589,14 +581,15 @@ function selectOneDOM(dom){
           console.log('resize stop');
           console.log(e);
           console.log(ui);
-          var hid = ui.originalElement[0].dataset['id'];
-          _DOMId2node.get(hid)['fontSize'] = ui.size.height/(5*S);
-          save(_DOMId2node.get(hid));
+          var hid = ui.originalElement[0].dataset['parent_node_id'];
+          domNode(hid)['fontSize'] = ui.size.height/(5*S);
+          save(domNode(hid));
           updateNode(_('#'+hid));
           // ui.originalElement.style.width='auto';
           __X = ui;
         }
       });
+
     })
     $(dom)
       .find('.ui-resizable-handle')
@@ -729,21 +722,6 @@ function stopEditing(){
 }
 
 _PLACES = {};
-function stripPlaces(_p=null){
-  p = _p?_p:_PLACES;
-  console.log(p);
-  if('items' in p){
-    return {
-      name:p.name
-      ,items:p.items.map(stripPlaces)
-    }
-  }else{
-    return {
-      name:p.name
-      ,state:p.state
-    }
-  }
-}
 
 function save(node=null, save_ids=true){
   // save node state to localStorage.
@@ -762,6 +740,8 @@ function save(node=null, save_ids=true){
     localStorage['noteplace.node_ids'] = JSON.stringify(node_ids);
   }else if(node=='ids'){
     save_ids = true;
+  }else if(node=='places'){
+    // do nothing, I intend on saving places anyway
   }else{
     // node provided, save only node
     if('x' in node){
@@ -778,7 +758,7 @@ function save(node=null, save_ids=true){
     )
   }
   localStorage['noteplace.places'] = JSON.stringify(
-    stripPlaces()
+    stripPlace(_PLACES)
   )
 }
 
@@ -841,8 +821,7 @@ function textareaBtnDown(e){
 
   if (e.keyCode == 9){
     //Tab
-    
-
+  
 
     // no jump-to-next-field
     e.preventDefault();
@@ -933,14 +912,11 @@ function onNodeDblClick(e){
 }
 
 
-function now(){
-  return new Date().getTime();
-}
 
 __nodeMouseDown = null;
 
 function domNode(dom){
-  return _DOMId2node.get(dom.id);
+  return _DOMId2node.get(typeof(dom)=="string"?dom:dom.id);
 }
 
 function onNodeMouseDown(e){
@@ -997,7 +973,7 @@ function newId(){
       // It has not... perform the initialization
       newId.N = 0;
   }  
-  while(getNode(newId.N)){
+  while(getDOM(newId.N)){
     newId.N++;
   }
   newId.N++;
@@ -1039,15 +1015,18 @@ function newNode(node){
       node.fontSize = 20/S;
     }
 
-    tdom = document.createElement('div')
-    tdom.id = 'node_'+node.id;
+    tdom = _ce('div'
+      ,'id','node_'+node.id
+      ,'className', "node ui-rotatable"
+      ,'onclick', onNodeClick
+      ,'ondblclick', onNodeDblClick
+      ,'onmousedown', onNodeMouseDown
+    )
+    tdom.style.display = 'none';
 
     _NODES.push(node);
     _DOMId2node.set(tdom.id, node);
     _DOMId2nodej.set(tdom.id, _NODES.length-1);
-
-
-    tdom.className = "node ui-rotatable";
 
     //  tn.contentEditable = true;
     // tn.dataset["x"] = d.x;
@@ -1057,10 +1036,10 @@ function newNode(node){
     // tn.dataset['text'] = d.text;
     // tn.dataset['id'] = d.id;
   }
-  tdom.innerHTML = '';
-  tdom.onclick = onNodeClick;
-  tdom.ondblclick = onNodeDblClick;
-  tdom.onmousedown = onNodeMouseDown;
+  // tdom.innerHTML = '';
+  // tdom.onclick = onNodeClick;
+  // tdom.ondblclick = onNodeDblClick;
+  // tdom.onmousedown = onNodeMouseDown;
 
 
   tdom.innerHTML = getHTML(node.text);
@@ -1097,12 +1076,13 @@ function newNode(node){
   // tn.appendChild(ta);
   node.node = tdom;
 
-  updateNode(node);
-
   if(!('className' in node)){
     // console.log("!('className' in node) , appending to DOM")
     node_container.appendChild(tdom);
   }
+
+  updateNode(node);
+  redrawNode(node);
 
   [].forEach.call(tdom.getElementsByTagName('a'),(elt)=>{
     if(elt.href){
@@ -1135,7 +1115,6 @@ function updateNode(d){
   [].forEach.call(n.getElementsByTagName('img'),(e)=>{
     e.style.width='auto';
     e.style.height = 5*(d["fontSize"])*S +'px';
-    e.style.transitionDuration='0.2s';
     // e.setAttribute('draggable', false);
     // e.onmousedown = (e)=>{e.preventDefault();};
   })
@@ -1173,14 +1152,6 @@ function calcBox(d){
   }
 }
 
-function isInBox(xMin,xMax,yMin,yMax,bxMin,bxMax,byMin,byMax){
-  return (
-    (xMin <= bxMax)
-  &&(yMin <= byMax)
-  &&(xMax >= bxMin)
-  &&(yMax >= byMin)  
-  )
-}
 
 function isVisible(d){
   if(!('xMax' in d)){
@@ -1200,50 +1171,68 @@ function isVisible(d){
 }
 
 function calcVisible(d, onhide, onshow){
-  if(!('vis' in d)){
-    d.vis=0;
-  }
   new_vis = isVisible(d);
-  if(d.vis){
+
+  if(!('vis' in d)){
     if(new_vis){
-      //
+      onshow(d);
     }else{
       onhide(d);
     }
   }else{
-    if(new_vis){
-      // 
-      onshow(d);
+    if(d.vis){
+      if(new_vis){
+        //
+      }else{
+        // console.log('hiding:');
+        // console.log(d);
+        onhide(d);
+      }
     }else{
-      // did not show before and not showing now, pass
+      if(new_vis){
+        // console.log('show:');
+        // console.log(d);
+        onshow(d);
+      }else{
+        // did not show before and not showing now, pass
+      }
     }
   }
   d.vis = new_vis;
 }
 
+function redrawNode(e){
+  calcVisible(e
+    ,onhide=function(){
+      e.node.style.opacity=0;
+      e.node.style.display='none';
+    },onshow=function(){
+      var old_td = 0;
+      if('node' in e){
+        old_td = e.node.style.transitionDuration.slice(0,-1)*1;
+        e.node.style.display='none';
+      }
+      updateNode(e);
+      setTimeout(function(){
+      e.node.style.display='';
+      e.node.style.opacity=1;
+      },1+1000*old_td);
+    }
+  )
+}
+
 function redraw(){
+  console.log('redraw')
   _NODES.forEach((e)=>{
     if(('vis' in e)&&(e.vis)){
+      // console.log('vis => update');
+      // console.log(e);
       updateNode(e);
     }
   })
   
   setTimeout(function(){
-    _NODES.forEach(function(e){
-      calcVisible(e
-      ,function(){ //onhide
-        e.node.style.opacity=0;
-        // e.node.style.display='none';
-      },function(){ //onshow
-        if('node' in e){
-          // e.node.style.display='none';
-        }
-        updateNode(e);
-        e.node.style.display='';
-        // e.node.style.transitionDuration='0.2s';
-        e.node.style.opacity=1;
-      })
-    })
+    _NODES.forEach(redrawNode);
   }, 5)
 
   if(contentEditTextarea){
@@ -1255,20 +1244,31 @@ function redraw(){
     contentEditTextarea.style.width = 1*contentEditTextarea.dataset['initWidth']*S/(1*contentEditTextarea.dataset['initS']) + 'px';
     console.log('contentEditTextarea.style.width = '+contentEditTextarea.style.width);
     contentEditTextarea.style.height = contentEditTextarea.dataset['initHeight']*S/contentEditTextarea.dataset['initS']  + 'px';
-    }
-}
+  }
 
+  if(_selected_DOM.length>0){
+    _selected_DOM.forEach(dom=>{
+      
+      var wrapper = dom.getElementsByClassName('ui-wrapper');
+      
+      if(wrapper.length>0){
+        wrapper=wrapper[0];
+        var img = wrapper.getElementsByTagName('img')[0];
 
-function _(s){
-  if(s[0]=='#'){
-    return document.getElementById(s.slice(1));
-  }else
-  if(s[0]=='.'){
-    return document.getElementsByClassName(s.slice(1));
-  }else{
-    throw Error('Not Implemented: selector=['+s+']')
+        console.log(img)
+
+        console.log(wrapper.style.width);
+        console.log(S/img.dataset['origS'])
+        wrapper.style.width = wrapper.style.width.slice(0,-2)*S/img.dataset['origS']+'px';
+        console.log(wrapper.style.width);
+        wrapper.style.height = wrapper.style.height.slice(0,-2)*S/img.dataset['origS']+'px';
+        img.dataset['origS'] = S;
+      }
+    })
   }
 }
+
+
 
 
 function zoomToURL(s, smooth=true, no_temp=false){
@@ -1287,36 +1287,6 @@ function getHTML(text){
             .replaceAll('\n', '<br />')
             .replace(/href="(\?[^"]+)"/,/class="local" onclick="zoomToURL('$1')"/);
             // .replaceAll(/(href="[^\?])/g,'onclick="(e)=>{console.log(e);e.stopPropagation();}" $1');  
-}
-
-function getFontSize(d){
-  return d.fontSize * S + 'px';
-}
-
-
-
-zoom_urlPushTimeout = null;
-function zoomed() {
-  S = d3.event.scale;
-  T[0] = d3.event.translate[0]/S;
-  T[1] = d3.event.translate[1]/S;
-
-  status({T:T,S:S});//+' E:['+d3.event.x.toFixed(2)+','+d3.event.y.toFixed(2)+']');
-  
-  redraw();
-
-  clearTimeout(zoom_urlPushTimeout);
-
-  // every 10s of stay at one place time - 
-  zoom_urlPushTimeout = setTimeout(function(){
-    console.log('history pushed');
-      url = window.location.href.indexOf('?')==-1 ? window.location.href : window.location.href.slice(0,window.location.href.indexOf('?'))
-      window.history.pushState(
-          {T:T,S:S}, 
-          'Noteplace', 
-          url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
-    }, 10000);
-    
 }
 
 function isCurrentState(){
@@ -1343,26 +1313,9 @@ zoom_urlReplaceTimeout = setInterval(function(){
   }
 }, 200);
 
-function selectAllContent(el){
-  var el = getG(tnode);
-  var range = document.createRange()
-  var sel = window.getSelection()
-  
-  //range.setStart(el.childNodes[0], 0)
-  range.selectNodeContents(el.childNodes[0])
-  // range.collapse(true)
-  
-  sel.removeAllRanges()
-  sel.addRange(range)
-}
 
-
-function getNode(id){
+function getDOM(id){
   return document.getElementById('node_' + id);
-}
-
-function getG(d){
-  return document.getElementById('node_' + d.id);
 }
 
 function onFontSizeEdit(){
@@ -1388,19 +1341,6 @@ function onTextEditChange(){
 
     save(_selected_DOM);
   }
-}
-
-
-// https://gist.github.com/simondahla/0c324ba8e6ed36055787
-function addOnContentChange(elt, fun){
-  if(window.addEventListener) {
-    // Normal browsers
-    elt.addEventListener('DOMSubtreeModified', fun, false);
-  } else
-   if(window.attachEvent) {
-      // IE
-      elt.attachEvent('DOMSubtreeModified', fun);
-   }
 }
 
 
@@ -1444,21 +1384,6 @@ function editFontSize(delta){
 }
 
 
-const copyToClipboard = str => {
-  const el = document.createElement('textarea');
-  el.value = str;
-  el.setAttribute('readonly', '');
-  el.style.position = 'absolute';
-  el.style.left = '-9999px';
-  el.style.opacity=0;
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand('copy');
-  document.body.removeChild(el);
-};
-
-
-
 function showModalYesNo(title, body, yes_callback){
   _('#modalYesNoLabel').innerHTML = title;
   _('#modalYesNoBody').innerHTML = body;
@@ -1474,20 +1399,6 @@ function showModalYesNo(title, body, yes_callback){
 // +#+            +#+     +#+        +#+              +#+ 
 // #+#            #+#     #+#        #+#       #+#    #+# 
 // ###        ########### ########## ########## ########  
-
-
-function download(filename, text) {
-  var element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-  element.setAttribute('download', filename);
-
-  element.style.display = 'none';
-  document.body.appendChild(element);
-
-  element.click();
-
-  document.body.removeChild(element);
-}
 
 
 function defaultFilename(){
@@ -1522,7 +1433,7 @@ function saveToG(){
     T:T,
     S:S,
     nodes: _NODES.map(stripNode),
-    places: stripPlaces()
+    places: stripPlace()
   }
 }
 
@@ -1578,156 +1489,6 @@ _('#file').oninput = function(){
     fr.readAsText(this.files[0]);  
 }
 
-//  ::::::::   ::::::::   ::::::::   ::::::::  :::        ::::::::::      :::::::::  :::::::::  ::::::::::: :::     ::: :::::::::: 
-// :+:    :+: :+:    :+: :+:    :+: :+:    :+: :+:        :+:             :+:    :+: :+:    :+:     :+:     :+:     :+: :+:        
-// +:+        +:+    +:+ +:+    +:+ +:+        +:+        +:+             +:+    +:+ +:+    +:+     +:+     +:+     +:+ +:+        
-// :#:        +#+    +:+ +#+    +:+ :#:        +#+        +#++:++#        +#+    +:+ +#++:++#:      +#+     +#+     +:+ +#++:++#   
-// +#+   +#+# +#+    +#+ +#+    +#+ +#+   +#+# +#+        +#+             +#+    +#+ +#+    +#+     +#+      +#+   +#+  +#+        
-// #+#    #+# #+#    #+# #+#    #+# #+#    #+# #+#        #+#             #+#    #+# #+#    #+#     #+#       #+#+#+#   #+#        
-//  ########   ########   ########   ########  ########## ##########      #########  ###    ### ###########     ###     ########## 
-// ™
-
-
-
-__GDRIVE_saveFilename = null;
-__files = new Map();
-
-function fillFilesList(rowClickFun){
-  
-  listFiles(function(files){
-    __files = new Map();
-    files.forEach((file)=>{
-      __files.set(file.name,file.id);
-      console.log(file);
- 
-      var row = document.createElement('div');
-      row.className = 'row my-1';
-      row.dataset['fileId'] = file.id;
-      row.dataset['name'] = file.name;
-      
-      var col_name = document.createElement('div');
-      col_name.className = 'col-10 btn  btn-outline-secondary';
-      col_name.innerText = file.name;
-      col_name.onclick = function(_row){
-        console.log('row click');
-        return function(){rowClickFun(_row);
-        
-      }}(row)
-
-      var col_del = document.createElement('div');
-      col_del.className = 'col';
-      var del_btn = document.createElement('div');
-      del_btn.className = "btn btn-danger align-self-end";
-      del_btn.innerHTML = '⌫';
-      del_btn.title="delete "+file.name;
-      del_btn.onclick = function(_row){return function(){
-
-        _('#modalYesNoLabel').innerHTML = 'Delete?';
-        _('#modalYesNoBody').innerHTML = 'Really delete <b>' + _row.dataset['name'] + '</b>?';
-        _('#modalYesNo-Yes').onclick = function(){
-          gapi.client.drive.files.delete({
-            'fileId':_row.dataset['fileId']
-          }).then(function(a){
-            console.log(a); 
-            if(a.status==204){
-              _row.remove();
-              __files.delete(_row.dataset['name']);
-            }
-          })
-        };
-        $('#modalYesNo').modal('show');
-      }}(row)
-      col_del.appendChild(del_btn);
-
-      row.appendChild(col_name);
-      row.appendChild(col_del);
-
-      _('#modal-list').appendChild(row);
-    })  
-  });
-}
-
-
-_('#load_gdrive').addEventListener('click',function(){
-  console.log('GDrive load..');
-
-  _('#modal-input').value = '';
-  _('#modal-input').oninput = function(){
-    if( __files.has(_('#modal-input').value)){
-      _('#modal-save').style.display='';
-    }else{
-      _('#modal-save').style.display='none';
-    }
-  }
-  
-  _('#modal-list').innerHTML = '';
-  _('#exampleModalLabel').innerHTML = 'Load from Google Drive file:';
-  _('#modal-save').innerHTML = 'Save';
-  _('#modal-save').style.display='none';
-
-  fillFilesList((row)=>{console.log(row); getFileContent(row.dataset['fileId'],function(e){
-    if(e.status==200){
-      // file loaded OK, load nodes'n'stuff
-      loadFromG(JSON.parse(e.result));
-      // only hide on OK load
-      $('#exampleModal').modal('hide')
-      // save Filename for faster save
-      __GDRIVE_saveFilename = row.dataset['name'];
-    }else{
-      alert('error.. '+e);
-      console.log(e);
-    }
-  })})
-})
-
-function saveToGDrive(filename){
-  uploadFile(
-    filename, 
-    JSON.stringify(saveToG())
-  );
-  // save filename
-  __GDRIVE_saveFilename = filename;
-}
-
-_('#save_gdrive').addEventListener('click',function(){
-  console.log('GDrive save..');
-
-  _('#modal-input').value = __GDRIVE_saveFilename?__GDRIVE_saveFilename:defaultFilename();
-  _('#modal-input').oninput = function(){};
-  _('#modal-save').style.display='';
-  _('#exampleModalLabel').innerHTML = 'Save to Google Drive file:';
-  _('#modal-save').innerHTML = 'Save';
-  _('#modal-list').innerHTML = '';
-
-
-  _('#modal-save').onclick = function(){
-    saveToGDrive(_('#modal-input').value);
-  }
-
-
-  fillFilesList((_row)=>{
-    showModalYesNo(
-      'Overwrite?',
-      'Really Overwrite <b>' + _row.dataset['name'] + '</b>?',
-      function(){
-        // I was not able to rewrite file content
-        //  , so I will just delete and save
-        gapi.client.drive.files.delete({
-          'fileId':_row.dataset['fileId']
-        }).then(function(a){
-          if(a.status==204){
-            // Now save
-            saveToGDrive(_row.dataset['name']);
-            $('#exampleModal').modal('hide');
-          }else{
-            console.log(a); 
-            alert('Error while rewriting...');
-          }
-        })
-      })
-    });
-}, false);
-
 //  :::::::: ::::::::::: :::     ::::::::: ::::::::::: :::    ::: :::::::::  
 // :+:    :+:    :+:   :+: :+:   :+:    :+:    :+:     :+:    :+: :+:    :+: 
 // +:+           +:+  +:+   +:+  +:+    +:+    +:+     +:+    +:+ +:+    +:+ 
@@ -1738,7 +1499,7 @@ _('#save_gdrive').addEventListener('click',function(){
 
 node_container.dataset['x'] = 0;
 node_container.dataset['y'] = 0;
-zoomToURL(window.location.search);
+
 
 
 // event handlers
@@ -1788,6 +1549,12 @@ if($(".node").length){
   }
   nodes.map(stripNode).forEach(newNode);
 }
+
+
+_PLACES = stripPlace(_PLACES_default);
+
+fillPlaces();
+
 
 save();
 
@@ -1927,21 +1694,6 @@ _('#btnRestart').addEventListener('click', function(){
   )
 })
 
-image_file_types = [
-  'image/apng'
-  ,'image/avif'
-  ,'image/gif'
-  ,'image/jpeg'
-  ,'image/png'
-  ,'image/svg+xml'
-  ,'image/webp'
-  ,'image/bmp'
-  ,'image/x-icon'
-  ,'image/tiff'
-]
-function isImage(file){
-  return image_file_types.indexOf(file.type)>=0;
-}
 _fileList = null;
 container.addEventListener('drop',function(e){
   console.log('container drop');
@@ -1965,8 +1717,6 @@ container.addEventListener('drop',function(e){
       })
     );
   }
-
-
 })
 
 container.addEventListener('dragover',function(e){
@@ -1981,12 +1731,14 @@ container.addEventListener('dragenter',function(e){
   container.classList.add('drag-hover');
   e.preventDefault();
 })
+
 container.addEventListener('dragleave',function(e){
   console.log('container dragleave')
   container.classList.remove('drag-hover');
   // console.log(e);
   e.preventDefault();
 })
+
 container.addEventListener('dragend',function(e){
   console.log('container dragend')
   // console.log(e);
@@ -2006,9 +1758,10 @@ _('#btnSaveView').onclick = function(){
 
   btn.innerHTML = 'Saved View '+btoa(Math.random()).slice(10,13)+'&nbsp';
 
-  telt = document.createElement('i');
-  telt.className = "bi-fullscreen";
-
+  telt = _ce('i'
+    ,'className',"bi-fullscreen"
+    ,'title',"Preview"
+  )
   telt.addEventListener('mouseenter', e => {
     __previewOldState = {T:T,S:S};
     zoomToURL(_('#btnSaveView').dataset['view'], false);
@@ -2020,12 +1773,8 @@ _('#btnSaveView').onclick = function(){
     e.stopPropagation();
     __previewOldState = {T:T,S:S};
   },false);
-  telt.title = "Preview";
 
   btn.appendChild(telt);
-
-  
-  
 
   btn.title = btn.dataset['view'];
   btn.draggable = true;
@@ -2070,386 +1819,8 @@ $("#menu-toggle").click(function(e) {
 });
 
 
-// create element
-function _ce(tag, plopName="className", plopVal="class"){
-  var elt = document.createElement(tag);
-  for(var j=1; j<arguments.length; j+=2){
-    elt[arguments[j]] = arguments[j+1];
-  }
-  return elt;
-}
-
-// returns _PLACES for path
-function pathPlace(path){
-  var p = _PLACES;
-  path = ((typeof(path)=="string")?JSON.parse(path):path).forEach((e)=>{
-    p=p.items[p.items.map(jp=>jp.name).indexOf(e)];
-  })
-  return p;
-}
-
-
-function addPlaceFolder(path){
-  console.log('addPlaceFolder path='+path);
-  var place = {'name':'New Folder', items:[]}
-  var hpath = JSON.parse(path);
-  hpath.push(place.name);  
-  
-  rli = createPlaceFolderDOM(place,JSON.stringify(hpath));
-
-  pathPlace(path).dom.ul.appendChild(rli);
-  pathPlace(path).items.push(place);
-
-  place.dom.btnEdit.click();
-}
-
-_('#btnNewHomeSubFolder').addEventListener('click',(e)=>{
-  
-  domwpath = _('#btnPlaces');
-  if(domwpath.ariaExpanded=='false'){
-    domwpath.click();
-  }
-
-  addPlaceFolder('[]');
-})
-
-_('#btnNewHomeSubPlace').addEventListener('click',(e)=>{
-  domwpath = _('#btnPlaces');
-  if(domwpath.ariaExpanded=='false'){
-    domwpath.click();
-  }
-  addPlace('[]');
-})
-
-function addPlace(path){
-  console.log('addPlace path='+path);
-
-  var place = {'name':'New Place', state:{T:T,S:S}}
-  var hpath = JSON.parse(path);
-  hpath.push(place.name);  
-  
-  rli = createPlaceDOM(place,JSON.stringify(hpath));
-
-  pathPlace(path).dom.ul.appendChild(rli);
-  pathPlace(path).items.push(place);
-
-  place.dom.btnEdit.click();
-}
-
-function placesUpdatePaths(places=null, _path=[]){
-  if(!places){
-    places = _PLACES.items;
-  }
-  for(var place of places){
-    var path = _path.slice();
-    path.push(place.name);
-    if('items' in place){
-      place.dom.hBtn.dataset['path'] = JSON.stringify(path);
-
-      placesUpdatePaths(place.items, path);
-    }else{
-      place.dom.a.dataset['path'] = JSON.stringify(path);
-    }
-  }
-
-}
-
-function createPlaceFolderDOM(place, path){
-  createPlaceFolderDOM.N++;
-
-  var rli = document.createElement('li');
-  var hid = 'places-collapse-'+createPlaceFolderDOM.N;
-
-  var hdiv = _ce('div');
-
-  var hBtn = _ce('span'
-    ,'className','btn btn-toggle align-items-center collapsed places-folder places-name'
-    ,'ariaExpanded','false'
-    ,'innerHTML',place.name
-    ,'title', 'Edit name'
-    ,'onmouseenter',function(e){
-      console.log('mouseenter');
-      console.log(e);
-    }
-    ,'onmouseleave',function(e){
-      console.log('onmouseleave');
-      console.log(e);
-    }
-  );
-  hBtn.dataset['bsToggle'] = 'collapse';
-  hBtn.dataset['bsTarget'] = '#' + hid;
-  hBtn.dataset['path'] = path;
-
-
-  var btnEdit = _ce('button'
-    ,'className',"btn p-1"
-    ,'innerHTML','<i class="bi-pencil"></i>'
-    ,'onclick',function(e){
-      var elt = this.parentNode.getElementsByClassName('places-name')[0];
-      elt.contentEditable="true";
-      elt.dataset['originalName'] = elt.innerHTML;
-      elt.focus();
-      elt.addEventListener('focusout', function(){
-        console.log('focusout1!');
-        console.log(this);
-        console.log(this.innerHTML);
-        this.contentEditable = "false";
-        // TODO:
-        //if(collision_check)
-        //  this.innerHTML = this.dataset['originalName'];
-        var thisplace = pathPlace(this.dataset['path']);
-        thisplace.name = this.innerHTML;
-        var tpath = JSON.parse(this.dataset['path']).slice(0,-1);
-        tpath.push(this.innerHTML);
-        this.dataset['path'] = JSON.stringify(tpath);
-        placesUpdatePaths(thisplace.items, tpath);
-      })
-      elt.addEventListener('keydown', function(e){
-        console.log(e);
-        if(e.key=='Enter'){
-          // end editing
-          this.contentEditable = "false";
-        }else if(e.key==' '){
-          // e.preventDefault();
-          // this.innerHTML+=' ';
-          // e.stopPropagation();
-        }
-      });
-    }
-  );
-
-  var btnDel = _ce('button'
-    ,'className',"btn text-danger p-1"
-    ,'innerHTML','<i class="bi-folder-x"></i>'
-    ,'title','Delete folder'
-    ,'onclick', function(e){
-      showModalYesNo(
-        'Really?'
-        ,'Are you sure you want to delete folder <b>' + place.name+'</b> with <i>all</i> it\'s contents???'
-        ,function(){
-          // find parent place
-          var path = place.dom.hBtn.dataset['path'];
-          parent_place = pathPlace(JSON.parse(path).slice(0,-1));
-
-          if('items' in parent_place){
-            parent_place = parent_place.items;
-          }
-          // remove place
-          parent_place.splice(parent_place.indexOf(place),1);
-          
-          //remove dom
-          place.dom.hBtn.parentNode.parentNode.parentNode.removeChild(place.dom.hBtn.parentNode.parentNode);
-        }
-      )
-    }
-  );
-
-  var btnAddFolder = _ce('button'
-    ,'className',"btn p-1"
-    ,'innerHTML','<i class="bi-folder-plus"></i>'
-    ,'title','Add sub-folder'
-    ,'onclick', function(e){
-      if(hBtn.ariaExpanded=="false"){
-        hBtn.click();
-      }
-      addPlaceFolder(place.dom.hBtn.dataset['path']);
-    }
-  );      
-
-  var btnAddPlace = _ce('button'
-    ,'className',"btn p-1"
-    ,'innerHTML','<i class="bi-plus-square-dotted"></i>'
-    ,'title','Add place to folder'
-    ,'onclick', function(e){
-      if(hBtn.ariaExpanded=="false"){
-        hBtn.click();
-      }
-      addPlace(place.dom.hBtn.dataset['path']);
-    }
-  );      
-
-
-  var bdiv = _ce('div'
-    ,'className','collapse'
-    ,'id',hid
-  )
-
-  var tul = _ce('ul'
-    ,'className', "btn-toggle-nav list-unstyled fw-normal pb-1 small"
-  )
-  bdiv.appendChild(tul);
-
-  hdiv.appendChild(hBtn);
-  hdiv.appendChild(btnEdit);
-  hdiv.appendChild(btnDel);
-  hdiv.appendChild(btnAddFolder);
-  hdiv.appendChild(btnAddPlace);
-
-  place.dom = {
-    hBtn:hBtn
-    ,btnEdit:btnEdit
-    ,btnDel:btnDel
-    ,btnAddFolder:btnAddFolder
-    ,btnAddPlace:btnAddPlace
-    ,ul:tul
-  }
-  rli.appendChild(hdiv);
-  rli.appendChild(bdiv);
-
-  return rli;
-}
-
-function createPlaceDOM(place, path){
-  var rli = document.createElement('li');
-
-  var ta = _ce('a'
-    ,'className', "btn align-items-center places-place places-name"
-    ,'innerHTML', place.name
-    ,'onclick', function(e){
-      var pl = pathPlace(this.dataset['path']);
-      applyZoom(pl.state.T,pl.state.S,smooth=false,no_temp=true);
-    }
-    ,'onmouseenter', function(e){
-      console.log('enter');
-      __previewOldState = {T:T,S:S};
-      state = pathPlace(this.dataset['path']).state;
-      applyZoom(state.T,state.S,false);
-    }
-    ,'onmouseleave', function(e){
-      console.log('leave');
-      applyZoom(__previewOldState.T,__previewOldState.S,false)
-    }
-  )
-  ta.dataset['path'] = path;
-
-
-  var btnEdit = _ce('button'
-    ,'className','btn'
-    ,'innerHTML','<i class="bi-pencil"></i>'
-    ,'title', 'Edit name'
-    ,'onclick',function(e){
-        var elt = this.parentNode.getElementsByClassName('places-name')[0];
-        elt.contentEditable="true";
-        //save for probable collision check
-        elt.dataset['originalName'] = elt.innerHTML;
-        elt.focus();
-        elt.addEventListener('focusout', function(){
-          console.log('focusout1!');
-          console.log(this);
-          this.contentEditable = "false";
-          // TODO: 
-          // if(collision check)
-          //   this.innerHTML = this.dataset['originalName'];
-          var thisplace = pathPlace(this.dataset['path']);
-          thisplace.name = this.innerHTML;
-          var tpath = JSON.parse(this.dataset['path']).slice(0,-1);
-          tpath.push(this.innerHTML);
-          this.dataset['path'] = JSON.stringify(tpath);
-        });
-        elt.addEventListener('keydown', function(e){
-          if(e.key=='Enter'){
-            // end editing
-            this.contentEditable = "false";
-          }
-        });
-      }
-  );
-
-  var btnDel = _ce('button'
-    ,'className',"btn text-danger p-1"
-    ,'innerHTML','<i class="bi-file-x"></i>'
-    ,'title','Delete place'
-    ,'onclick', function(e){
-      showModalYesNo(
-        'Really?'
-        ,'Are you sure you want to delete <b>' + place.name+'</b>?'
-        ,function(){
-          // find parent place
-          var path = place.dom.a.dataset['path'];
-          parent_place = pathPlace(JSON.parse(path).slice(0,-1));
-
-          if('items' in parent_place){
-            parent_place = parent_place.items;
-          }
-          // remove place
-          parent_place.splice(parent_place.indexOf(place),1);
-          
-          //remove dom
-          place.dom.a.parentNode.parentNode.removeChild(place.dom.a.parentNode);
-        }
-      )
-    }
-  );
-
-  var btnSubs = _ce('button'
-    ,'className','btn'
-    ,'innerHTML','<i class="bi-fullscreen"></i>'
-    ,'title','Save current here'
-    ,'onclick', function(e){
-      showModalYesNo(
-        'Rewrite?'
-        ,'Are you sure you want to save current position as <b>' + place.name + "</b>?"
-        ,function(){
-          place.state={T:T, S:S};
-        }
-      )
-    }
-  )
-
-  rli.appendChild(ta);
-  rli.appendChild(btnEdit);
-  rli.appendChild(btnDel);
-  rli.appendChild(btnSubs);
-
-  place.dom = {
-     a:ta
-    ,btnEdit:btnEdit
-    ,btnDel:btnDel
-    ,btnSubs:btnSubs
-  };
-
-  return rli;
-}
-
-
-function rec_fillPlace(places, root_dom, _P_path=''){
-  console.log('rec_fillPlace path='+_P_path)
-  for(var place of places){
-    var path = _P_path?JSON.parse(_P_path):[]
-    path.push(place.name);
-    path = JSON.stringify(path);
-
-    if('items' in place){
-      // Folder
-      var rli = createPlaceFolderDOM(place, path);
-
-      console.log(' >rec_fillPlace with path='+path);
-      rec_fillPlace(place.items, place.dom.ul, path);
-
-      root_dom.appendChild(rli);
-    }else{
-      // place, not a Folder
-      root_dom.appendChild(createPlaceDOM(place, path));
-    }
-  }
-}
-
-
-function fillPlaces(){
-  createPlaceFolderDOM.N=0;
-  _('#places-root').innerHTML = "";
-  rec_fillPlace(_PLACES.items, _('#places-root'));
-}
-
-
-_PLACES = _PLACES_default;
-
-_PLACES.dom = {
-  hBtn:_('#btnPlaces')
-  ,ul:_('#places-root')
-} 
-
-fillPlaces();
+// applyZoom(T,S, false);
+zoomToURL(window.location.search, false);
 
 // :::    ::: ::::::::::: ::::::::::: :::        ::::::::::: ::::::::::: :::   ::: 
 // :+:    :+:     :+:         :+:     :+:            :+:         :+:     :+:   :+: 
@@ -2458,6 +1829,15 @@ fillPlaces();
 // +#+    +#+     +#+         +#+     +#+            +#+         +#+        +#+    
 // #+#    #+#     #+#         #+#     #+#            #+#         #+#        #+#    
 //  ########      ###     ########### ########## ###########     ###        ###    
+
+function status() {
+  if((arguments.length==1)&&(typeof(arguments[0])=='object')){
+    var s = toStr(arguments[0]);
+    _('#status').innerText = s.slice(1,s.length-1);
+  }else
+    _('#status').innerText = [... Array(arguments.length).keys()].map((j)=>toStr(arguments[j])).join(', ');
+}
+
 
 function addRandomNodesToView(N){
   addRandomNodes(
@@ -2468,13 +1848,21 @@ function addRandomNodesToView(N){
   )
 }
 
-function _RESTART(new_nodes=nodes_default){
+function _RESTART(new_nodes=nodes_default, new_places=_PLACES_default){
+  console.log('_RESTART');
+  console.log('new_nodes=['+new_nodes+']');
+  console.log('new_places=['+new_places+']');
+  
   _NODES = [];
   newId.N = 0;
   $('.node').remove();
-  console.log('new_nodes=['+new_nodes+']');
+
+  _PLACES = stripPlace(_PLACES_default);
+  fillPlaces();
+
   new_nodes.map(stripNode).forEach(newNode);
-  applyZoom([0,0],1,0);
+  console.log('restart');
+  applyZoom([0,0],smooth=false,no_temp=false);
 }
 
 

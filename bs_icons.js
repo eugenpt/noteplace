@@ -361,8 +361,7 @@ function randomizePalette(N=100){
 
 randomizePalette();
 
-__isin = (q, s)=>s.indexOf(q)>=0;
-__isin_all = (q,s)=>q.split(' ').every(jq=>__isin(jq, s));
+
 
 _('#inputIconSearch').oninput = function(){
     [].forEach.call(_('.np-palette'), function(dom){
