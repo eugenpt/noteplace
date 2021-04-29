@@ -1222,10 +1222,10 @@ function calcVisible(d, onhide, onshow){
 
 function redrawNode(e){
   calcVisible(e
-    ,onhide=function(){
+    ,function(){//onhide
       e.node.style.opacity=0;
       e.node.style.display='none';
-    },onshow=function(){
+    },function(){//onshow
       var old_td = 0;
       if('node' in e){
         old_td = e.node.style.transitionDuration.slice(0,-1)*1;
