@@ -1117,7 +1117,16 @@ function updateNode(d){
     e.style.height = 5*(d["fontSize"])*S +'px';
     // e.setAttribute('draggable', false);
     // e.onmousedown = (e)=>{e.preventDefault();};
-  })
+  });
+  [].forEach.call(n.getElementsByClassName('ui-wrapper'),(wrapper)=>{
+    var img = wrapper.getElementsByTagName('img')[0];
+    // e.style.height = img.clientHeight+'px';
+    // e.style.width = img.clientWidth+'px';
+    wrapper.style.width = wrapper.style.width.slice(0,-2)*S/img.dataset['origS']+'px';
+    wrapper.style.height = wrapper.style.height.slice(0,-2)*S/img.dataset['origS']+'px';
+    img.dataset['origS'] = S;
+
+  });
 }
 
 
@@ -1255,12 +1264,7 @@ function redraw(){
         wrapper=wrapper[0];
         var img = wrapper.getElementsByTagName('img')[0];
 
-        console.log(img)
-
-        console.log(wrapper.style.width);
-        console.log(S/img.dataset['origS'])
         wrapper.style.width = wrapper.style.width.slice(0,-2)*S/img.dataset['origS']+'px';
-        console.log(wrapper.style.width);
         wrapper.style.height = wrapper.style.height.slice(0,-2)*S/img.dataset['origS']+'px';
         img.dataset['origS'] = S;
       }
