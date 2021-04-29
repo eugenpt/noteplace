@@ -355,8 +355,8 @@ body > * {
 
 .btn-toggle-nav a {
   display: inline-flex;
-  padding: .1875rem .5rem;
-  margin-top: .125rem;
+  padding: .375rem .5rem;
+  margin-top: 0px;
   margin-left: 1.25rem;
   text-decoration: none;
 }

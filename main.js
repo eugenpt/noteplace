@@ -80,7 +80,9 @@ container.ondblclick = function(e) {
   e.preventDefault();
   e.stopPropagation();
   
-  onNodeDblClick(newdom);
+  setTimeout(function(){
+    onNodeDblClick(newdom);
+  },1);
 }
 
 function zoomInOut(in_degree, clientPos=null){
@@ -760,6 +762,11 @@ function save(node=null, save_ids=true){
   localStorage['noteplace.places'] = JSON.stringify(
     stripPlace(_PLACES)
   )
+
+  tsize = localStorageSize()/(1024*1024);
+  if(tsize>4){
+    console.error("localStorage " + tsize.toFixed(3) + ' MB, limit is 5. you know what to do.');
+  }
 }
 
 
@@ -795,16 +802,17 @@ function textareaBtnDown(e){
     stopEditing();
   }
   if((e.keyCode == 13) && (e.shiftKey)){
+    tnode = stripNode(domNode(contentEditNode));
+    var th = contentEditNode.getBoundingClientRect().height;
     // Shift+Enter
     stopEditing();
 
     selectNode(null);
-    tnode = domNode(contentEditNode)
     var new_node = newNode({
       x:tnode['x'],
       y:1*tnode['y']
         // + 1*tnode['fontSize']
-        + (contentEditNode.getBoundingClientRect().height/S),
+        + (th/S),
       x:tnode['x'],
       text:'',
       fontSize:tnode['fontSize'],
@@ -883,6 +891,7 @@ function onNodeDblClick(e){
   // contentEditTextarea.style.fontSize = contentEditNode.dataset['fontSize']*S+'px';
   // contentEditTextarea.style.fontFamily = 'Open Sans';
   contentEditTextarea.dataset['initS'] = S;
+  console.log(contentEditNode.getBoundingClientRect())
   contentEditTextarea.dataset['initWidth'] = Math.max(width/3, contentEditNode.getBoundingClientRect().width+20);
   contentEditTextarea.dataset['initHeight'] = contentEditNode.getBoundingClientRect().height;
   contentEditTextarea.style.width = contentEditTextarea.dataset['initWidth'] +'px';
@@ -891,6 +900,7 @@ function onNodeDblClick(e){
   contentEditTextarea.onkeydown = textareaBtnDown;
   contentEditTextarea.onkeyup = textareaAutoResize;
   contentEditTextarea.oninput = function(e){
+    console.log('contentEditTextarea input')
     _DOMId2node.get(this.parentElement.id)['text'] = this.value;
   }
   
@@ -905,7 +915,7 @@ function onNodeDblClick(e){
   contentEditNode.innerHTML = '';
   contentEditNode.appendChild(contentEditTextarea);
 
-  textareaAutoResize(contentEditTextarea);
+  // textareaAutoResize(contentEditTextarea);
   contentEditTextarea.select();
 
   // selectNode(contentEditNode);
@@ -1230,6 +1240,29 @@ function redrawNode(e){
   )
 }
 
+
+
+// function redrawAllNodes(){
+//   if(redrawAllNodes.running){
+//     redrawAllNodes.waiting = true;
+//   }else{
+//     redrawAllNodes.running = true;
+//     _NODES.forEach(redrawNode);
+    
+//     if(redrawAllNodes.waiting){
+//       redrawAllNodes.waiting = false;
+//       setTimeout(redrawAllNodes,5);
+//     }else{
+//       redrawAllNodes.running=false;
+//     }
+//   }
+//   // clearTimeout(redrawAllNodes.timeout);
+//   // redrawAllNodes.timeout = setTimeout(function(){
+//   // }, 1);
+// }
+// redrawAllNodes.running=false;
+// redrawAllNodes.waiting=false;
+
 function redraw(){
   console.log('redraw')
   _NODES.forEach((e)=>{
@@ -1240,6 +1273,7 @@ function redraw(){
     }
   })
   
+  // setTimeout(function(){redrawAllNodes();},10);
   setTimeout(function(){
     _NODES.forEach(redrawNode);
   }, 5)
@@ -1324,8 +1358,11 @@ function getDOM(id){
 
 function onFontSizeEdit(){
   if(_selected_DOM.length == 1){
-    domNode(_selected_DOM[0])['fontSize'] = _('#fontSize').value;
+    var dom = _selected_DOM[0];
+    var node = domNode(dom);
+    node['fontSize'] = _('#fontSize').value;
     _selected_DOM[0].classList.add('zoom');
+
     updateNode(_selected_DOM[0]);
     // _selected_DOM.classList.remove('zoom');
 
@@ -1366,7 +1403,7 @@ function addRandomNodes(N, Xlim, Ylim, FSLim){
 
 function editFontSize(delta){
   if(_selected_DOM.length>0){
-    if(_selected_DOM.length==1){
+    if(_selected_DOM.length==0){
       // one element selected, fontSize input is related to it
       input = _('#fontSize');
       input.value *= Math.pow(1.25, delta);
@@ -1377,10 +1414,18 @@ function editFontSize(delta){
       var centerPos = calcCenterPos(_selected_DOM.map(domNode));
 
       _selected_DOM.forEach((dom)=>{
-        domNode(dom).fontSize *= k;
-        domNode(dom).x = centerPos[0] + (domNode(dom).x - centerPos[0])*k;
-        domNode(dom).y = centerPos[1] + (domNode(dom).y - centerPos[1])*k;
+        var node = domNode(dom);
+        node.fontSize *= k;
+        node.x = centerPos[0] + (node.x - centerPos[0])*k;
+        node.y = centerPos[1] + (node.y - centerPos[1])*k;
 
+        wrapper = dom.getElementsByClassName('ui-wrapper');
+        if(wrapper.length>0){
+          wrapper=wrapper[0];
+          console.log(wrapper);
+          wrapper.style.width = (wrapper.style.width.slice(0,-2)*k)+'px';
+          wrapper.style.height = (wrapper.style.height.slice(0,-2)*k)+'px';
+        }
         updateNode(dom);
       })
     }
@@ -1555,7 +1600,11 @@ if($(".node").length){
 }
 
 
-_PLACES = stripPlace(_PLACES_default);
+try{
+  _PLACES = JSON.parse(localStorage['noteplace.places']);
+}catch{
+  _PLACES = stripPlace(_PLACES_default);
+}
 
 fillPlaces();
 

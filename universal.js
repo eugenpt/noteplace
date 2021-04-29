@@ -65,6 +65,24 @@ function isImage(file){
   return image_file_types.indexOf(file.type)>=0;
 }
 
+
+function localStorageSize(verbose=false){
+  var _lsTotal = 0,
+      _xLen, _x;
+  for (_x in localStorage) {
+      if (!localStorage.hasOwnProperty(_x)) {
+          continue;
+      }
+      _xLen = ((localStorage[_x].length + _x.length) * 2);
+      _lsTotal += _xLen;
+      if(verbose)
+        console.log(_x.substr(0, 50) + " = " + (_xLen / 1024).toFixed(2) + " KB")
+  };
+  if(verbose)
+    console.log("Total = " + (_lsTotal / 1024).toFixed(2) + " KB");
+  
+  return _lsTotal;
+}
 // :::::::::   ::::::::  ::::    ::::  
 // :+:    :+: :+:    :+: +:+:+: :+:+:+ 
 // +:+    +:+ +:+    +:+ +:+ +:+:+ +:+ 

@@ -92,6 +92,8 @@ function addPlaceFolder(path){
   pathPlace(path).dom.ul.appendChild(rli);
   pathPlace(path).items.push(place);
 
+  save('places');
+
   place.dom.btnEdit.click();
 }
 
@@ -108,6 +110,8 @@ function addPlace(path){
 
   pathPlace(path).dom.ul.appendChild(rli);
   pathPlace(path).items.push(place);
+
+  save('places');
 
   place.dom.btnEdit.click();
 }
@@ -186,12 +190,13 @@ function createPlaceFolderDOM(place, path){
         this.contentEditable = "false";
         if(this.innerHTML != this.dataset['originalName']){
           var thisplace = pathPlace(this.dataset['path']);
-          thisplace.name = this.innerHTML;
           var tpath = JSON.parse(this.dataset['path']).slice(0,-1);
           if(placeOKNewName(tpath, this.innerHTML)){
             tpath.push(this.innerHTML);
             this.dataset['path'] = JSON.stringify(tpath);
+            thisplace.name = this.innerHTML;
             placesUpdatePaths(thisplace.items, tpath);
+            save('places');
           }else{
             // return to original
             this.innerHTML = this.dataset['originalName'];
@@ -233,6 +238,8 @@ function createPlaceFolderDOM(place, path){
           
           //remove dom
           place.dom.hBtn.parentNode.parentNode.parentNode.removeChild(place.dom.hBtn.parentNode.parentNode);
+
+          save('places');
         }
       )
     }
@@ -332,12 +339,17 @@ function createPlaceDOM(place, path){
           console.log(this);
           this.contentEditable = "false";
           if(this.innerHTML != this.dataset['originalName']){
+            console.log(this.dataset['path']);
             var thisplace = pathPlace(this.dataset['path']);
-            thisplace.name = this.innerHTML;
             var tpath = JSON.parse(this.dataset['path']).slice(0,-1);
             if(placeOKNewName(tpath, this.innerHTML)){
+              console.log('OK NAME!')
+              console.log(this.dataset['path'])
               tpath.push(this.innerHTML);
               this.dataset['path'] = JSON.stringify(tpath);
+              thisplace.name = this.innerHTML;
+              console.log(this.dataset['path'])
+              save('places');
             }else{
               this.innerHTML = this.dataset['originalName'];
             }
@@ -347,6 +359,8 @@ function createPlaceDOM(place, path){
           if(e.key=='Enter'){
             // end editing
             this.contentEditable = "false";
+            e.preventDefault();
+            e.stopPropagation();
           }
         });
       }
@@ -373,6 +387,8 @@ function createPlaceDOM(place, path){
           
           //remove dom
           place.dom.a.parentNode.parentNode.removeChild(place.dom.a.parentNode);
+
+          save('places');
         }
       )
     }
@@ -388,6 +404,7 @@ function createPlaceDOM(place, path){
         ,'Are you sure you want to save current position as <b>' + place.name + "</b>?"
         ,function(){
           place.state={T:T, S:S};
+          save('places');
         }
       )
     }
