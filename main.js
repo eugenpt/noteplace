@@ -119,7 +119,12 @@ function zoomInOut(in_degree, clientPos=null){
 
 function onMouseWheel(e){
   console.log(e.deltaX, e.deltaY, e.deltaFactor);
-  zoomInOut(e.deltaY<0 ? 1 : -1,  [e.clientX , e.clientY])
+  var hdelta = e.deltaY<0 ? 1 : -1;
+  if(e.ctrlKey){
+    editFontSize(hdelta)
+  }else{
+    zoomInOut(hdelta,  [e.clientX , e.clientY])
+  }
 }
 
 // $(container).on('mousewheel', onMouseWheel );
@@ -967,8 +972,8 @@ function onNodeClick(e){
 
   if(e.shiftKey){
     // multiselect!
-    selectNode(this);
-    e.stopPropagation();
+    // selectNode(this); //already handled via drag-select
+    // e.stopPropagation();
   }else{
     selectNode(null);
     selectNode(this);
