@@ -186,6 +186,7 @@
       <button id="btnSaveView" class="btn btn-secondary" type="button">
         Save View
       </button>
+      
     <!-- </div> -->
     <div>
       <div class="collapse" id="collapsePallette">
@@ -209,15 +210,31 @@
     <div id="node_container">
 
     </div>
-  </div>
-  <div class="navbar navbar-expand-sm border border-dark container-fluid position-absolute bottom-0">
-    <p>
-      <textarea id="text"></textarea> 
-      FontSize:<input type="number" step="10" id="fontSize">
-      <button id="btnFontMinus" class="btn btn-outline-secondary">-</button>
-      <button id="btnFontPlus" class="btn btn-outline-secondary">+</button>
-      <span id="status"></span>
-    </p>
+    <div class="navbar navbar-expand-sm border border-dark container-fluid position-absolute bottom-0">
+      <p>
+        <textarea id="text"></textarea> 
+        FontSize:<input type="number" step="10" id="fontSize">
+        <button id="btnFontMinus" class="btn btn-outline-secondary">-</button>
+        <button id="btnFontPlus" class="btn btn-outline-secondary">+</button>
+        <span id="status"></span>
+      </p>
+    </div>
+
+    <div id="searchSideBar" class="position-fixed end-0 h-100 bg-light">
+      <button id="search-toggle" class="position-fixed t-0 sm-n5"><i class="bi-search"></i></button>
+      <input type="text" id="searchInput">
+      <div class="container" id="searchResultContainer">
+        <div class="row">
+          <div class="col">
+            aaa
+          </div>
+          
+        </div>
+        <div>
+          bb
+        </div>
+      </div>
+    </div>
   </div>
 
 
@@ -289,4 +306,5 @@
   <script src="nodes_default.js"></script>
   <script src="places.js"></script>
   <script src="main.js"></script>
+  <script src="search.js"></script>
 </body>

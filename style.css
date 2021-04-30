@@ -383,3 +383,27 @@ body > * {
   max-width: 8em;
   overflow: hidden;
 }
+
+
+/* -------------- */
+
+#searchSideBar{
+  width: 18rem;
+  transition-duration: 0.25s;
+  z-index: 900;
+}
+
+#searchSideBar.toggled{
+  margin-right:-18rem;
+}
+
+#search-toggle{
+  position: relative;
+  margin-left: -32px;
+  width:32px;
+}
+
+.node.np-search-preview{
+  border: 2px dotted orange;
+}
+

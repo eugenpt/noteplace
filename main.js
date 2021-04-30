@@ -1283,6 +1283,8 @@ function redraw(){
     _NODES.forEach(redrawNode);
   }, 5)
 
+  // _NODES.forEach(redrawNode);
+
   if(contentEditTextarea){
     console.log('redraw : contextEditTextarea');
     console.log('initWidth:')
@@ -1876,6 +1878,12 @@ $("#menu-toggle").click(function(e) {
   $("#wrapper").toggleClass("toggled");
 });
 
+window.onpopstate = function(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  console.log("location: " + document.location + ", state: " + JSON.stringify(e.state));
+  gotoState(e.state);
+};
 
 // applyZoom(T,S, false);
 zoomToURL(window.location.search, false);
@@ -1896,6 +1904,63 @@ function status() {
     _('#status').innerText = [... Array(arguments.length).keys()].map((j)=>toStr(arguments[j])).join(', ');
 }
 
+function currentState(){
+  return {T:T,S:S}
+}
+
+function previewState(state){
+  if(typeof(state)=='string'){
+    try{
+      state = JSON.parse(state);
+      state = {T:[state.T[0]*1, state.T[1]*1],S:state.S*1};
+    }catch{
+      state = URLSearchParams(state)
+      state = {T:[state.get("Tx")*1, state.get("Ty")*1],S:state.get('S')*1};
+    }
+  }
+  __previewOldState = currentState();
+
+  gotoState(state, false, false);
+}
+
+function gotoState(state, smooth=false, rewrite_preview=false){
+  applyZoom(state.T, state.S, smooth, rewrite_preview);
+}
+
+function exitPreview(){
+  gotoState(__previewOldState, false, true);
+}
+
+function nodeState(node){
+  var hS = 20/node.fontSize;
+  return {
+    T:[
+      (node.xMax?(node.x + node.xMax)/2 : (node.x + node.text.length*node.fontSize*0.4))-width/(3*hS), 
+      node.y-height/(3*hS)
+    ], 
+    S:hS
+  };
+}
+
+function depreviewNode(){
+  if(previewNode.node){
+    previewNode.node.node.classList.remove('np-search-preview');
+  }
+}
+
+function previewNode(node){
+  previewState(nodeState(node));
+
+  node.node.classList.add('np-search-preview');
+
+  previewNode.node = node;
+}
+previewNode.node = null;
+
+function gotoNode(node){
+  gotoState(nodeState(node), false, true);
+  depreviewNode();
+}
 
 function addRandomNodesToView(N){
   addRandomNodes(
