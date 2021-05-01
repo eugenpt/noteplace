@@ -518,7 +518,11 @@ window.addEventListener('keydown',(e)=>{
         }
       }
     }
+  }else if (e.code == "F3" || ((e.ctrlKey||e.metaKey) && e.code == "KeyF")) { 
+    _('#search-toggle').click();
+    e.preventDefault();
   }
+
 })
 
 __IMG = null

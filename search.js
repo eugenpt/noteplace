@@ -1,7 +1,7 @@
 
 
 _SEARCH = {
-  page_results:10,
+  page_results:20,
   q:'',
   results:[],
   last_checked_nodej:-1,
@@ -19,7 +19,7 @@ function fillSearchResults(){
 
   _SEARCH.results.forEach((n)=>{
     var div = _ce('div'
-      ,'className','container'
+      ,'className','container btn btn-outline-secondary'
       ,'onmouseenter',function(e){
         console.log('enter!' + n.text);
         previewNode(n);
@@ -97,6 +97,16 @@ _('#searchInput').addEventListener('input',function(e){
   onSearchInput(e.target.value);
 })
 
+_('#searchInput').addEventListener('keydown', function(e){
+  console.log('searchInput keydown');
+  console.log(e);
+  if(e.code=="Escape"){
+    e.preventDefault();
+    e.stopPropagation();
+    _("#search-toggle").click();
+  }
+})
+
 _("#search-toggle").onclick = function(e) {
   e.preventDefault();
   e.stopPropagation();
@@ -115,4 +125,8 @@ _('#searchSideBar').onmousedown = function(e){
 _('#searchSideBar').onmouseup = function(e){
   e.stopPropagation();  
 }
+_('#searchSideBar').onmousewheel = function(e){
+  e.stopPropagation();  
+}
+
 
