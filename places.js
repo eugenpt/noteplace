@@ -14,7 +14,10 @@ _PLACES_default = {
 ]}
 
 
-function stripPlace(place){
+function stripPlace(place=null){
+  if(place===null)
+    place = _PLACES;
+    
   if('items' in place){
     return {
       name:place.name
