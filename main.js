@@ -936,7 +936,8 @@ function onNodeDblClick(e){
   contentEditTextarea.dataset['initWidth'] = Math.max(width/3, contentEditNode.getBoundingClientRect().width+20);
   contentEditTextarea.dataset['initHeight'] = contentEditNode.getBoundingClientRect().height;
   contentEditTextarea.style.width = contentEditTextarea.dataset['initWidth'] +'px';
-  contentEditTextarea.style.height = contentEditTextarea.dataset['initHeight'] +'px';
+  // contentEditTextarea.style.height = contentEditTextarea.dataset['initHeight'] +'px';
+  contentEditTextarea.style.height = 'auto'
   
   contentEditTextarea.onkeydown = textareaBtnDown;
   contentEditTextarea.onkeyup = textareaAutoResize;

@@ -401,6 +401,17 @@ body > * {
   position: relative;
   margin-left: -32px;
   width:32px;
+  border-radius: 48%;
+}
+
+#searchResultContainer{
+  overflow-y: auto;
+}
+
+.np-sr-row .col{
+  text-overflow: ellipsis;
+  white-space:nowrap;
+  overflow: hidden;
 }
 
 .node.np-search-preview{

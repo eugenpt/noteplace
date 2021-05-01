@@ -5,6 +5,7 @@ _SEARCH = {
   q:'',
   results:[],
   last_checked_nodej:-1,
+  last_dom_nodej:-1,
   current_page:0,
   dom:[],
 }
@@ -15,11 +16,15 @@ _NODES_searchRes = []
 function fillSearchResults(){
   root = _('#searchResultContainer');
 
-  root.innerHTML = '';
+  if(_SEARCH.last_dom_nodej<0)
+    root.innerHTML = '';
 
-  _SEARCH.results.forEach((n)=>{
+  //for(var j=_SEARCH.last_dom_nodej+1; j<_SEARCH.results.length; j++){
+  _SEARCH.results.slice(_SEARCH.last_dom_nodej+1).forEach((n)=>{
+    // var n=_SEARCH.results[j];
+  // _SEARCH.results.forEach((n)=>{
     var div = _ce('div'
-      ,'className','container btn btn-outline-secondary'
+      ,'className','container btn btn-outline-secondary my-1'
       ,'onmouseenter',function(e){
         console.log('enter!' + n.text);
         previewNode(n);
@@ -51,6 +56,8 @@ function fillSearchResults(){
     div.appendChild(row);
 
     root.appendChild(div);
+
+    _SEARCH.last_dom_nodej++;
   })
 }
 
@@ -80,6 +87,7 @@ function findSearchResults(n=null){
 function onSearchInput(q){
   console.log('onSearchInput q='+q)
   _SEARCH.q = q;
+  _SEARCH.last_dom_nodej = -1; //to restart
   if(q){
     _SEARCH.results = [];
     _SEARCH.last_checked_nodej = -1;
@@ -128,5 +136,16 @@ _('#searchSideBar').onmouseup = function(e){
 _('#searchSideBar').onmousewheel = function(e){
   e.stopPropagation();  
 }
+
+_('#searchResultContainer').addEventListener('scroll', function(e){
+  console.log(e);
+  console.log(this.scrollTop);
+  console.log(this.scrollHeight);
+
+  if(this.scrollTop + this.clientHeight + this.scrollHeight - 100){
+    findSearchResults();
+    fillSearchResults();
+  }
+})
 
 
