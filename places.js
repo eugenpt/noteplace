@@ -310,18 +310,15 @@ function createPlaceDOM(place, path){
     ,'className', "btn align-items-center places-place places-name"
     ,'innerHTML', place.name
     ,'onclick', function(e){
-      var pl = pathPlace(this.dataset['path']);
-      applyZoom(pl.state.T,pl.state.S,smooth=false,no_temp=true);
+      gotoState(pathPlace(this.dataset['path']).state, false, true);
     }
     ,'onmouseenter', function(e){
       console.log('enter');
-      __previewOldState = {T:T,S:S};
-      state = pathPlace(this.dataset['path']).state;
-      applyZoom(state.T,state.S,false);
+      previewState(pathPlace(this.dataset['path']).state);
     }
     ,'onmouseleave', function(e){
       console.log('leave');
-      applyZoom(__previewOldState.T,__previewOldState.S,false)
+      exitPreview();
     }
   )
   ta.dataset['path'] = path;
@@ -462,3 +459,57 @@ _('#btnNewHomeSubPlace').addEventListener('click',(e)=>{
   }
   addPlace('[]');
 })
+
+_('#btnSaveView').dataset['view'] = null;
+_('#btnSaveView').onclick = function(){
+  var btn = _('#btnSaveView');
+  btn.dataset['view'] = getStateURL();
+
+  btn.innerHTML = '<i class="bi-stickies-fill"></i>&nbsp';
+  //btn.getElementsByTagName('i')[0].className='bi-stickies-fill';
+  // btn.classList.remove('btn-secondary');
+  // btn.classList.add('btn-success');
+
+  btn.title = 'Saved View '+btoa(Math.random()).slice(10,13)+'&nbsp';
+
+  telt = _ce('i'
+    ,'className',"bi-fullscreen"
+    ,'title',"Preview"
+  )
+  telt.addEventListener('mouseenter', e => {
+    previewState(_('#btnSaveView').dataset['view']);
+  });
+  telt.addEventListener('mouseleave', e=>{
+    exitPreview();
+  });
+  telt.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    __previewOldState = {T:T,S:S};
+    // gotoState(_('#btnSaveView').dataset['view'], false, true);
+  },false);
+
+  btn.appendChild(telt);
+
+  btn.title = btn.dataset['view'];
+  btn.draggable = true;
+
+
+  btn.ondragstart = function(e){
+    console.log('btn drag start')
+    console.log(e);
+    e.dataTransfer.effectAllowed = 'all';
+    e.dataTransfer.setData('text', 'Tap to [View]('+this.dataset['view']+' "Saved View")');
+    console.log(e);
+  }
+
+  btn.ondragend = function(e){
+    console.log('btn ondragend');
+    console.log(e);
+  }
+  
+
+  btn.ondrop = function(e){
+    console.log('btn drop');
+    console.log(e);
+  }
+}

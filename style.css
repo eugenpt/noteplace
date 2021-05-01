@@ -380,6 +380,10 @@ body > * {
 }
 
 /* ------------------------------- */
+#np-places-header button{
+  padding: 0.4rem;
+}
+
 .places-place{
   max-width: 8em;
   overflow: hidden;

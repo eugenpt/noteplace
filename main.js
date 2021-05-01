@@ -1084,7 +1084,7 @@ function newNode(node){
       ,'onclick', onNodeClick
       ,'ondblclick', onNodeDblClick
       ,'onmousedown', onNodeMouseDown
-      ,'title','test <input type="color">'
+      // ,'title','test <input type="color">'
     )
     // tdom.dataset['bsHtml']='true';
     // tdom.dataset['bsPlacement']='top';
@@ -1144,8 +1144,9 @@ function newNode(node){
               .find('[data-text-align="'+this.dataset['textAlign']+'"]')
               .addClass('np-n-t-ta-selected')
             node.style.textAlign = this.dataset['textAlign'];
-            newNode(node.node);
-            selectNode(node)
+            node.content_dom.style.textAlign = this.dataset['textAlign'];
+            // newNode(node.node);
+            // selectNode(node)
             e.stopPropagation();
           }
         )
@@ -1937,58 +1938,6 @@ function getStateURL(){
   return '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S;
 }
 
-_('#btnSaveView').dataset['view'] = null;
-_('#btnSaveView').onclick = function(){
-  var btn = _('#btnSaveView');
-  btn.dataset['view'] = getStateURL();
-
-  btn.classList.remove('btn-secondary');
-  btn.classList.add('btn-success');
-
-  btn.innerHTML = 'Saved View '+btoa(Math.random()).slice(10,13)+'&nbsp';
-
-  telt = _ce('i'
-    ,'className',"bi-fullscreen"
-    ,'title',"Preview"
-  )
-  telt.addEventListener('mouseenter', e => {
-    __previewOldState = {T:T,S:S};
-    zoomToURL(_('#btnSaveView').dataset['view'], false);
-  });
-  telt.addEventListener('mouseleave', e=>{
-    applyZoom(__previewOldState.T,__previewOldState.S, false);
-  });
-  telt.addEventListener('click', (e)=>{
-    e.stopPropagation();
-    __previewOldState = {T:T,S:S};
-  },false);
-
-  btn.appendChild(telt);
-
-  btn.title = btn.dataset['view'];
-  btn.draggable = true;
-
-
-  btn.ondragstart = function(e){
-    console.log('btn drag start')
-    console.log(e);
-    e.dataTransfer.effectAllowed = 'all';
-    e.dataTransfer.setData('text', 'Tap to [View]('+this.dataset['view']+' "Saved View")');
-    console.log(e);
-  }
-
-  btn.ondragend = function(e){
-    console.log('btn ondragend');
-    console.log(e);
-  }
-  
-
-  btn.ondrop = function(e){
-    console.log('btn drop');
-    console.log(e);
-  }
-}
-
 // start updateSizes process
 updateSizes();
 
@@ -2043,7 +1992,7 @@ function previewState(state){
       state = JSON.parse(state);
       state = {T:[state.T[0]*1, state.T[1]*1],S:state.S*1};
     }catch{
-      state = URLSearchParams(state)
+      state = new URLSearchParams(state);
       state = {T:[state.get("Tx")*1, state.get("Ty")*1],S:state.get('S')*1};
     }
   }

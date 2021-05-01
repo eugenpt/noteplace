@@ -20,7 +20,7 @@
       <div class="sidebar-heading">Start Bootstrap </div>
       <ul class="list-unstyled ps-0 d-grid gap-2">
         <li class="mb-1 d-grid gap-2">
-          <div>
+          <div id="np-places-header">
             <button id="btnPlaces" class="btn btn-toggle align-items-center collapsed places-name" data-bs-toggle="collapse" data-bs-target="#places-collapse" aria-expanded="false">
               Places
             </button>
@@ -33,77 +33,13 @@
             <button class="btn" title="New place" id="btnNewHomeSubPlace">
               <i class="bi-plus-square-dotted"></i>
             </button>
+            <button class="btn" title="Temp copy current place" id="btnSaveView">
+              <i class="bi-stickies"></i>
+            </button>
           </div>
           <div class="collapse" id="places-collapse" style="">
             <ul id="places-root" class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-              <li>
-                <div>
-                  <a class="btn align-items-center">
-                    Home
-                  </a>
-                  <button class="btn">
-                    <i class="bi-pencil"></i>
-                  </button>
-                  <button class="btn">
-                    <i class="bi-x-square"></i>
-                  </button>
-                  <button class="btn">
-                    <i class="bi-fullscreen"></i>
-                  </button>
-                </div>
-              </li>              
-              <li>
-                <div>
-                  <button class="btn btn-toggle align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#place_f1" aria-expanded="false">
-                    Common places
-                  </button>
-                  <button class="btn btn-outline-danger">
-                    <i class="bi-folder-x"></i>
-                  </button>
-                  <button class="btn">
-                    <i class="bi-folder-plus"></i>
-                  </button>
-                  <button class="btn">
-                    <i class="bi-plus-square-dotted"></i>
-                  </button>
-                </div>
-                <div class="collapse" id="place_f1" style="">
-                  <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                    <li>
-                      <div>
-                        <button class="btn btn-toggle align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#place_f2" aria-expanded="false">
-                          VIP Common places
-                        </button>
-                        <button class="btn">
-                          <i class="bi-folder-plus"></i>
-                        </button>
-                      </div>
-                      <div class="collapse" id="place_f2" style="">
-                        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                          <li>
-                            <a href="#" class="link-dark rounded">VIP common 1</a>
-                          </li>
-                          <li><a href="#" class="link-dark rounded">VIP common 2</a></li>
-                        </ul>
-                      </div>
-                    </li>
-                    <li><a href="#" class="link-dark rounded">common 2</a></li>
-                  </ul>
-                </div>
-              </li>
-              <li>
-                <div>
-                  <button class="btn align-items-center">
-                    <a href="#" class="link-dark rounded">Place 1</a>
-                  </button>
-                  <button class="btn">
-                    <i class="bi-x-square"></i>
-                  </button>
-                  <button class="btn">
-                    <i class="bi-fullscreen"></i>
-                  </button>
-                </div>
-              </li>
+
             </ul>
           </div>
         </li>
@@ -184,9 +120,9 @@
       <button id="btnPaletteToggle" class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePallette" aria-expanded="false" aria-controls="collapsePallette">
         <i class="bi-palette"></i>
       </button>
-      <button id="btnSaveView" class="btn btn-secondary" type="button">
+      <!-- <button id="btnSaveView" class="btn btn-secondary" type="button">
         Save View
-      </button>
+      </button> -->
       
     <!-- </div> -->
     <div>
