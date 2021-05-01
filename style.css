@@ -134,7 +134,7 @@ html, body {
     /* fill:red;
     color:red; */
     border:1px solid black;
-    z-index: 1000;
+    z-index: 100;
   }
   
 .node blockquote{
@@ -418,3 +418,22 @@ body > * {
   border: 2px dotted orange;
 }
 
+/*----------------*/
+
+
+
+.np-n-tooltip{
+  display: none;
+  height:2rem;
+  font-size: 1rem;
+  margin-top: -1rem;
+  border-radius: 0.3rem;
+  border:1px solid black;
+  vertical-align: middle;
+  text-align: center;
+  padding: 0.125rem;
+}
+.selected .np-n-tooltip{
+  display: block;
+  /* transition-duration: 0.5s; */
+}

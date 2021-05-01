@@ -56,3 +56,8 @@ nodes_default = [
 ,{text: "(including from ++outside++ ***Noteplace***!)", x: 954.8230763193785, y: 785.3856402343732, fontSize: "24.999999999999996"}
 ,{x: 528.92, y: 505.31999999999994, fontSize: "12.8", text: "(for full **MarkDown** spec follow that link)"}
 ];
+
+default_node_style = {
+  textAlign:'right'
+  ,border:'none'
+}

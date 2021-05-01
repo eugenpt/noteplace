@@ -117,10 +117,10 @@ function zoomInOut(in_degree, clientPos=null){
   );
 }
 
-const wheelZoom_minInterval_ms = 0;
+const wheelZoom_minInterval_ms = 100;
 
 function onMouseWheel(e){
-  console.log(e);
+  // console.log(e);
   e.preventDefault();
   e.stopPropagation();
   // console.log(e.deltaX, e.deltaY, e.deltaFactor);
@@ -1066,6 +1066,12 @@ function newNode(node){
     if(!('fontSize' in node)){
       node.fontSize = 20/S;
     }
+    if((!node.hasOwnProperty('style'))
+        ||(node.style === undefined)){
+      node.style = Object.assign({},default_node_style);
+    }else{
+      node.style = Object.assign(node.style, default_node_style);
+    }
 
     tdom = _ce('div'
       ,'id','node_'+node.id
@@ -1073,7 +1079,13 @@ function newNode(node){
       ,'onclick', onNodeClick
       ,'ondblclick', onNodeDblClick
       ,'onmousedown', onNodeMouseDown
+      ,'title','test <input type="color">'
     )
+    // tdom.dataset['bsHtml']='true';
+    // tdom.dataset['bsPlacement']='top';
+    // tdom.dataset['bsToggle']='popover';
+    // tdom.dataset['bsContainer']="body";
+    
     tdom.style.display = 'none';
 
     _NODES.push(node);
@@ -1088,13 +1100,27 @@ function newNode(node){
     // tn.dataset['text'] = d.text;
     // tn.dataset['id'] = d.id;
   }
-  // tdom.innerHTML = '';
+  tdom.innerHTML = '';
   // tdom.onclick = onNodeClick;
   // tdom.ondblclick = onNodeDblClick;
   // tdom.onmousedown = onNodeMouseDown;
 
+  tt = _ce('div'
+    ,'className','position-absolute translate-middle start-50 np-n-tooltip'
+    ,'innerHTML','aaa'
+  )
+  tdom.appendChild(tt);
 
-  tdom.innerHTML = getHTML(node.text);
+  tcontent = _ce('div'
+    ,'innerHTML',getHTML(node.text)
+  )
+
+
+  
+  
+  tdom.appendChild(tcontent);
+  // tdom.innerHTML += getHTML(node.text);
+
 
   if(node.rotate!=0){
     tdom.style.transform="rotate("+node.rotate+"rad)"
@@ -1131,6 +1157,11 @@ function newNode(node){
   if(!('className' in node)){
     // console.log("!('className' in node) , appending to DOM")
     node_container.appendChild(tdom);
+    // $(tdom).tooltip({content:'AAAAA!!'})
+    // new bootstrap.Tooltip(tdom)
+    // new bootstrap.Popover(tdom, {
+
+    // })
   }
 
   updateNode(node);
@@ -1538,7 +1569,8 @@ function stripNode(d){
     y:1*d['y'],
     fontSize:1*d['fontSize'],
     text:d['text'],
-    rotate:'rotate' in d?d.rotate:0
+    rotate:'rotate' in d?d.rotate:0,
+    style:'style' in d?delete_defaults(d.style, default_node_style):undefined,
   } 
 }
 
