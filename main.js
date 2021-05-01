@@ -117,7 +117,7 @@ function zoomInOut(in_degree, clientPos=null){
   );
 }
 
-const wheelZoom_minInterval_ms = 100;
+const wheelZoom_minInterval_ms = 10;
 
 function onMouseWheel(e){
   // console.log(e);
@@ -759,7 +759,7 @@ function stopEditing(){
   if(contentEditTextarea.value==''){
     deleteNode(contentEditTextarea.parentElement);
   }else{
-    newNode(contentEditTextarea.parentElement);
+    newNode(contentEditTextarea.parentElement.parentElement);
   }
   contentEditTextarea = null;
 }
@@ -920,15 +920,20 @@ function onNodeDblClick(e){
     contentEditNode = e;
   }
 
-
   console.log('double-clicked on ['+contentEditNode.id+'] : '+contentEditNode.innerText);
-  console.log(this);
+  console.log(contentEditNode);
+
+
+
 
   // console.log(contentEditNode);
 
   contentEditTextarea = document.createElement('textarea');
   contentEditTextarea.id = 'contentEditTextarea';
   contentEditTextarea.value = _DOMId2node.get(contentEditNode.id)['text'];
+
+  contentEditNode = contentEditNode.getElementsByClassName('np-n-c')[0];
+
   // contentEditTextarea.style.fontSize = contentEditNode.dataset['fontSize']*S+'px';
   // contentEditTextarea.style.fontFamily = 'Open Sans';
   contentEditTextarea.dataset['initS'] = S;
@@ -943,7 +948,7 @@ function onNodeDblClick(e){
   contentEditTextarea.onkeyup = textareaAutoResize;
   contentEditTextarea.oninput = function(e){
     console.log('contentEditTextarea input')
-    _DOMId2node.get(this.parentElement.id)['text'] = this.value;
+    _DOMId2node.get(this.parentElement.parentElement.id)['text'] = this.value;
   }
   
   contentEditTextarea.onmousedown = (e)=>{
@@ -1070,7 +1075,7 @@ function newNode(node){
         ||(node.style === undefined)){
       node.style = Object.assign({},default_node_style);
     }else{
-      node.style = Object.assign(node.style, default_node_style);
+      node.style = Object.assign({}, default_node_style, node.style);
     }
 
     tdom = _ce('div'
@@ -1101,22 +1106,53 @@ function newNode(node){
     // tn.dataset['id'] = d.id;
   }
   tdom.innerHTML = '';
-  // tdom.onclick = onNodeClick;
-  // tdom.ondblclick = onNodeDblClick;
-  // tdom.onmousedown = onNodeMouseDown;
+
 
   tt = _ce('div'
-    ,'className','position-absolute translate-middle start-50 np-n-tooltip'
-    ,'innerHTML','aaa'
+    ,'className','position-absolute start-0 np-n-tooltip'//translate-middle start-50 
+//    ,'innerHTML','<button class="btn" onclick=>+</button>'
   )
+  
+  tplusbtn = _ce('button'
+    ,'className','np-n-t-btn plus-button'//btn btn-outline-primary'
+    ,'onclick',function(e){editFontSize(+1);e.stopPropagation();}
+    ,'innerHTML','<i class="bi bi-plus"></i>'
+  )
+  tminusbtn = _ce('button'
+    ,'className','np-n-t-btn minus-button'//'btn btn-outline-primary'
+    ,'onclick',function(e){editFontSize(-1);e.stopPropagation();}
+    ,'innerHTML','<i class="bi bi-dash"></i>'
+  )
+
+  tcolorselect = _ce('input'
+    ,'type','color'
+    ,'value',node.style.color
+    ,'oninput',function(e){
+      node.style.color = this.value;
+      node.content_dom.style.color = this.value;
+    }
+  )
+   
+  tt.appendChild(tcolorselect);
+  tt.appendChild(tminusbtn);
+  tt.appendChild(tplusbtn);
+
+  tt.addEventListener('dblclick',function(e){
+    e.stopPropagation();
+  })
+
   tdom.appendChild(tt);
 
   tcontent = _ce('div'
+    ,'className','np-n-c'
     ,'innerHTML',getHTML(node.text)
   )
 
 
-  
+  for(var p of Object.keys(node.style)){
+    tcontent.style[p] = node.style[p];
+  }
+
   
   tdom.appendChild(tcontent);
   // tdom.innerHTML += getHTML(node.text);
@@ -1153,15 +1189,11 @@ function newNode(node){
   // }  
   // tn.appendChild(ta);
   node.node = tdom;
+  node.content_dom = tcontent;
 
   if(!('className' in node)){
-    // console.log("!('className' in node) , appending to DOM")
     node_container.appendChild(tdom);
-    // $(tdom).tooltip({content:'AAAAA!!'})
-    // new bootstrap.Tooltip(tdom)
-    // new bootstrap.Popover(tdom, {
 
-    // })
   }
 
   updateNode(node);

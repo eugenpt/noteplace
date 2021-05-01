@@ -420,20 +420,44 @@ body > * {
 
 /*----------------*/
 
-
+.np-n-c{
+  /* */
+}
 
 .np-n-tooltip{
   display: none;
-  height:2rem;
+  height:3rem;
   font-size: 1rem;
-  margin-top: -1rem;
+  margin-top: -3rem;
   border-radius: 0.3rem;
   border:1px solid black;
   vertical-align: middle;
   text-align: center;
   padding: 0.125rem;
+
 }
 .selected .np-n-tooltip{
-  display: block;
+  display:flex;
+  align-items: center;
   /* transition-duration: 0.5s; */
 }
+
+.np-n-t-btn{
+/*--*/
+background-color: #fff;
+height: 2em;
+width: 2em;
+border: 2px solid lightgrey;
+border-radius: 999px;
+position: relative;
+vertical-align: middle;
+}
+.np-n-t-btn:hover,.np-n-btn:focus{
+  background-color:#ccc
+}
+
+.np-n-tooltip input{
+  height: 1.5em;
+  width: 1.5em;
+}
+

@@ -60,4 +60,6 @@ nodes_default = [
 default_node_style = {
   textAlign:'right'
   ,border:'none'
+  ,color:'#000000'
+  ,backgroundColor:'transparent'
 }
