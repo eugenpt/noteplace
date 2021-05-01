@@ -5,7 +5,7 @@ html, body {
     position:fixed;
     overflow: hidden; /* Hide scrollbars */ 
     font-family: 'Open Sans';
-
+    touch-action: none;
   }
 
   #wrapper {

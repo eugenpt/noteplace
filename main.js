@@ -117,15 +117,27 @@ function zoomInOut(in_degree, clientPos=null){
   );
 }
 
+const wheelZoom_minInterval_ms = 0;
+
 function onMouseWheel(e){
-  console.log(e.deltaX, e.deltaY, e.deltaFactor);
+  console.log(e);
+  e.preventDefault();
+  e.stopPropagation();
+  // console.log(e.deltaX, e.deltaY, e.deltaFactor);
   var hdelta = e.deltaY<0 ? 1 : -1;
-  if(e.ctrlKey){
+  if((e.ctrlKey)&&(_selected_DOM.length>0)){
     editFontSize(hdelta)
   }else{
-    zoomInOut(hdelta,  [e.clientX , e.clientY])
+    if(now() - onMouseWheel.lastZoom > wheelZoom_minInterval_ms){
+      if(e.ctrlKey){
+        hdelta = -e.deltaY/10;
+      }
+      zoomInOut(hdelta,  [e.clientX , e.clientY])
+      onMouseWheel.lastZoom = now();
+    }
   }
 }
+onMouseWheel.lastZoom = null;
 
 // $(container).on('mousewheel', onMouseWheel );
 // _('#container').addEventListener("wheel", onMouseWheel);
@@ -135,7 +147,27 @@ function onMouseWheel(e){
 // $('#container').scroll(onMouseWheel)
 
 // safari?
-window.addEventListener("wheel",onMouseWheel);
+// window.onwheel = onMouseWheel;
+// window.addEventListener("wheel",onMouseWheel);
+_('#wrapper').onwheel = onMouseWheel;
+
+// Safari zoomes on pinch no matter what
+// all of these do not work =(
+window.addEventListener('gestureend', e => {
+  console.log('gestureend');
+  console.log(e);
+  e.preventDefault();
+});
+window.addEventListener('gesturestart', e => {
+  console.log('gesturestart');
+  console.log(e);
+  e.preventDefault();
+});
+window.addEventListener('gesturechange', e => {
+  console.log('gesturechange');
+  console.log(e);
+  e.preventDefault();
+});
 
 function setTransitionDur(s){
   $('.node').css('transition-duration',s+'s');
