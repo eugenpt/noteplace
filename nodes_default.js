@@ -58,7 +58,7 @@ nodes_default = [
 ];
 
 default_node_style = {
-  textAlign:'right'
+  textAlign:'left'
   ,border:'none'
   ,color:'#000000'
   ,backgroundColor:'transparent'

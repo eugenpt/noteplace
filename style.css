@@ -452,17 +452,59 @@ body > * {
 background-color: #fff;
 height: 2em;
 width: 2em;
-border: 2px solid lightgrey;
+border: 2px solid #ccf;
 border-radius: 999px;
 position: relative;
 vertical-align: middle;
+margin-right: 0.33em;
 }
 .np-n-t-btn:hover,.np-n-btn:focus{
-  background-color:#ccc
+  /* background-color:#ccc */
+  background-color: #eef;
 }
 
 .np-n-tooltip input{
-  height: 1.5em;
-  width: 1.5em;
+  height: 1.3em;
+  width: 1.3em;
+  margin: 0.1em;
 }
 
+.np-n-t-ta:hover{
+  background-color: #eef;
+}
+
+.np-n-t-ta-selected{
+  /* */
+  background-color: #ccf;
+}
+
+
+input[type="color"]{
+  background-color:white;
+  border:none;
+  margin-right: 0.2em;
+  width:1.8em;
+  height:1.8em;
+  padding:0;
+  margin-right: 0.33em;
+}
+/* -webkit */
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;    
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;  
+  border-radius: 500%;
+}
+/* firefox */
+input[type=color]::-moz-focus-inner {
+  border: none;
+  padding: 0;
+  border-radius: 500%;
+}
+
+input[type=color]::-moz-color-swatch {
+  border: none;
+  border-radius: 500%;
+}

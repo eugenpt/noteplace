@@ -1107,11 +1107,54 @@ function newNode(node){
   }
   tdom.innerHTML = '';
 
+  tcontent = _ce('div'
+    ,'className','np-n-c'
+    ,'innerHTML',getHTML(node.text)
+  )
+
+  // Tooltip
 
   tt = _ce('div'
     ,'className','position-absolute start-0 np-n-tooltip'//translate-middle start-50 
-//    ,'innerHTML','<button class="btn" onclick=>+</button>'
   )
+
+  if(node.text.slice(0,2)!='!['){
+    // not entirely image-based node
+    tcolorselect = _ce('input'
+      ,'type','color'
+      ,'value',node.style.color
+      ,'oninput',function(e){
+        node.style.color = this.value;
+        node.content_dom.style.color = this.value;
+      }
+    )
+    tt.appendChild(tcolorselect);
+    
+    if(tcontent.innerHTML.indexOf('<br')>=0){
+      // text align only valuable for multiline nodes
+      ['left','center','right'].forEach((jta)=>{
+        var tbtn = _ce('button'
+          ,'className','np-n-t-btn np-n-t-ta' + (node.style.textAlign==jta?' np-n-t-ta-selected':'')
+          ,'innerHTML','<i class="bi-text-'+jta+'"></i>'
+          ,'onclick',function(e){
+            console.log('clicked on text-align='+this.dataset['textAlign']);
+            $(this.parent)
+              .find('.np-n-t-ta')
+              .removeClass('np-n-t-ta-selected')
+              .find('[data-text-align="'+this.dataset['textAlign']+'"]')
+              .addClass('np-n-t-ta-selected')
+            node.style.textAlign = this.dataset['textAlign'];
+            newNode(node.node);
+            selectNode(node)
+            e.stopPropagation();
+          }
+        )
+        
+        tbtn.dataset['textAlign'] = jta; 
+        tt.appendChild(tbtn);
+      })
+    }
+  }
   
   tplusbtn = _ce('button'
     ,'className','np-n-t-btn plus-button'//btn btn-outline-primary'
@@ -1123,19 +1166,8 @@ function newNode(node){
     ,'onclick',function(e){editFontSize(-1);e.stopPropagation();}
     ,'innerHTML','<i class="bi bi-dash"></i>'
   )
-
-  tcolorselect = _ce('input'
-    ,'type','color'
-    ,'value',node.style.color
-    ,'oninput',function(e){
-      node.style.color = this.value;
-      node.content_dom.style.color = this.value;
-    }
-  )
-   
-  tt.appendChild(tcolorselect);
-  tt.appendChild(tminusbtn);
   tt.appendChild(tplusbtn);
+  tt.appendChild(tminusbtn);
 
   tt.addEventListener('dblclick',function(e){
     e.stopPropagation();
@@ -1143,10 +1175,6 @@ function newNode(node){
 
   tdom.appendChild(tt);
 
-  tcontent = _ce('div'
-    ,'className','np-n-c'
-    ,'innerHTML',getHTML(node.text)
-  )
 
 
   for(var p of Object.keys(node.style)){
