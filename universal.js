@@ -1,3 +1,7 @@
+function log(a){
+  console.log(a);
+}
+
 function now(){
   return new Date().getTime();
 }

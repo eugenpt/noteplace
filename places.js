@@ -304,10 +304,16 @@ function createPlaceFolderDOM(place, path){
 }
 
 function createPlaceDOM(place, path){
-  var rli = document.createElement('li');
+  var rli = _ce('li'
+    // ,'className','container'
+  );
+
+  // var tc = _ce('div'
+  //   ,'className',
+  // )
 
   var ta = _ce('a'
-    ,'className', "btn align-items-center places-place places-name"
+    ,'className', "btn col align-self-start align-items-center places-place places-name"
     ,'innerHTML', place.name
     ,'onclick', function(e){
       gotoState(pathPlace(this.dataset['path']).state, false, true);
@@ -324,8 +330,9 @@ function createPlaceDOM(place, path){
   ta.dataset['path'] = path;
 
 
+
   var btnEdit = _ce('button'
-    ,'className','btn'
+    ,'className','btn p-1'
     ,'innerHTML','<i class="bi-pencil"></i>'
     ,'title', 'Edit name'
     ,'onclick',function(e){
@@ -395,7 +402,7 @@ function createPlaceDOM(place, path){
   );
 
   var btnSubs = _ce('button'
-    ,'className','btn'
+    ,'className','btn p-1'
     ,'innerHTML','<i class="bi-fullscreen"></i>'
     ,'title','Save current here'
     ,'onclick', function(e){
@@ -410,10 +417,25 @@ function createPlaceDOM(place, path){
     }
   )
 
+  var btnPlace = _ce('button'
+    ,'className','btn p-1 col align-self-end'
+    ,'innerHTML','<i class="bi-geo-alt"></i>'
+    ,'title','Drag to place link'
+    ,'draggable', true
+    ,'ondragstart', function(e){
+      console.log('place drag start')
+      console.log(e);
+      e.dataTransfer.effectAllowed = 'all';
+      e.dataTransfer.setData('text', 'Tap to ['+place.name+']('+getStateURL(place.state)+' "Goto '+place.name+'")');
+      console.log(e);
+    }
+  )
+
   rli.appendChild(ta);
   rli.appendChild(btnEdit);
   rli.appendChild(btnDel);
   rli.appendChild(btnSubs);
+  rli.appendChild(btnPlace);
 
   place.dom = {
      a:ta
@@ -506,7 +528,6 @@ _('#btnSaveView').onclick = function(){
     console.log('btn ondragend');
     console.log(e);
   }
-  
 
   btn.ondrop = function(e){
     console.log('btn drop');

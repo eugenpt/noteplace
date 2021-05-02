@@ -483,9 +483,14 @@ window.addEventListener('keydown',(e)=>{
   console.log('keydown');
   console.log(e);
   if(e.key=="Delete"){
-    if(_selected_DOM.length>0){
-      _selected_DOM.forEach(deleteNode);
-      save('ids');
+    if(contentEditTextarea){
+
+
+    }else{
+      if(_selected_DOM.length>0){
+        _selected_DOM.forEach(deleteNode);
+        save('ids');
+      }
     }
   }else if(e.key=='Enter'){
     if(contentEditTextarea){
@@ -757,7 +762,8 @@ function deleteNode(d){
 
 function stopEditing(){
   if(contentEditTextarea.value==''){
-    deleteNode(contentEditTextarea.parentElement);
+    deleteNode(contentEditTextarea.parentElement.parentElement);
+    contentEditNode = null;
   }else{
     newNode(contentEditTextarea.parentElement.parentElement);
   }
@@ -843,10 +849,19 @@ function textareaBtnDown(e){
     stopEditing();
   }
   if((e.keyCode == 13) && (e.shiftKey)){
-    tnode = stripNode(domNode(contentEditNode));
+    // Shift-enter
+    tnode_orig = domNode(contentEditNode.parentElement)
+    tnode = stripNode(tnode_orig);
     var th = contentEditNode.getBoundingClientRect().height;
     // Shift+Enter
     stopEditing();
+    
+    // setTimeout(function(){
+    if(contentEditNode){
+      // if the node has not been deleted (as empty)
+      //  , get actual height (not height of markdown textarea)
+      th = tnode_orig.content_dom.getBoundingClientRect().height;
+    }
 
     selectNode(null);
     var new_node = newNode({
@@ -865,7 +880,8 @@ function textareaBtnDown(e){
 
     // neither preventDefault nor stopPropagation
     //    stoped newline from appearing
-    setTimeout(function(){contentEditTextarea.value='';},10);
+    setTimeout(function(){contentEditTextarea.value='';contentEditTextarea.focus();},10);
+  // },10);
   }
 
   if (e.keyCode == 9){
@@ -880,7 +896,7 @@ function textareaBtnDown(e){
   if(contentEditNode){
     if (e.key === "Escape") { // escape key maps to keycode `27`
       
-      selectNode(contentEditNode);
+      selectNode(contentEditNode.parentElement);
       
       stopEditing();
           
@@ -906,7 +922,7 @@ zoom_urlReplaceTimeout = setInterval(function(){
     window.history.replaceState(
         {T:T,S:S}, 
         'Noteplace', 
-        url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+        url + getStateURL());
   }
 }, 200);
 
@@ -1459,7 +1475,7 @@ function getHTML(text){
   return md.render(text)
             .slice(0, -1) // md.render adds newline (?)
             .replaceAll('\n', '<br />')
-            .replace(/href="(\?[^"]+)"/,/class="local" onclick="zoomToURL('$1')"/);
+            .replace(/href="(\?[^"]+)"/,/class="local" onclick="zoomToURL('$1',false)"/);
             // .replaceAll(/(href="[^\?])/g,'onclick="(e)=>{console.log(e);e.stopPropagation();}" $1');  
 }
 
@@ -1477,7 +1493,7 @@ function replaceHistoryState(){
   window.history.replaceState(
       {T:T,S:S}, 
       'Noteplace', 
-      url + '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S);
+      url + getStateURL());
       console.log('history replaced');
 }
 
@@ -1934,8 +1950,11 @@ container.addEventListener('dragend',function(e){
   // console.log(e);
 })
 
-function getStateURL(){
-  return '?Tx='+T[0]+'&Ty='+T[1]+'&S='+S;
+function getStateURL(state=null){
+  if(state==null){
+    state = currentState();
+  }
+  return '?Tx='+state.T[0]+'&Ty='+state.T[1]+'&S='+state.S;
 }
 
 // start updateSizes process
