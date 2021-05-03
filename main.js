@@ -16,6 +16,8 @@ M = 0;
 
 _NODES = [];
 _DOMId2node = new Map();
+_NODEId2node = new Map();
+
 
 zoomMax = 1e14;
 zoomMin = 1e-15;
@@ -67,7 +69,7 @@ container.ondblclick = function(e) {
   console.log('dblclick on empty field at ['+e.clientX+','+e.clientY+']');
   console.log('T='+T+' S='+S);
   // console.log(e);
-  var id = newId();
+  var id = newNodeID();
   var node = {
     id:id, 
     x:e.clientX/S + T[0], 
@@ -463,7 +465,7 @@ function calcCenterPos(nodes){
   return [R[0]/nodes.length, R[1]/nodes.length]
 }
 
-function copySelection(){
+function copySelection(de_id=false){
   copySelection.on=true;
   _clipBoard = _selected_DOM.map(domNode).map(stripNode);
   var centerPos = calcCenterPos(_clipBoard);
@@ -524,35 +526,7 @@ window.addEventListener('keydown',(e)=>{
       if(contentEditTextarea){
 
       }else{
-        // if anything is copied
-        if(0){//_clipBoard.length>0){      
-          // deselect all
-          selectNode(null);
-          // paste Under the cursor?
-          
-          _clipBoard.forEach((node)=>{
-            var nnode = stripNode(node);
-            nnode.x /= S;
-            nnode.y /= S;
-            nnode.fontSize /= S;
-            var tmousePos = clientToNode(_mousePos);
-            nnode.x += tmousePos[0];
-            nnode.y += tmousePos[1];
-            
-            selectNode(newNode(nnode));
-          })
-
-        }else{
-
-          // setTimeout(function(){
-          //   // read copied
-          //   tstuff = _('#copydiv').innerHTML;
-          //   console.log(tstuff);
-          //   selectNode(newNode({
-          //     text:tstuff
-          //   }))
-          // },50)
-        }
+        // moved to window paste
       }
     }
   }else if (e.code == "F3" || ((e.ctrlKey||e.metaKey) && e.code == "KeyF")) { 
@@ -563,11 +537,7 @@ window.addEventListener('keydown',(e)=>{
 })
 
 __IMG = null
-
 __isResizing = false;
-
-
-
 __X = null;
 
 function deselectOneDOM(dom){
@@ -736,9 +706,14 @@ function selectNode(n){
 
 _DOMId2nodej = new Map()
 function gen_DOMId2nodej(){
-  _DOMId2nodej = new Map()
+  _DOMId2node = new Map();
+  _DOMId2nodej = new Map();
+  _NODEId2node = new Map();
+
   for(var j=0;j<_NODES.length;j++){
+    _DOMId2node.set(_NODES[j].node.id, _NODES[j]);
     _DOMId2nodej.set(_NODES[j].node.id,j);
+    _NODEId2node.set(_NODES[j].id, _NODES[j].id);
   }
 }
 
@@ -868,11 +843,10 @@ function textareaBtnDown(e){
 
     selectNode(null);
     var new_node = newNode({
-      x:tnode['x'],
+      x:1*tnode['x'],
       y:1*tnode['y']
         // + 1*tnode['fontSize']
         + (th/S),
-      x:tnode['x'],
       text:'',
       fontSize:tnode['fontSize'],
     })
@@ -991,6 +965,10 @@ function onNodeDblClick(e){
 
 __nodeMouseDown = null;
 
+function idNode(id){
+  return _NODEId2node.get(id);
+}
+
 function domNode(dom){
   return _DOMId2node.get(typeof(dom)=="string"?dom:dom.id);
 }
@@ -1042,18 +1020,8 @@ function onNodeClick(e){
 }
 
 
-// https://stackoverflow.com/a/1535650/2624911
-function newId(){
-  // Check to see if the counter has been initialized
-  if ( typeof newId.N == 'undefined' ) {
-      // It has not... perform the initialization
-      newId.N = 0;
-  }  
-  while(getDOM(newId.N)){
-    newId.N++;
-  }
-  newId.N++;
-  return newId.N-1;
+function newNodeID(id=null){
+  return newID(id||'n', idNode);
 }
 
 // ::::    ::: :::::::::: :::       ::: ::::    :::  ::::::::  :::::::::  :::::::::: 
@@ -1065,7 +1033,18 @@ function newId(){
 // ###    #### ##########   ###   ###   ###    ####  ########  #########  ########## 
 
 
-function newNode(node){
+// function addNode(node){
+  
+//   _NODES.push(node);
+//   _DOMId2node.set(tdom.id, node);
+//   _DOMId2nodej.set(tdom.id, _NODES.length-1);
+// }
+
+// function addNodes(nodes){
+
+// }
+
+function newNode(node, redraw=true){
   // console.log(d);
   if('className' in node){
     tdom = node;
@@ -1074,8 +1053,8 @@ function newNode(node){
     node = domNode(tdom);
   }else{
     console.log('newNode with node provided')
-    if (!('id' in node))
-      node.id = newId()
+    if ((!(node.hasOwnProperty('id'))) || (node.id === undefined))
+      node.id = newNodeID()
     if(!'rotate' in node)
       node.rotate=0;
     if(!('x' in node)){
@@ -1103,7 +1082,6 @@ function newNode(node){
       ,'onclick', onNodeClick
       ,'ondblclick', onNodeDblClick
       ,'onmousedown', onNodeMouseDown
-      // ,'title','test <input type="color">'
     )
     // tdom.dataset['bsHtml']='true';
     // tdom.dataset['bsPlacement']='top';
@@ -1113,6 +1091,7 @@ function newNode(node){
     tdom.style.display = 'none';
 
     _NODES.push(node);
+    _NODEId2node.set(node.id, node);
     _DOMId2node.set(tdom.id, node);
     _DOMId2nodej.set(tdom.id, _NODES.length-1);
 
@@ -1195,22 +1174,12 @@ function newNode(node){
 
   tdom.appendChild(tt);
 
-
-
   for(var p of Object.keys(node.style)){
     tcontent.style[p] = node.style[p];
   }
 
-  
   tdom.appendChild(tcontent);
-  // tdom.innerHTML += getHTML(node.text);
 
-
-  if(node.rotate!=0){
-    tdom.style.transform="rotate("+node.rotate+"rad)"
-  }
-
-  
   // tn.innerHTML =  '';
   // ta = document.createElement('a');
   // ta.href = '(?Tx='+tn.dataset["x"]+'&Ty='+tn.dataset["y"]+'&S='+30/tn.dataset["fontSize"];
@@ -1245,7 +1214,7 @@ function newNode(node){
   }
 
   updateNode(node);
-  redrawNode(node);
+
 
   [].forEach.call(tdom.getElementsByTagName('a'),(elt)=>{
     if(elt.href){
@@ -1258,19 +1227,27 @@ function newNode(node){
     }
   })
 
+  if(redraw){
+    redrawNode(node);
+  }
+
   return tdom;
 }
 
 
 function updateNode(d){
   //here, sadly, d s for _NODES element, and n is for DOM element..
-  if('node' in d){
+  if(d.hasOwnProperty('node')){
     n = d.node;
   }else{
     n=d;
     d = _DOMId2node.get(n.id);
   }
 
+  if(d.rotate!=0){
+    n.style.transform="rotate("+d.rotate+"rad)"
+  }
+  
   n.style.left = (d["x"] - T[0])*S + 'px';
   n.style.top = (d["y"] - T[1])*S + 'px';
   n.style.fontSize = (d["fontSize"])*S + 'px';
@@ -1374,6 +1351,11 @@ function calcVisible(d, onhide, onshow){
 }
 
 function redrawNode(e){
+  if(!e.hasOwnProperty('deleted'))
+    e.deleted = false;
+  if(e.deleted){
+    e.node.style.display='none';
+  }else
   calcVisible(e
     ,function(){//onhide
       e.node.style.opacity=0;
@@ -1542,7 +1524,7 @@ function onTextEditChange(){
 
 function addRandomNodes(N, Xlim, Ylim, FSLim){
   for(var j=0; j<N; j++){
-    var id = newId();
+    var id = newNodeID();
     newNode({
       x:Xlim[0]+Math.random()*(Xlim[1]-Xlim[0]),
       y:Ylim[0]+Math.random()*(Ylim[1]-Ylim[0]),
@@ -1644,12 +1626,12 @@ function saveToG(){
 function stripNode(d){
   // strips only relevant data for nodes, also convert to numerical
   return {
-    id:newId(),//('id' in d)?1*d['id']:newId(),
+    id:('id' in d)?d['id']:newNodeID(),//newNodeID(),//
     x:1*d['x'],
     y:1*d['y'],
     fontSize:1*d['fontSize'],
     text:d['text'],
-    rotate:'rotate' in d?d.rotate:0,
+    rotate:'rotate' in d?1*d.rotate:0,
     style:'style' in d?delete_defaults(d.style, default_node_style):undefined,
   } 
 }
@@ -1811,6 +1793,9 @@ window.addEventListener('paste', function(e){
       setTimeout(function(){
         tstuff = _('#copydiv').innerHTML;
 
+        copydiv_observer.disconnect();
+        copydiv.innerHTML = '';
+
         json_parsed = false;
         if(tstuff[0]=='['){
           try{
@@ -1837,6 +1822,8 @@ window.addEventListener('paste', function(e){
           
           _clipBoard.forEach((node)=>{
             var nnode = stripNode(node);
+            // de-duplicate if
+            nnode.id = newNodeID(nnode.id);
             nnode.x /= S;
             nnode.y /= S;
             nnode.fontSize /= S;
@@ -1857,13 +1844,17 @@ window.addEventListener('paste', function(e){
           tstuff = tstuff.replaceAll(/height:[ 0-9]+(px)?;?/g,'')
 
           console.log(tstuff);
-          selectNode(newNode({
-            text:tstuff
-          }))
+
+          applyAction({
+            type:'A',
+            nodes:[{
+              text:tstuff
+            }]
+          })
+          selectNode(_NODES[_NODES.length-1].node);
 
         }
-        copydiv_observer.disconnect();
-        copydiv.innerHTML = '';
+
         // node_container.removeChild(copydiv);
       },50);
       // e.stopPropagation();
@@ -2097,7 +2088,7 @@ function _RESTART(new_nodes=nodes_default, new_places=_PLACES_default){
   console.log('new_places=['+new_places+']');
   
   _NODES = [];
-  newId.N = 0;
+  newNodeID.N = 0;
   $('.node').remove();
 
   _PLACES = stripPlace(_PLACES_default);
@@ -2105,7 +2096,7 @@ function _RESTART(new_nodes=nodes_default, new_places=_PLACES_default){
 
   new_nodes.map(stripNode).forEach(newNode);
   console.log('restart');
-  applyZoom([0,0],smooth=false,no_temp=false);
+  applyZoom([0,0],1,smooth=false,no_temp=false);
 }
 
 

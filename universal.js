@@ -1,3 +1,26 @@
+const ALPHANUMERIC = '0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM';
+
+function rand0Z(){
+  return ALPHANUMERIC[Math.floor(Math.random()*ALPHANUMERIC.length)];
+}
+
+// 
+function newID(start, checkfun, addfun=null, max_tries=1000){
+  id = start||'';
+  addfun = addfun||rand0Z;
+
+  var n_tries = 0;
+  while(checkfun(id)){
+    id = id + addfun();
+    n_tries++;
+    if(n_tries>max_tries){
+      throw "newID: Maximum number of tries exceeded, check your checkfun!";
+    }
+  }
+  return id;
+}
+
+
 function log(a){
   console.log(a);
 }
