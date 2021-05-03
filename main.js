@@ -490,8 +490,12 @@ window.addEventListener('keydown',(e)=>{
 
     }else{
       if(_selected_DOM.length>0){
-        _selected_DOM.forEach(deleteNode);
-        save('ids');
+        applyAction({
+          type:'D',
+          node_ids:_selected_DOM.map(dom => domNode(dom).id)
+        })
+        // _selected_DOM.forEach(deleteNode);
+        // save('ids');
       }
     }
   }else if(e.key=='Enter'){
@@ -1355,7 +1359,8 @@ function redrawNode(e){
     e.deleted = false;
   if(e.deleted){
     e.node.style.display='none';
-  }else
+  }else{
+    e.node.style.display='';
   calcVisible(e
     ,function(){//onhide
       e.node.style.opacity=0;
@@ -1373,6 +1378,7 @@ function redrawNode(e){
       },1+1000*old_td);
     }
   )
+  }
 }
 
 
@@ -1614,13 +1620,22 @@ _("#save").addEventListener("click", function(){
 }, false);
 
 // save everything to a single object
-function saveToG(){
-  return {
+function saveToG(add_history=false){
+  var G = {
     T:T,
     S:S,
-    nodes: _NODES.map(stripNode),
-    places: stripPlace()
+    nodes: (
+              add_history ? 
+                _NODES
+                : _NODES.filter(node=>!node.deleted)
+            ).map(stripNode),
+    places: stripPlace(),
   }
+  if(add_history){
+    G.history = _HISTORY;
+    G.history_current_id = _HISTORY_CURRENT_ID;
+  }  
+  return G;
 }
 
 function stripNode(d){
@@ -2101,3 +2116,7 @@ function _RESTART(new_nodes=nodes_default, new_places=_PLACES_default){
 
 
 
+_('#btnSaveFast').onclick = function(e){
+  save();
+  e.stopPropagation();
+}

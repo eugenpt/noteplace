@@ -8,6 +8,7 @@
     D : DELETE
     M : MOVE, ?
     E : EDIT, ?
+
   state: {T:T,S:S} of a view where it happened
 
   timestamp: timestamp of that action
@@ -41,7 +42,7 @@ function getHistory(id){
 }
 
 function lastHistoryID(){
-  return _HISTORY[_HISTORY.length-1].id;
+  return _HISTORY.length>0?_HISTORY[_HISTORY.length-1].id:null;
 }
 
 function newHistID(id=null){
@@ -119,7 +120,7 @@ function applyAction(A){
   // do the actual thing, make proper _HISTORY event
   h = processAction(A);
   redraw();
-  
+
   //
   h.id = newHistID();
   h.timestamp = now();
