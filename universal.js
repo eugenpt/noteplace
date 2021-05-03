@@ -1,91 +1,67 @@
 const ALPHANUMERIC = '0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM';
 
-function rand0Z(){
-  return ALPHANUMERIC[Math.floor(Math.random()*ALPHANUMERIC.length)];
+function rand0Z () {
+  return ALPHANUMERIC[Math.floor(Math.random() * ALPHANUMERIC.length)];
 }
 
-// 
-function newID(start, checkfun, addfun=null, max_tries=1000){
-  id = start||'';
-  addfun = addfun||rand0Z;
+//
+function newID(start, checkfun, addfun=null, maxTries=1000) {
+  let id = start || '';
+  addfun = addfun || rand0Z;
 
-  var n_tries = 0;
-  while(checkfun(id)){
+  let nTries = 0;
+  while (checkfun(id)) {
     id = id + addfun();
-    n_tries++;
-    if(n_tries>max_tries){
-      throw "newID: Maximum number of tries exceeded, check your checkfun!";
+    nTries++;
+    if (nTries > maxTries) {
+      throw Error('newID: Maximum number of tries exceeded, check your checkfun!');
     }
   }
   return id;
 }
 
-
-function log(a){
+function log (a) {
   console.log(a);
 }
 
-function now(){
+function now () {
   return new Date().getTime();
 }
 
-// https://jsfiddle.net/krnlde/10hbdohg/
-// http://davidwalsh.name/javascript-debounce-function
-var debounce = debounce || function (func, wait, immediate) {
-	var timeout;
-	return function() {
-		var context = this, args = arguments;
-		var later = function() {
-			timeout = null;
-			if (!immediate) func.apply(context, args);
-		};
-		var callNow = immediate && !timeout;
-		clearTimeout(timeout);
-		timeout = setTimeout(later, wait);
-		if (callNow) func.apply(context, args);
-	};
-};
-
-
-function delete_defaults(obj, def){
-  var r = {};
-  for(var p of Object.keys(obj)){
-    if((!def.hasOwnProperty(p))||(obj[p] != def[p])){
-      r[p] = obj[p]
+function delete_defaults (obj, def) {
+  const r = {};
+  for (let p of Object.keys(obj)) {
+    if ((def[p] === undefined) || (obj[p] !== def[p])) {
+      r[p] = obj[p];
     }
   }
-  
-  return Object.keys(r).length>0?r:undefined;
+  return Object.keys(r).length > 0 ? r : undefined;
 }
 
-function isInBox(xMin,xMax,yMin,yMax,bxMin,bxMax,byMin,byMax){
+function isInBox (xMin, xMax, yMin, yMax, bxMin, bxMax, byMin, byMax) {
   return (
-    (xMin <= bxMax)
-  &&(yMin <= byMax)
-  &&(xMax >= bxMin)
-  &&(yMax >= byMin)  
-  )
+     (xMin <= bxMax)
+  && (yMin <= byMax)
+  && (xMax >= bxMin)
+  && (yMax >= byMin)
+  );
 }
 
-__isin = (q, s)=>s.indexOf(q)>=0;
-__isin_all = (q,s)=>q.split(' ').every(jq=>__isin(jq, s));
+__isin = (q, s) => s.indexOf(q) >= 0
+__isin_all = (q, s) => q.split(' ').every(jq => __isin(jq, s))
 
-
-
-function toStr(a){
-  return(typeof(a)=="number")?
-    a.toExponential(2)
-    :
-    (Array.isArray(a)?
-      ('['+a.map(toStr).join(', ')+']')
-      :
-      ((typeof(a)=='object')?
-      '{'+Object.keys(a).map((k)=>k+':'+toStr(a[k])).join(', ')+'}'
-      :a)
-    );
+function toStr (a) {
+  return (typeof (a) === 'number')
+    ? a.toExponential(2)
+    : (Array.isArray(a)
+        ? ('[' + a.map(toStr).join(', ') + ']')
+        : ((typeof (a) === 'object')
+            ? '{' + Object.keys(a).map(k => k + ':' + toStr(a[k])).join(', ') + '}'
+            : a)
+      );
 }
 
-image_file_types = [
+const imageFileTypes = [
   'image/apng'
   ,'image/avif'
   ,'image/gif'
@@ -97,28 +73,31 @@ image_file_types = [
   ,'image/x-icon'
   ,'image/tiff'
 ]
-function isImage(file){
-  return image_file_types.indexOf(file.type)>=0;
+
+function isImage (file) {
+  return imageFileTypes.indexOf(file.type) >= 0;
 }
 
-
-function localStorageSize(verbose=false){
-  var _lsTotal = 0,
-      _xLen, _x;
+function localStorageSize (verbose=false) {
+  let _lsTotal = 0;
+  let _xLen = 0;
+  let _x = 0;
   for (_x in localStorage) {
-      if (!localStorage.hasOwnProperty(_x)) {
-          continue;
-      }
-      _xLen = ((localStorage[_x].length + _x.length) * 2);
-      _lsTotal += _xLen;
-      if(verbose)
-        console.log(_x.substr(0, 50) + " = " + (_xLen / 1024).toFixed(2) + " KB")
-  };
-  if(verbose)
-    console.log("Total = " + (_lsTotal / 1024).toFixed(2) + " KB");
-  
+    if (!localStorage.hasOwnProperty(_x)) {
+      continue
+    }
+    _xLen = ((localStorage[_x].length + _x.length) * 2);
+    _lsTotal += _xLen;
+    if (verbose) {
+      console.log(_x.substr(0, 50) + ' = ' + (_xLen / 1024).toFixed(2) + ' KB');
+    }
+  }
+  if (verbose) {
+    console.log('Total = ' + (_lsTotal / 1024).toFixed(2) + ' KB');
+  }
   return _lsTotal;
 }
+
 // :::::::::   ::::::::  ::::    ::::  
 // :+:    :+: :+:    :+: +:+:+: :+:+:+ 
 // +:+    +:+ +:+    +:+ +:+ +:+:+ +:+ 
@@ -126,23 +105,22 @@ function localStorageSize(verbose=false){
 // +#+    +#+ +#+    +#+ +#+       +#+ 
 // #+#    #+# #+#    #+# #+#       #+# 
 // #########   ########  ###       ### 
-          
-function _(s){
-  if(s[0]=='#'){
+
+function _ (s) {
+  if (s[0] === '#') {
     return document.getElementById(s.slice(1));
-  }else
-  if(s[0]=='.'){
+  } else if (s[0] === '.') {
     return document.getElementsByClassName(s.slice(1));
-  }else{
-    throw Error('Not Implemented: selector=['+s+']')
+  } else {
+    throw Error('Not Implemented: selector=[' + s + ']');
   }
 }
-  
+
 // create element
-function _ce(tag, plopName="className", plopVal="class"){
-  var elt = document.createElement(tag);
-  for(var j=1; j<arguments.length; j+=2){
-    elt[arguments[j]] = arguments[j+1];
+function _ce (tag, plopName='className', plopVal='class') {
+  const elt = document.createElement(tag);
+  for (let j = 1; j < arguments.length; j += 2) {
+    elt[arguments[j]] = arguments[j + 1];
   }
   return elt;
 }
@@ -153,36 +131,21 @@ const copyToClipboard = str => {
   el.setAttribute('readonly', '');
   el.style.position = 'absolute';
   el.style.left = '-9999px';
-  el.style.opacity=0;
+  el.style.opacity = 0;
   document.body.appendChild(el);
   el.select();
   document.execCommand('copy');
   document.body.removeChild(el);
 };
 
-
-function selectAllContent(el){
-  var el = getG(tnode);
-  var range = document.createRange()
-  var sel = window.getSelection()
-  
-  //range.setStart(el.childNodes[0], 0)
-  range.selectNodeContents(el.childNodes[0])
-  // range.collapse(true)
-  
-  sel.removeAllRanges()
-  sel.addRange(range)
-}
-
-
 // https://gist.github.com/simondahla/0c324ba8e6ed36055787
-function addOnContentChange(elt, fun){
+function addOnContentChange (elt, fun) {
   // https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver
   // Options for the observer (which mutations to observe)
   const config = {
-      // attributes: true,
-      childList: true,
-      subtree: true
+    // attributes: true,
+    childList: true,
+    subtree: true
   };
 
   // Create an observer instance linked to the callback function
@@ -193,7 +156,7 @@ function addOnContentChange(elt, fun){
   return observer;
 }
 
-function download(filename, text) {
+function download (filename, text) {
   var element = document.createElement('a');
   element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
   element.setAttribute('download', filename);
