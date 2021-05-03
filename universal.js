@@ -154,14 +154,21 @@ function selectAllContent(el){
 
 // https://gist.github.com/simondahla/0c324ba8e6ed36055787
 function addOnContentChange(elt, fun){
-  if(window.addEventListener) {
-    // Normal browsers
-    elt.addEventListener('DOMSubtreeModified', fun, false);
-  } else
-   if(window.attachEvent) {
-      // IE
-      elt.attachEvent('DOMSubtreeModified', fun);
-   }
+  //https://developer.mozilla.org/ru/docs/Web/API/MutationObserver
+  // Выбираем целевой элемент
+  // Конфигурация observer (за какими изменениями наблюдать)
+  const config = {
+      // attributes: true,
+      childList: true,
+      subtree: true
+  };
+
+  // Создаём экземпляр наблюдателя с указанной функцией колбэка
+  const observer = new MutationObserver(fun);
+
+  // Начинаем наблюдение за настроенными изменениями целевого элемента
+  observer.observe(elt, config);
+  return observer;
 }
 
 function download(filename, text) {

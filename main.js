@@ -573,13 +573,14 @@ __X = null;
 function deselectOneDOM(dom){
   dom.classList.remove('selected');
   try{
-  $(dom).rotatable('destroy');
-  
-  [].forEach.call(dom.getElementsByTagName('img'),(e)=>{
-    $(e).resizable('destroy').css('width','auto');
-  });
-  } catch{
-
+    $(dom).rotatable('destroy');
+    
+    [].forEach.call(dom.getElementsByTagName('img'),(e)=>{
+      $(e).resizable('destroy').css('width','auto');
+    });
+  }catch (e){
+    console.log('some error in rotatable and resizable destroy');
+    console.log(e);
   }
 }
 
@@ -714,7 +715,7 @@ function selectNode(n){
     [].forEach.call(_selected_DOM.getElementsByTagName('img'),(e)=>{
       $(e).resizable('destroy').css('width','auto');
     });
-    } catch{
+    } catch(e){
 
     }
   }
@@ -761,11 +762,13 @@ function deleteNode(d){
 }
 
 function stopEditing(){
+  var tdom = contentEditTextarea.parentElement.parentElement
+  contentEditTextarea.remove();
   if(contentEditTextarea.value==''){
-    deleteNode(contentEditTextarea.parentElement.parentElement);
+    deleteNode(tdom);
     contentEditNode = null;
   }else{
-    newNode(contentEditTextarea.parentElement.parentElement);
+    newNode(tdom);
   }
   contentEditTextarea = null;
 }
@@ -1745,7 +1748,7 @@ if($(".node").length){
       
       return JSON.parse(localStorage['noteplace.node_'+id]);
     });
-  }catch{
+  }catch(e){
     console.log('no nodes in localStorage, loading default');
     nodes = nodes_default
   }
@@ -1755,7 +1758,7 @@ if($(".node").length){
 
 try{
   _PLACES = JSON.parse(localStorage['noteplace.places']);
-}catch{
+}catch(e){
   _PLACES = stripPlace(_PLACES_default);
 }
 
@@ -1769,6 +1772,14 @@ $('#exampleModal').on('shown.bs.modal', function () {
   $('#modal-input').trigger('focus')
 })
 
+copydiv = _ce('div'
+  ,"id", "copydiv"
+  ,"contentEditable", "true"
+  ,"onready",function(){ copydiv.focus()}
+)
+copydiv_observer=null;
+node_container.appendChild(copydiv);
+    
 window.addEventListener('paste', function(e){
   console.log('window paste');
   console.log(e);
@@ -1778,16 +1789,24 @@ window.addEventListener('paste', function(e){
 
   }else{
     // hmm, pasting something from the outside?
-    copydiv = document.createElement('div');
-    copydiv.id = "copydiv";
-    copydiv.contentEditable = "true";
-    
-    node_container.appendChild(copydiv);
     copydiv.focus();
+
+    // copydiv.addEventListener('input',function(e){
+    //   console.log('copydiv input')
+    //   console.log(this);
+    //   console.log(e)
+    // })
+    if(1){
     // copydiv.addEventListener('paste',function(e){
-    addOnContentChange(copydiv,function(e){
+    copydiv_observer = addOnContentChange(copydiv,function(e){
       console.log('copydiv paste!');
       console.log(e);
+
+      E=e
+
+      tstuff = [].map.call(e,je=>[].map.call(
+        je.addedNodes,n=>'innerHTML' in n?n.innerHTML:n.textContent
+      ).join('')).join('');
 
       setTimeout(function(){
         tstuff = _('#copydiv').innerHTML;
@@ -1806,7 +1825,7 @@ window.addEventListener('paste', function(e){
                     // .replaceAll('&quot;','"')
             );
             json_parsed = true;
-          }catch{
+          }catch(e){
             json_parsed = false;
           }
         }
@@ -1843,10 +1862,14 @@ window.addEventListener('paste', function(e){
           }))
 
         }
-        node_container.removeChild(copydiv);
-      },5);
-      e.stopPropagation();
-    }) 
+        copydiv_observer.disconnect();
+        copydiv.innerHTML = '';
+        // node_container.removeChild(copydiv);
+      },50);
+      // e.stopPropagation();
+    // }) 
+  }) 
+}
   }
 });
 
@@ -2010,7 +2033,7 @@ function previewState(state){
     try{
       state = JSON.parse(state);
       state = {T:[state.T[0]*1, state.T[1]*1],S:state.S*1};
-    }catch{
+    }catch(e){
       state = new URLSearchParams(state);
       state = {T:[state.get("Tx")*1, state.get("Ty")*1],S:state.get('S')*1};
     }
