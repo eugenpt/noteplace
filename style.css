@@ -513,3 +513,13 @@ input[type=color]::-moz-color-swatch {
   border: none;
   border-radius: 500%;
 }
+
+
+/* ----------- */
+
+#historyContainer{
+  max-height: 60vh;
+  overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
+}

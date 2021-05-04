@@ -1614,13 +1614,7 @@ function showModalYesNo (title, body, yes_callback) {
 // ###        ########### ########## ########## ########
 
 function defaultFilename () {
-  return 'Noteplace_'+
-            (new Date().toISOString()
-              .slice(0, 19)
-              .replaceAll('-', '')
-              .replace('T', '-')
-              .replaceAll(':', '')
-            ) + '.json';
+  return 'Noteplace_' + date2str(new Date()) + '.json';
 }
 
 // Start file download.

@@ -28,6 +28,7 @@
 
 const btnUndo = _('#btnUndo');
 const btnRedo = _('#btnRedo');
+const historyContainer = _('#historyContainer');
 
 let _HISTORY = null;
 let _HISTORY_Map = new Map();
@@ -159,6 +160,8 @@ function applyAction (A) {
 
     // save?
     save(h.node_ids);
+
+    fillHistoryList();
 
     updateUndoRedoEnabled();
   }else{
@@ -314,11 +317,75 @@ function updateUndoRedoEnabled(){
 btnUndo.onclick = function(e) {
   goBackInHistory();
   updateUndoRedoEnabled();
-  e.stopPropagation();
-
+  fillHistoryList();  
 }
 
 btnRedo.onclick = function(e) {
   goForwardInHistory();
   updateUndoRedoEnabled();
+  fillHistoryList();  
 }
+
+function fillHistoryList () {
+  historyContainer.innerHTML = '';
+
+  const nowDate = new Date();
+  for( let j=_HISTORY.length-1 ; j>=0 ; j-- ){
+    const h = _HISTORY[j];
+
+    const date = new Date(h.timestamp);
+
+    const isToday = nowDate.toLocaleDateString() == date.toLocaleDateString();
+    // no need for date if it was today
+    let datestr = isToday ? date.toLocaleTimeString() : date.toLocaleString();    
+    datestr = datestr.replaceAll(' ','&nbsp');
+
+    let actionStr = '';
+
+    if (h.type === 'A') {
+      actionStr = 'Added';
+    }else if(h.type === 'D'){
+      actionStr = 'Deleted';
+    }else if(h.type === 'M'){
+      actionStr = 'Moved';
+    }else if(h.type === 'E'){
+      actionStr = 'Edited';
+    }
+
+
+    let allstr = actionStr + ' ' + h.node_ids.length + ' node' + (h.node_ids.length>1?'s':'') + ' ' + datestr;
+
+    const row = _ce('div'
+      ,'className','row btn btn-outline-' + ( h.id == _HISTORY_CURRENT_ID ? 'primary' : 'secondary')
+      ,'innerHTML',allstr
+      ,'onmouseenter', function (e) {
+        const _h_id = this.dataset['histodyID'];
+        previewState(getHistory(_h_id).state);
+      }
+      ,'onmouseleave', function (e) {
+        exitPreview();
+      }
+      ,'onclick', function (e) {
+        const _h_id = this.dataset['histodyID'];
+        const clickJ = _HISTORY_j_Map.get(_h_id);
+        const nowJ = _HISTORY_j_Map.get(_HISTORY_CURRENT_ID);
+
+        let goBtn = btnUndo;
+        if(nowJ < clickJ){
+          goBtn = btnRedo;
+        }
+
+        while(_HISTORY_CURRENT_ID !== _h_id){
+          goBtn.click();
+        }
+      }
+    );
+    row.dataset['histodyID'] = h.id;
+
+    // log(allstr);
+
+    historyContainer.appendChild(row);
+  }
+}
+
+fillHistoryList();

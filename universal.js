@@ -28,6 +28,19 @@ function now () {
   return new Date().getTime();
 }
 
+function int2strwz(i, length) {
+  return (Array(10).join('0')+i).slice(-length);
+}
+
+function date2str(d) {
+  return d.getFullYear() + ''
+          + int2strwz(d.getMonth()+1,2) + ''
+          + int2strwz(d.getDate(), 2) + '-'
+          + int2strwz(d.getHours(), 2) + ''
+          + int2strwz(d.getMinutes(), 2) + ''
+          + int2strwz(d.getSeconds(), 2)
+}
+
 // if property is dot-separated (style.color for example)
 //  take obj.style.color instead of just obj['style.color']
 function dotProp(obj, prop){
