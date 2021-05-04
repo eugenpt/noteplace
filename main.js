@@ -218,7 +218,7 @@ let _isDragSelecting = false;
 
 let __nodeMouseDown = false;
 
-let _dragSelected = false;
+let _dragSelected = [];
 
 let __isResizing = false;
 
@@ -275,7 +275,19 @@ window.addEventListener('mouseup', function (e) {
   __nodeMouseDown = null;
 
   if (_isMouseDragging) {
-    save(_isMouseDragging);
+    // stop dragging
+    const A = { type: 'M' }
+    if (_selected_DOM.indexOf(_isMouseDragging.node) >= 0) {
+      // moving all selected
+      A.node_ids = _selected_DOM.map( dom => domNode(dom).id );
+      A.oldValues = _selected_DOM.map( dom => domNode(dom).startPos );
+    } else {
+      // moving just the one node
+      A.node_ids = [ _isMouseDragging.id ];
+      A.oldValues = [ _isMouseDragging.startPos ];
+    }
+    applyAction(A);
+    // save(_isMouseDragging);
 
     _isMouseDragging = false;
   } else if (_isDragSelecting) {
@@ -398,7 +410,6 @@ function isNodeInClientBox (node, cbxMin, cbxMax, cbyMin, cbyMax) {
   );
 }
 
-_mousePos = [0, 0];
 container.onmousemove = function (e) {
   _mousePos = [e.clientX, e.clientY];
   if (_isMouseDown) {
@@ -407,15 +418,15 @@ container.onmousemove = function (e) {
         // move all selected
         _selected_DOM.forEach(function (dom) {
           const node = _DOMId2node.get(dom.id);
-          node.x = node.startPos[0] + (e.clientX - _mouseDragStart[0]) / S;
-          node.y = node.startPos[1] + (e.clientY - _mouseDragStart[1]) / S;
+          node.x = node.startPos.x + (e.clientX - _mouseDragStart[0]) / S;
+          node.y = node.startPos.y + (e.clientY - _mouseDragStart[1]) / S;
           calcBox(node);
           updateNode(node);
         });
       }else {
         // move the node under the cursor
-        _isMouseDragging.x = _mouseDragPos[0] + (e.clientX - _mouseDragStart[0]) / S;
-        _isMouseDragging.y = _mouseDragPos[1] + (e.clientY - _mouseDragStart[1]) / S;
+        _isMouseDragging.x = _isMouseDragging.startPos.x + (e.clientX - _mouseDragStart[0]) / S;
+        _isMouseDragging.y = _isMouseDragging.startPos.y + (e.clientY - _mouseDragStart[1]) / S;
         calcBox(_isMouseDragging);
         updateNode(_isMouseDragging);
       }
@@ -552,11 +563,13 @@ function deselectOneDOM (dom) {
   }
 }
 
+let _oldValues = null;
+
 function selectOneDOM (dom) {
   dom.classList.add('selected');
 
-  const node = _DOMId2node.get(dom.id);
-  node.startPos = [node.x, node.y];
+  const node = domNode(dom);
+  node.startPos = {x: node.x, y: node.y};
   //
   // https://jsfiddle.net/Twisty/7zc36sug/
   // https://stackoverflow.com/a/62379454/2624911
@@ -566,6 +579,7 @@ function selectOneDOM (dom) {
       start: function (e) {
         console.log('rotate start');
         console.log(e);
+        _oldValues = [{ rotate: node.rotate }];
       },
       stop: function (e, ui) {
         console.log('rotate stop');
@@ -573,7 +587,13 @@ function selectOneDOM (dom) {
         console.log(ui);
 
         // ui.angle.start = ui.angle.current;
-        _DOMId2node.get(e.target.id).rotate = ui.angle.current;
+        applyAction({
+          type: 'E',
+          node_ids: [ node.id ],
+          oldValues: _oldValues,
+          newValues: [{ rotate: ui.angle.current }]
+        });
+
         save(e.target);
       }
     };
@@ -592,15 +612,23 @@ function selectOneDOM (dom) {
           console.log('resize start');
           console.log(e);
           console.log(ui);
+          _oldValues = [{ fontSize: node.fontSize }];
         },
         stop: function (e, ui) {
           console.log('resize stop');
           console.log(e);
           console.log(ui);
-          let hid = ui.originalElement[0].dataset.parent_node_id;
-          domNode(hid).fontSize = ui.size.height / (5 * S);
-          save(domNode(hid));
-          updateNode(_('#' + hid));
+          applyAction({
+            type:'E',
+            node_ids:[ node.id ],
+            oldValues: _oldValues,
+            newValues: [{ fontSize: ui.size.height / (5 * S) }]
+          })
+          // let hid = ui.originalElement[0].dataset.parent_node_id;
+          // domNode(hid).fontSize = ui.size.height / (5 * S);
+          // save(domNode(hid));
+          // updateNode(_('#' + hid));
+
           // ui.originalElement.style.width='auto';
           __X = ui;
         }
@@ -724,6 +752,8 @@ function save (node = null, save_ids = true) {
   //  if node == 'ids', saves ids
   // additional argument:
   //  save_ids [bool] : true => save ids too
+  log('save!');
+  log(node);
   if (node === null) {
     // save all
     const node_ids = [];
@@ -733,18 +763,31 @@ function save (node = null, save_ids = true) {
       // nodes.push(JSON.parse(JSON.stringify(node.dataset)));
     });
     localStorage['noteplace.node_ids'] = JSON.stringify(node_ids);
-  } else if (node === 'ids') {
-    save_ids = true;
-  } else if (node === 'places') {
-    // do nothing, I intend on saving places anyway
-  }else {
+  } else if ( typeof(node) === 'string'){
+    if (node === 'ids') {
+      save_ids = true;
+    } else if (node === 'places') {
+      // do nothing, I intend on saving places anyway
+    } else {
+      // ID
+      localStorage['noteplace.node_' + node] = JSON.stringify(stripNode(idNode(node)));
+    }
+  } else if (Array.isArray(node)) {
+    // you know, array is for saving all of them
+    node.forEach( save );
+    // aand ids, just in case.
+    save('ids');
+  } else {
     // node provided, save only node
     if ('x' in node) {
       // original object
       localStorage['noteplace.node_' + node.id] = JSON.stringify(stripNode(node));
-    }else {
+    } else if ('id' in node) {
       // DOM node
       localStorage['noteplace.' + node.id] = JSON.stringify(stripNode(domNode(node)));
+    } else {
+      log(node);
+      throw Error('What did you aim for, calling save('+node+') ??');
     }
   }
   if (save_ids) {
@@ -911,20 +954,21 @@ function onNodeMouseDown (e) {
   console.log('onNodeMouseBtn');
   console.log(this.id);
 
-  __nodeMouseDown = _DOMId2node.get(this.id);
+  __nodeMouseDown = domNode(this);
   // console.log(e);
   if (e.button === 1) {
     _isMouseDragging = __nodeMouseDown;
     _mouseDragStart = [e.clientX, e.clientY];
-    _mouseDragPos = [1 * __nodeMouseDown.x, 1 * __nodeMouseDown.y];
 
+    let applyDrag = [ this ];
     if (this.classList.contains('selected')) {
       // save all selected positions
-      _selected_DOM.forEach((dom) => {
-        const node = domNode(dom);
-        node.startPos = [node.x, node.y];
-      });
+      applyDrag = _selected_DOM;
     }
+    applyDrag.forEach((dom) => {
+      const node = domNode(dom);
+      node.startPos = { x: node.x, y: node.y };
+    });
 
     e.preventDefault();
   } else if (e.button === 0) {
@@ -1189,6 +1233,15 @@ function updateNode (d) {
     // e.setAttribute('draggable', false);
     // e.onmousedown = (e)=>{e.preventDefault();};
   });
+  setTimeout(function () {
+    [].forEach.call(n.getElementsByClassName('ui-wrapper'), (wrapper) => {
+      const img = wrapper.getElementsByTagName('img')[0];
+      wrapper.style.height = img.style.height;
+      wrapper.style.width = img.getBoundingClientRect.width;
+      img.dataset.origS = S;
+    })
+  }, 10);
+  return 1;
   [].forEach.call(n.getElementsByClassName('ui-wrapper'), (wrapper) => {
     const img = wrapper.getElementsByTagName('img')[0];
     // e.style.height = img.clientHeight+'px';
@@ -1554,7 +1607,7 @@ function saveToG (add_history = false) {
 function stripNode (d) {
   // strips only relevant data for nodes, also convert to numerical
   return {
-    id: ('id' in d) ? d.id : newNodeID(), // newNodeID(),//
+    id: ('id' in d) ? d.id+'' : newNodeID(), // newNodeID(),//
     x: 1 * d.x,
     y: 1 * d.y,
     fontSize: 1 * d.fontSize,

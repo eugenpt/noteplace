@@ -72,20 +72,32 @@ function processAction (A) {
     case 'M':
       // move
       h.node_ids = A.node_ids.slice();
-      h.oldValues = [];
-      for (let j = 0; j < h.node_ids.length; j++) {
-        const tnode = idNode(n_id);
-        h.oldValues.push({ x: tnode.x, y: tnode.y });
-        tnode.x = A.newValues[j].x;
-        tnode.y = A.newValues[j].y;
+      if('oldValues' in A){
+        h.oldValues = A.oldValues;
+      }else{
+        h.oldValues = [];
+      }
+      if('newValues' in A){
+        for (let j = 0; j < h.node_ids.length; j++) {
+          const tnode = idNode(n_id);
+          if (!('oldValues' in A)) {
+            h.oldValues.push({ x: tnode.x, y: tnode.y });
+          }
+          tnode.x = A.newValues[j].x;
+          tnode.y = A.newValues[j].y;
+        }
       }
       break;
     case 'E':
       // edit
       h.node_ids = A.node_ids.slice();
-      h.oldValues = [];
+      if ('oldValues' in A) {
+        h.oldValues = A.oldValues;
+      } else {
+        h.oldValues = [];
+      }
       for (let j = 0; j < h.node_ids.length; j++) {
-        const tnode = idNode(n_id);
+        const tnode = idNode(h.node_ids[j]);
         const oldValues = {};
         Object.keys(A.newValues[j]).forEach(prop => {
           if (tnode[prop] != A.newValues[j][prop]) {
@@ -93,7 +105,9 @@ function processAction (A) {
             tnode[prop] = A.newValues[j][prop];
           }
         });
-        h.oldValues.push(oldValues);
+        if(!('oldValues' in A)){
+          h.oldValues.push(oldValues);
+        }
       }
       break;
     default:
@@ -114,7 +128,7 @@ function applyAction (A) {
 
   // if we are not at the end of _HISTORY, clear all after
   if (_HISTORY_CURRENT_ID !== lastHistoryID()) {
-    _HISTORY = _HISTORY.slice(0, _HISTORY_j_Map(_HISTORY_CURRENT_ID) + 1);
+    _HISTORY = _HISTORY.slice(0, _HISTORY_j_Map.get(_HISTORY_CURRENT_ID) + 1);
   }
 
   // do the actual thing, make proper _HISTORY event
@@ -132,6 +146,9 @@ function applyAction (A) {
   _HISTORY_CURRENT_ID = h.id;
   _HISTORY_Map.set(h.id, h);
   _HISTORY_j_Map.set(h.id, _HISTORY.length - 1);
+
+  // save?
+  save(h.node_ids);
 }
 
 function revertHistory (id) {
@@ -163,7 +180,7 @@ function revertHistory (id) {
     case 'M':
       // move
       for (let j = 0; j < h.node_ids.length; j++) {
-        const tnode = idNode(node_ids[j]);
+        const tnode = idNode(h.node_ids[j]);
         tnode.x = h.oldValues[j].x;
         tnode.y = h.oldValues[j].y;
       }
@@ -172,13 +189,13 @@ function revertHistory (id) {
       // edit
       log('reverting EDIT');
       for (let j = 0; j < h.node_ids.length; j++) {
-        const tnode = idNode(node_ids[j]);
-        log(' node ' + idNode(node_ids[j]).id);
+        const tnode = idNode(h.node_ids[j]);
+        log(' node ' + idNode(h.node_ids[j]).id);
         for (let prop of Object.keys(h.oldValues[j])) {
           log(' prop ' + prop);
 
-          idNode(node_ids[j])[prop] = h.oldValues[j][prop];
-          log(' -> ' + idNode(node_ids[j])[prop]);
+          idNode(h.node_ids[j])[prop] = h.oldValues[j][prop];
+          log(' -> ' + idNode(h.node_ids[j])[prop]);
         }
       }
       break;
