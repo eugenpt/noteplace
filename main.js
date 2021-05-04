@@ -1764,7 +1764,9 @@ if ($('.node').length) {
     console.log('no nodes in localStorage, loading default');
     nodes = nodes_default;
   }
-  nodes.map(stripNode).forEach(newNode);
+  nodes.forEach(n => {
+    newNode(stripNode(n));
+  });
 }
 
 try {
@@ -2136,7 +2138,9 @@ function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default) {
   _PLACES = stripPlace(_PLACES_default);
   fillPlaces();
 
-  new_nodes.map(stripNode).forEach(newNode);
+  new_nodes.forEach(n => {
+    newNode(stripNode(n));
+  });
 
   _HISTORY = [];
   _HISTORY_CURRENT_ID = null;
