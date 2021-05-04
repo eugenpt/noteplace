@@ -376,14 +376,15 @@ function updateDragSelect () {
   });
   _NODES.forEach((node) => {
     // if(node.vis){
-    if (isNodeInClientBox(node,
-      Math.min(_mousePos[0], _mouseDownPos[0]), Math.max(_mousePos[0], _mouseDownPos[0]),
-      Math.min(_mousePos[1], _mouseDownPos[1]), Math.max(_mousePos[1], _mouseDownPos[1])
-    )) {
-      tempSelect(node);
-      node.stillSelected = true;
+    if (!node.deleted) {
+      if (isNodeInClientBox(node,
+        Math.min(_mousePos[0], _mouseDownPos[0]), Math.max(_mousePos[0], _mouseDownPos[0]),
+        Math.min(_mousePos[1], _mouseDownPos[1]), Math.max(_mousePos[1], _mouseDownPos[1])
+      )) {
+        tempSelect(node);
+        node.stillSelected = true;
+      }
     }
-    // }
   });
   //
   _dragSelected.forEach((node) => {
