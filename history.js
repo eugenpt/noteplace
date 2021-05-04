@@ -47,7 +47,7 @@ function getHistory (id) {
 }
 
 function lastHistoryID () {
-  return _HISTORY.length > 0 ? _HISTORY[_HISTORY.length - 1].id:null;
+  return _HISTORY.length > 0 ? _HISTORY[_HISTORY.length - 1].id : null;
 }
 
 function newHistID (id = null) {
@@ -292,10 +292,10 @@ if (localStorage['noteplace.history'] !== undefined) {
 }
 
 _HISTORY = _HISTORY || [
-  { id: '0', type: 'A', state: { T: [0, 0], S: 1 }, timestamp: 1620040025793, node_ids: ['0', '1'] },
-  { id: '1', type: 'D', state: { T: [0, 0], S: 1 }, timestamp: 1620040305793, node_ids: ['1'] },
-  { id: '2', type: 'M', state: { T: [0, 0], S: 1 }, timestamp: 1620044005793, node_ids: ['0'], oldValues: [{ x: -100, y: -100 }] },
-  { id: '3', type: 'E', state: { T: [-200, -200], S: 0.6 }, timestamp: 1620050025793, node_ids: ['0'], oldValues: [{ rotate: -0.3 }] }
+  // { id: '0', type: 'A', state: { T: [0, 0], S: 1 }, timestamp: 1620040025793, node_ids: ['0', '1'] },
+  // { id: '1', type: 'D', state: { T: [0, 0], S: 1 }, timestamp: 1620040305793, node_ids: ['1'] },
+  // { id: '2', type: 'M', state: { T: [0, 0], S: 1 }, timestamp: 1620044005793, node_ids: ['0'], oldValues: [{ x: -100, y: -100 }] },
+  // { id: '3', type: 'E', state: { T: [-200, -200], S: 0.6 }, timestamp: 1620050025793, node_ids: ['0'], oldValues: [{ rotate: -0.3 }] }
 ];
 
 genHistIDMap();

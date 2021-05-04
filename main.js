@@ -821,6 +821,9 @@ function save (node = null, save_ids = true) {
     stripPlace(_PLACES)
   );
 
+  localStorage['noteplace.history'] = JSON.stringify( _HISTORY);
+  localStorage['noteplace.history_current'] = _HISTORY_CURRENT_ID;
+
   const tsize = localStorageSize() / (1024 * 1024);
   if (tsize > 4) {
     console.error('localStorage ' + tsize.toFixed(3) + ' MB, limit is 5. you know what to do.');
@@ -2116,6 +2119,12 @@ function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default) {
   fillPlaces();
 
   new_nodes.map(stripNode).forEach(newNode);
+
+  _HISTORY = [];
+  _HISTORY_CURRENT_ID = null;
+  genHistIDMap();
+  fillHistoryList();
+
   console.log('restart');
   applyZoom([0, 0], 1, false, false);
 }
