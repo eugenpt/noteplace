@@ -168,6 +168,8 @@ function applyAction (A) {
     // nothing changed!
     log('no changes')
   }
+
+  return h;
 }
 
 function revertHistory (id) {

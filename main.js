@@ -1846,6 +1846,8 @@ window.addEventListener('paste', function (e) {
             selectNode(null);
             // paste Under the cursor?
 
+            const A = { type: 'A', nodes: [] };
+
             _clipBoard.forEach((node) => {
               const nnode = stripNode(node);
               // de-duplicate if
@@ -1857,8 +1859,15 @@ window.addEventListener('paste', function (e) {
               nnode.x += tmousePos[0];
               nnode.y += tmousePos[1];
 
-              selectNode(newNode(nnode));
+              A.nodes.push(nnode);
+
+              // selectNode(newNode(nnode));
             });
+
+            applyAction(A);
+
+            selectNode(A.nodes.map( n => idNode(n.id).node ));
+
           }else {
             // I know this is not perfect (HAHAHAHAHA!!...)
             //  but it kinda works
@@ -1954,12 +1963,20 @@ container.addEventListener('drop', function (e) {
     // _fileList
   } else {
     selectNode(null);
-    selectNode(
-      newNode({
+    let h = applyAction( { 
+      type: 'A',
+      nodes: [{
         text: e.dataTransfer.getData('text'),
         mousePos: [e.clientX, e.clientY]
-      })
-    );
+      }]
+    } );
+    selectNode(_NODES[_NODES.length-1].node);
+    // selectNode(
+    //   newNode({
+    //     text: e.dataTransfer.getData('text'),
+    //     mousePos: [e.clientX, e.clientY]
+    //   })
+    // );
   }
 });
 
