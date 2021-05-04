@@ -26,6 +26,9 @@
 
 */
 
+const btnUndo = _('#btnUndo');
+const btnRedo = _('#btnRedo');
+
 let _HISTORY = null;
 let _HISTORY_Map = new Map();
 let _HISTORY_j_Map = new Map();
@@ -57,10 +60,19 @@ function processAction (A) {
     case 'A':
       // ADD
       let doms = [];
-      h.node_ids = A.nodes.map(function (node) {
-        doms.push(newNode(node, false));
-        return node.id;
-      });
+      if('node_ids' in A){
+        // just de-delete them, ok?
+        h.node_ids = A.node_ids.slice();
+
+        h.node_ids.forEach( id => {
+          idNode(id).deleted = false;
+        })
+      }else{
+        h.node_ids = A.nodes.map(function (node) {
+          doms.push(newNode(node, false));
+          return node.id;
+        });
+      }
       // selectNode(doms);
       break;
     case 'D':
@@ -147,6 +159,8 @@ function applyAction (A) {
 
     // save?
     save(h.node_ids);
+
+    updateUndoRedoEnabled();
   }else{
     // nothing changed!
     log('no changes')
@@ -249,7 +263,7 @@ function goForwardInHistory () {
   }
 
   nowj++;
-  applyAction(_HISTORY[nowj]);
+  processAction(_HISTORY[nowj]);
 
   gotoState(_HISTORY[nowj].state);
 
@@ -291,3 +305,20 @@ if (localStorage['noteplace.history_current'] !== undefined) {
   }
 }
 _HISTORY_CURRENT_ID = _HISTORY_CURRENT_ID || lastHistoryID();
+
+function updateUndoRedoEnabled(){
+  btnUndo.disabled = (_HISTORY_CURRENT_ID === null);
+  btnRedo.disabled = (_HISTORY_CURRENT_ID === lastHistoryID());
+}
+
+btnUndo.onclick = function(e) {
+  goBackInHistory();
+  updateUndoRedoEnabled();
+  e.stopPropagation();
+
+}
+
+btnRedo.onclick = function(e) {
+  goForwardInHistory();
+  updateUndoRedoEnabled();
+}

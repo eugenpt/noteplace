@@ -277,15 +277,20 @@ window.addEventListener('mouseup', function (e) {
   if (_isMouseDragging) {
     // stop dragging
     const A = { type: 'M' }
+
     if (_selected_DOM.indexOf(_isMouseDragging.node) >= 0) {
       // moving all selected
       A.node_ids = _selected_DOM.map( dom => domNode(dom).id );
-      A.oldValues = _selected_DOM.map( dom => domNode(dom).startPos );
     } else {
       // moving just the one node
       A.node_ids = [ _isMouseDragging.id ];
-      A.oldValues = [ _isMouseDragging.startPos ];
     }
+    A.oldValues = A.node_ids.map( id => idNode(id).startPos );
+    A.newValues = A.node_ids.map( id => {
+      const node = idNode(id);
+      return { x: node.x, y: node.y}  
+    });
+
     applyAction(A);
     // save(_isMouseDragging);
 
@@ -543,6 +548,17 @@ window.addEventListener('keydown', (e) => {
   } else if (e.code === 'F3' || ((e.ctrlKey || e.metaKey) && e.code === 'KeyF')) {
     _('#search-toggle').click();
     e.preventDefault();
+  } else if ((e.code == "KeyZ") && ( (e.ctrlKey) || (e.metaKey) )) {
+    if (e.shiftKey){
+      // Shift - Meta - Z = Re-do on Macs
+      _('#btnRedo').click();
+    }else{
+      // Ctrl/Meta - Z
+      _('#btnUndo').click();
+    }
+  } else if ((e.code == "KeyY") && ( (e.ctrlKey) || (e.metaKey) )) {
+    // Ctrl-Y was Re-do, right?
+    _('#btnRedo').click();
   }
 });
 
@@ -1551,11 +1567,24 @@ function editFontSize (delta) {
 
       const centerPos = calcCenterPos(_selected_DOM.map(domNode));
 
+      applyAction({
+        type: 'E',
+        node_ids: _selected_DOM.map( dom => domNode(dom).id ),
+        newValues: _selected_DOM.map( dom => { 
+          let node = domNode(dom);
+          return {
+            fontSize: node.fontSize * k,
+            x: centerPos[0] + (node.x - centerPos[0]) * k,
+            y: centerPos[1] + (node.y - centerPos[1]) * k
+        }; })
+      })
+
       _selected_DOM.forEach((dom) => {
-        let node = domNode(dom);
-        node.fontSize *= k;
-        node.x = centerPos[0] + (node.x - centerPos[0]) * k;
-        node.y = centerPos[1] + (node.y - centerPos[1]) * k;
+        // let node = domNode(dom);
+        // node.fontSize *= k;
+        // node.x = centerPos[0] + (node.x - centerPos[0]) * k;
+        // node.y = centerPos[1] + (node.y - centerPos[1]) * k;
+        // updateNode(dom);
 
         let wrapper = dom.getElementsByClassName('ui-wrapper');
         if (wrapper.length > 0) {
@@ -1564,7 +1593,6 @@ function editFontSize (delta) {
           wrapper.style.width = (wrapper.style.width.slice(0, -2) * k) + 'px';
           wrapper.style.height = (wrapper.style.height.slice(0, -2) * k) + 'px';
         }
-        updateNode(dom);
       });
     }
   }

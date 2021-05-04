@@ -88,6 +88,8 @@
     <nav id="navbar" class="navbar navbar-light bg-light container-fluid justify-content-start">
       <a id="menu-toggle" class="btn btn-outline-secondary"><i class="bi-list-ul"></i></a>
       <button id="btnSaveFast" class="btn btn-outline-secondary">💾</button>
+      <button id="btnUndo" class="btn btn-outline-primary" title="Undo"><i class="bi-arrow-90deg-left"></i></button>
+      <button id="btnRedo" class="btn btn-outline-primary" title="Redo"><i class="bi-arrow-90deg-right"></i></button>
       <div class="d-flex" style="display: none!important;">
         <input type="number" id="number" value=100>
         <button id="btnAddLots" class="btn btn-outline-success">ADD!</button>
@@ -147,7 +149,7 @@
     <div id="node_container">
 
     </div>
-    <div class="navbar navbar-expand-sm border border-dark container-fluid position-absolute bottom-0">
+    <div style="display: none;" class="navbar navbar-expand-sm border border-dark container-fluid position-absolute bottom-0">
       <p>
         <textarea id="text"></textarea> 
         FontSize:<input type="number" step="10" id="fontSize">
