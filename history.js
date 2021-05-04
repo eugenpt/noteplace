@@ -17,6 +17,7 @@
 
   oldValues : for MOVE and EDIT events old values of specified parameters
               ( are stored in _HISTORY )
+  newValues : for reverting aand going forward again
 
   nodes : for Actions, nodes to be created
 
@@ -70,44 +71,40 @@ function processAction (A) {
       });
       break;
     case 'M':
-      // move
-      h.node_ids = A.node_ids.slice();
-      if('oldValues' in A){
-        h.oldValues = A.oldValues;
-      }else{
-        h.oldValues = [];
-      }
-      if('newValues' in A){
-        for (let j = 0; j < h.node_ids.length; j++) {
-          const tnode = idNode(n_id);
-          if (!('oldValues' in A)) {
-            h.oldValues.push({ x: tnode.x, y: tnode.y });
-          }
-          tnode.x = A.newValues[j].x;
-          tnode.y = A.newValues[j].y;
-        }
-      }
-      break;
+      // move and edit are basically the same
     case 'E':
       // edit
       h.node_ids = A.node_ids.slice();
-      if ('oldValues' in A) {
-        h.oldValues = A.oldValues;
-      } else {
-        h.oldValues = [];
-      }
+      h.oldValues = [];
+      // h.newValues = [];
+      let anythingChanged = false;
       for (let j = 0; j < h.node_ids.length; j++) {
         const tnode = idNode(h.node_ids[j]);
         const oldValues = {};
+        const newValues = {};
         Object.keys(A.newValues[j]).forEach(prop => {
-          if (tnode[prop] != A.newValues[j][prop]) {
-            oldValues[prop] = tnode[prop];
-            tnode[prop] = A.newValues[j][prop];
+          newValues[prop] = A.newValues[j][prop];
+          if(prop.indexOf('.')>0){
+            oldValues[prop] = ('oldValues' in A)?A.oldValues[j][prop]:dotProp(tnode,prop);
+            setDotProp(tnode, prop, newValues[prop]);
+
+          }else{
+            oldValues[prop] = ('oldValues' in A)?A.oldValues[j][prop]:tnode[prop];
+            tnode[prop] = newValues[prop];
+          }
+          if(oldValues[prop] != newValues[prop]){
+            anythingChanged = true;
           }
         });
-        if(!('oldValues' in A)){
-          h.oldValues.push(oldValues);
-        }
+        h.oldValues.push(oldValues);
+        // h.newValues.push(newValues);
+      }
+      if(!anythingChanged){
+        return null;
+      }
+      if (h.type === 'E'){
+        // really redraw nodes
+        h.node_ids.forEach( id => { newNode(idNode(id).node); } );
       }
       break;
     default:
@@ -133,22 +130,27 @@ function applyAction (A) {
 
   // do the actual thing, make proper _HISTORY event
   const h = processAction(A);
-  redraw();
+  if(h !== null){
+    redraw();
 
-  //
-  h.id = newHistID();
-  h.timestamp = now();
-  // TODO: probably calculate state based on action itself?
-  h.state = currentState();
+    //
+    h.id = newHistID();
+    h.timestamp = now();
+    // TODO: probably calculate state based on action itself?
+    h.state = currentState();
 
-  // add to _HISTORY and to indices
-  _HISTORY.push(h);
-  _HISTORY_CURRENT_ID = h.id;
-  _HISTORY_Map.set(h.id, h);
-  _HISTORY_j_Map.set(h.id, _HISTORY.length - 1);
+    // add to _HISTORY and to indices
+    _HISTORY.push(h);
+    _HISTORY_CURRENT_ID = h.id;
+    _HISTORY_Map.set(h.id, h);
+    _HISTORY_j_Map.set(h.id, _HISTORY.length - 1);
 
-  // save?
-  save(h.node_ids);
+    // save?
+    save(h.node_ids);
+  }else{
+    // nothing changed!
+    log('no changes')
+  }
 }
 
 function revertHistory (id) {
@@ -188,16 +190,27 @@ function revertHistory (id) {
     case 'E':
       // edit
       log('reverting EDIT');
+      h.newValues = [];
       for (let j = 0; j < h.node_ids.length; j++) {
         const tnode = idNode(h.node_ids[j]);
+        const newValues = {};
         log(' node ' + idNode(h.node_ids[j]).id);
         for (let prop of Object.keys(h.oldValues[j])) {
           log(' prop ' + prop);
-
-          idNode(h.node_ids[j])[prop] = h.oldValues[j][prop];
-          log(' -> ' + idNode(h.node_ids[j])[prop]);
+          if(prop.indexOf('.')>0){
+            // like style.color
+            newValues[prop] = dotProp(tnode,prop);
+            setDotProp(tnode, prop, h.oldValues[j][prop]);
+          }else{
+            newValues[prop] = tnode[prop];
+            tnode[prop] = h.oldValues[j][prop];
+          }
+          log(' -> ' + newValues[prop]);
         }
+        h.newValues.push(newValues);
       }
+      // sometimes an Update just won't cut it
+      h.node_ids.forEach( id => { newNode(idNode(id).node); } );
       break;
     default:
       throw Error('revertHistory error: What type of history is [' + h.type + '] ??!');
@@ -221,6 +234,26 @@ function goBackInHistory () {
 
   nowj--;
   _HISTORY_CURRENT_ID = nowj >= 0 ? _HISTORY[nowj].id:null;
+  log('nowj=' + nowj);
+  log('_HISTORY_CURRENT_ID=' + _HISTORY_CURRENT_ID);
+}
+
+function goForwardInHistory () {
+  log('goForwardInHistory');
+
+  let nowj = _HISTORY_j_Map.get(_HISTORY_CURRENT_ID);
+  log('current nowj=' + nowj);
+  if (nowj === _HISTORY.length - 1) {
+    // after the last one : impossible!
+    return 0;
+  }
+
+  nowj++;
+  applyAction(_HISTORY[nowj]);
+
+  gotoState(_HISTORY[nowj].state);
+
+  _HISTORY_CURRENT_ID = _HISTORY[nowj].id;
   log('nowj=' + nowj);
   log('_HISTORY_CURRENT_ID=' + _HISTORY_CURRENT_ID);
 }

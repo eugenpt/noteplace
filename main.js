@@ -737,12 +737,18 @@ function deleteNode (d) {
 function stopEditing () {
   let tdom = contentEditTextarea.parentElement.parentElement;
   contentEditTextarea.remove();
+  const A = { type: 'D', node_ids: [ domNode(tdom).id ] };
   if (contentEditTextarea.value === '') {
-    deleteNode(tdom);
+    //deleteNode(tdom);    
     contentEditNode = null;
   }else {
+    A.type = 'E';
+    A.oldValues = [ { text: domNode(tdom).startText } ];
+    A.newValues = [ { text: domNode(tdom).text } ];
+    // A.nodes = [ domNode(tdom) ];
     newNode(tdom);
   }
+  applyAction(A);
   contentEditTextarea = null;
 }
 
@@ -752,8 +758,8 @@ function save (node = null, save_ids = true) {
   //  if node == 'ids', saves ids
   // additional argument:
   //  save_ids [bool] : true => save ids too
-  log('save!');
-  log(node);
+  // log('save!');
+  // log(node);
   if (node === null) {
     // save all
     const node_ids = [];
@@ -900,9 +906,13 @@ function onNodeDblClick (e) {
 
   // console.log(contentEditNode);
 
+  const node = domNode(contentEditNode);
+
   contentEditTextarea = document.createElement('textarea');
   contentEditTextarea.id = 'contentEditTextarea';
-  contentEditTextarea.value = _DOMId2node.get(contentEditNode.id).text;
+  contentEditTextarea.value = node.text;
+
+  node.startText = node.text;
 
   contentEditNode = contentEditNode.getElementsByClassName('np-n-c')[0];
 
@@ -920,7 +930,7 @@ function onNodeDblClick (e) {
   contentEditTextarea.onkeyup = textareaAutoResize;
   contentEditTextarea.oninput = function (e) {
     console.log('contentEditTextarea input');
-    _DOMId2node.get(this.parentElement.parentElement.id).text = this.value;
+    domNode(this.parentElement.parentElement).text = this.value;
   };
 
   contentEditTextarea.onmousedown = (e) => {
@@ -1102,7 +1112,16 @@ function newNode (node, redraw = true) {
         node.style.color = this.value;
         node.content_dom.style.color = this.value;
       }
+      , 'onchange', function (e) {
+        applyAction( { 
+          type: 'E',
+          node_ids: [ node.id ],
+          oldValues: [ { 'style.color': this.dataset['oldValue'] } ],
+          newValues: [ { 'style.color': this.value } ]
+        })
+      }
     );
+    tcolorselect.dataset['oldValue'] = node.style.color;
     tt.appendChild(tcolorselect);
 
     if (tcontent.innerHTML.indexOf('<br') >= 0) {
@@ -1118,7 +1137,13 @@ function newNode (node, redraw = true) {
               .removeClass('np-n-t-ta-selected')
               .find('[data-text-align="' + this.dataset.textAlign + '"]')
               .addClass('np-n-t-ta-selected');
-            node.style.textAlign = this.dataset.textAlign;
+
+            applyAction({
+              type: 'E',
+              node_ids: [ node.id ],
+              newValues: [ { 'style.textAlign': this.dataset.textAlign } ]
+            })  
+            // node.style.textAlign = this.dataset.textAlign;
             node.content_dom.style.textAlign = this.dataset.textAlign;
             // newNode(node.node);
             // selectNode(node)

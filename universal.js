@@ -28,6 +28,25 @@ function now () {
   return new Date().getTime();
 }
 
+// if property is dot-separated (style.color for example)
+//  take obj.style.color instead of just obj['style.color']
+function dotProp(obj, prop){
+  const propParts = prop.split('.');
+  let h = obj;
+  for(let propPart of propParts){
+    if(!(propPart in h)){
+      h[propPart] = {};
+    }
+    h = h[propPart];
+  }
+  return h;
+}
+
+function setDotProp(obj, prop, value){
+  const propParts = prop.split('.');
+  dotProp(obj, propParts.slice(0,-1).join('.'))[propParts[propParts.length-1]] = value;
+}
+
 function delete_defaults (obj, def) {
   const r = {};
   for (let p of Object.keys(obj)) {
