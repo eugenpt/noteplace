@@ -330,6 +330,7 @@ window.addEventListener('mouseup', function (e) {
   //   e.preventDefault();
   // }
 
+  hideGridLine();
   __isResizing = false;
   _isMouseDown = false;
 });
@@ -412,26 +413,132 @@ function isNodeInClientBox (node, cbxMin, cbxMax, cbyMin, cbyMax) {
   );
 }
 
+function allVisibleNodesProps(prop='x', except=[]){
+  const except_ids = except.map( n => n.id )
+  const R = new Map();
+  for( let j=0 ; j<_NODES.length ; j++){
+    const node = _NODES[j];
+    if ((!node.vis)||(node.deleted))
+      continue;
+    if (except_ids.indexOf(node.id) >= 0)
+      continue;
+    
+    R.set(node.id, node[prop]);
+  }
+  return R;
+}
+
+_theGridAlignLines = { x: null, y:null };
+
+function gridAlignLine(node1, node2, prop){
+  if(_theGridAlignLines[prop] == null){
+    _theGridAlignLines[prop] = _ce('div'
+      ,'className','grid-align-line'
+    );
+    node_container.appendChild(_theGridAlignLines[prop]);
+  }
+  _theGridAlignLines[prop].style.display = '';
+  const prop2 = 'y';
+
+  let widthprop = 'width';
+  let heightprop = 'height';
+  let domProp = 'left';
+  let domProp2 = 'top';
+  if(prop == 'y'){
+    widthprop = 'height';
+    heightprop = 'width';
+    domProp = 'top';
+    domProp2 = 'left';
+  }
+
+  const delta = 0;
+
+  node1prop = node1.node.style[domProp].slice(0,-2) * 1;
+  node2prop = node2.node.style[domProp].slice(0,-2) * 1;
+  node1prop2 = node1.node.style[domProp2].slice(0,-2) * 1;
+  node2prop2 = node2.node.style[domProp2].slice(0,-2) * 1;
+
+  _theGridAlignLines[prop].style[widthprop] = 1;
+  _theGridAlignLines[prop].style[domProp] = Math.min( node1prop , node2prop ) + 'px'
+
+  let tx = Math.min( node1prop2 , node2prop2) - delta;
+  log('tx=');
+  log(tx);
+
+  _theGridAlignLines[prop].style[domProp2] = tx + 'px';
+  log(_theGridAlignLines[prop].style[domProp2])
+  _theGridAlignLines[prop].style[heightprop] = (Math.max( node1prop2 , node2prop2) - tx + 2 * delta ) +'px'
+
+}
+
+function hideGridLine(prop){
+  // console
+  log(prop);
+  if(prop == null){
+    Object.keys(_theGridAlignLines).forEach( hideGridLine );
+    return 0;
+  }
+  if(_theGridAlignLines[prop] !== null) {
+    log(_theGridAlignLines[prop]);
+    _theGridAlignLines[prop].style.display = 'none';
+    // node_container.removeChild(_theGridAlignLines[prop]);
+    // _theGridAlignLines[prop] = null;
+  }
+}
+
 container.onmousemove = function (e) {
   _mousePos = [e.clientX, e.clientY];
   if (_isMouseDown) {
     if (_isMouseDragging) {
+      const deltaMove = { 
+        x: (e.clientX - _mouseDragStart[0]) / S  ,
+        y: (e.clientY - _mouseDragStart[1]) / S
+      }
+      const sizeScreen = {
+        x: width,
+        y: height
+      }
+      let updatePosNodes = [_isMouseDragging];
+
       if (_isMouseDragging.node.classList.contains('selected')) {
         // move all selected
-        _selected_DOM.forEach(function (dom) {
-          const node = _DOMId2node.get(dom.id);
-          node.x = node.startPos.x + (e.clientX - _mouseDragStart[0]) / S;
-          node.y = node.startPos.y + (e.clientY - _mouseDragStart[1]) / S;
-          calcBox(node);
-          updateNode(node);
-        });
-      }else {
-        // move the node under the cursor
-        _isMouseDragging.x = _isMouseDragging.startPos.x + (e.clientX - _mouseDragStart[0]) / S;
-        _isMouseDragging.y = _isMouseDragging.startPos.y + (e.clientY - _mouseDragStart[1]) / S;
-        calcBox(_isMouseDragging);
-        updateNode(_isMouseDragging);
+        updatePosNodes = _selected_DOM.map(domNode);
       }
+
+      for(let prop of ['x','y']){
+        _isMouseDragging[prop] = _isMouseDragging.startPos[prop] + deltaMove[prop];
+
+          allPropsMap = allVisibleNodesProps(prop, [_isMouseDragging]);
+
+          allPropsAbs = [...allPropsMap.values()].map( v => Math.abs( v - _isMouseDragging[prop] ));
+          minAbs = Math.min(...allPropsAbs)
+          minJ = allPropsAbs.indexOf(minAbs);
+
+          minDvh = minAbs*S / sizeScreen[prop];
+
+        if(minDvh < 0.01){
+          //
+          log('seems like node '+[...allPropsMap.keys()][minJ]+' is OK, huh?');
+          // _isMouseDragging[prop] = [...allPropsMap.values()][minJ];
+          deltaMove[prop] = [...allPropsMap.values()][minJ] - _isMouseDragging.startPos[prop];
+
+          gridAlignLine(_isMouseDragging, idNode([...allPropsMap.keys()][minJ]), prop);
+        } else {
+          hideGridLine(prop);
+        }
+      }
+      updatePosNodes.forEach(function (node) {
+        node.x = node.startPos.x + deltaMove.x;
+        node.y = node.startPos.y + deltaMove.y;
+        calcBox(node);
+        updateNode(node);
+      });      
+        // move the node under the cursor
+        // _isMouseDragging.x = _isMouseDragging.startPos.x + deltaMove.x;
+        // _isMouseDragging.y = _isMouseDragging.startPos.y + deltaMove.y;
+        // calcBox(_isMouseDragging);
+        // updateNode(_isMouseDragging);
+      // }
     } else if (__isResizing) {
       // pass
     } else if (_isDragSelecting) {
@@ -1629,6 +1736,7 @@ function stripNode (d) {
     fontSize: 1 * d.fontSize,
     text: d.text,
     rotate: 'rotate' in d ? 1 * d.rotate:0,
+    deleted: 'deleted' in d ? d.deleted : false,
     style: 'style' in d ? delete_defaults(d.style, default_node_style) : undefined
   };
 }
