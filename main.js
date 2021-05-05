@@ -330,6 +330,8 @@ window.addEventListener('mouseup', function (e) {
   //   e.preventDefault();
   // }
 
+  hideGridLine();
+  
   __isResizing = false;
   _isMouseDown = false;
 });
@@ -436,30 +438,52 @@ function gridAlignLine(node1, node2, prop){
     );
     node_container.appendChild(_theGridAlignLines[prop]);
   }
-  const prop2 = prop == 'x' ? 'y' : 'x';
+  _theGridAlignLines[prop].style.display = '';
+  const prop2 = 'y';
 
-  if(prop == 'x'){
-    _theGridAlignLines[prop].style.width = 1;
-    _theGridAlignLines[prop].style.left = Math.min( node1.node.style.left , node2.node.style.left)
-
-    _theGridAlignLines[prop].style.top = Math.min( node1.node.style.top , node2.node.style.top) - 10
-    _theGridAlignLines[prop].style.height = Math.max( node1.node.style.top , node2.node.style.top) - _theGridAlignLines[prop].style.top + 20
-  }else{
-    _theGridAlignLines[prop].style.height = 1;
-    _theGridAlignLines[prop].style.top = Math.min( node1.node.style.top , node2.node.style.top)
-
-    _theGridAlignLines[prop].style.left = Math.min( node1.node.style.left , node2.node.style.left) - 10
-    _theGridAlignLines[prop].style.width = Math.max( node1.node.style.left , node2.node.style.left) - _theGridAlignLines[prop].style.left + 20
+  let widthprop = 'width';
+  let heightprop = 'height';
+  let domProp = 'left';
+  let domProp2 = 'top';
+  if(prop == 'y'){
+    widthprop = 'height';
+    heightprop = 'width';
+    domProp = 'top';
+    domProp2 = 'left';
   }
+
+  const delta = 0;
+
+  node1prop = node1.node.style[domProp].slice(0,-2) * 1;
+  node2prop = node2.node.style[domProp].slice(0,-2) * 1;
+  node1prop2 = node1.node.style[domProp2].slice(0,-2) * 1;
+  node2prop2 = node2.node.style[domProp2].slice(0,-2) * 1;
+
+  _theGridAlignLines[prop].style[widthprop] = 1;
+  _theGridAlignLines[prop].style[domProp] = Math.min( node1prop , node2prop ) + 'px'
+
+  let tx = Math.min( node1prop2 , node2prop2) - delta;
+  log('tx=');
+  log(tx);
+
+  _theGridAlignLines[prop].style[domProp2] = tx + 'px';
+  log(_theGridAlignLines[prop].style[domProp2])
+  _theGridAlignLines[prop].style[heightprop] = (Math.max( node1prop2 , node2prop2) - tx + 2 * delta ) +'px'
 
 }
 
 function hideGridLine(prop){
   // console
-  if(_theGridAlignLines[prop] != null) {
+  log(prop);
+  if(prop == null){
+    Object.keys(_theGridAlignLines).forEach( hideGridLine );
+    return 0;
+  }
+  if(_theGridAlignLines[prop] !== null) {
     log(_theGridAlignLines[prop]);
-    _theGridAlignLines[prop].remove();
-    _theGridAlignLines[prop] = null;
+    _theGridAlignLines[prop].style.display = 'none';
+    // node_container.removeChild(_theGridAlignLines[prop]);
+    // _theGridAlignLines[prop] = null;
   }
 }
 
@@ -503,7 +527,7 @@ container.onmousemove = function (e) {
 
             gridAlignLine(_isMouseDragging, idNode([...allPropsMap.keys()][minJ]), prop);
           } else {
-            hideGridLine();
+            hideGridLine(prop);
           }
         }
         // move the node under the cursor
