@@ -331,7 +331,6 @@ window.addEventListener('mouseup', function (e) {
   // }
 
   hideGridLine();
-  
   __isResizing = false;
   _isMouseDown = false;
 });
@@ -499,43 +498,47 @@ container.onmousemove = function (e) {
         x: width,
         y: height
       }
+      let updatePosNodes = [_isMouseDragging];
+
       if (_isMouseDragging.node.classList.contains('selected')) {
         // move all selected
-        _selected_DOM.forEach(function (dom) {
-          const node = _DOMId2node.get(dom.id);
-          node.x = node.startPos.x + deltaMove.x;
-          node.y = node.startPos.y + deltaMove.y;
-          calcBox(node);
-          updateNode(node);
-        });
-      }else {
-        for(let prop of ['x','y']){
-          _isMouseDragging[prop] = _isMouseDragging.startPos[prop] + deltaMove[prop];
+        updatePosNodes = _selected_DOM.map(domNode);
+      }
 
-           allPropsMap = allVisibleNodesProps(prop, [_isMouseDragging]);
+      for(let prop of ['x','y']){
+        _isMouseDragging[prop] = _isMouseDragging.startPos[prop] + deltaMove[prop];
 
-           allPropsAbs = [...allPropsMap.values()].map( v => Math.abs( v - _isMouseDragging[prop] ));
-           minAbs = Math.min(...allPropsAbs)
-           minJ = allPropsAbs.indexOf(minAbs);
+          allPropsMap = allVisibleNodesProps(prop, [_isMouseDragging]);
 
-           minDvh = minAbs*S / sizeScreen[prop];
+          allPropsAbs = [...allPropsMap.values()].map( v => Math.abs( v - _isMouseDragging[prop] ));
+          minAbs = Math.min(...allPropsAbs)
+          minJ = allPropsAbs.indexOf(minAbs);
 
-          if(minDvh < 0.01){
-            //
-            log('seems like node '+[...allPropsMap.keys()][minJ]+' is OK, huh?');
-            _isMouseDragging[prop] = [...allPropsMap.values()][minJ];
+          minDvh = minAbs*S / sizeScreen[prop];
 
-            gridAlignLine(_isMouseDragging, idNode([...allPropsMap.keys()][minJ]), prop);
-          } else {
-            hideGridLine(prop);
-          }
+        if(minDvh < 0.01){
+          //
+          log('seems like node '+[...allPropsMap.keys()][minJ]+' is OK, huh?');
+          // _isMouseDragging[prop] = [...allPropsMap.values()][minJ];
+          deltaMove[prop] = [...allPropsMap.values()][minJ] - _isMouseDragging.startPos[prop];
+
+          gridAlignLine(_isMouseDragging, idNode([...allPropsMap.keys()][minJ]), prop);
+        } else {
+          hideGridLine(prop);
         }
+      }
+      updatePosNodes.forEach(function (node) {
+        node.x = node.startPos.x + deltaMove.x;
+        node.y = node.startPos.y + deltaMove.y;
+        calcBox(node);
+        updateNode(node);
+      });      
         // move the node under the cursor
         // _isMouseDragging.x = _isMouseDragging.startPos.x + deltaMove.x;
         // _isMouseDragging.y = _isMouseDragging.startPos.y + deltaMove.y;
-        calcBox(_isMouseDragging);
-        updateNode(_isMouseDragging);
-      }
+        // calcBox(_isMouseDragging);
+        // updateNode(_isMouseDragging);
+      // }
     } else if (__isResizing) {
       // pass
     } else if (_isDragSelecting) {
