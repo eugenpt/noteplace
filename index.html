@@ -54,9 +54,23 @@
           </div>
         </li>
         <li class="mb-1">
-          <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#orders-collapse" aria-expanded="false">
-            History
-          </button>
+          <div id="np-history-header">
+            <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#orders-collapse" aria-expanded="false">
+              History
+            </button>
+            <button class="btn" id="btnHistoryStatus">
+              <i class="bi-calendar2"></i>
+            </button>
+            <button id="btnUndo" class="btn" title="Undo">
+              <i class="bi-arrow-90deg-left"></i>
+            </button>
+            <button id="btnRedo" class="btn" title="Redo">
+              <i class="bi-arrow-90deg-right"></i>
+            </button>
+            <button class="btn" id="btnHistoryClear" title="Clear history">
+              <i class="bi-calendar2-x"></i>
+            </button>
+          </div>
           <div class="collapse" id="orders-collapse">
             <div id="historyContainer" class="container">
               
@@ -67,7 +81,7 @@
           </div>
         </li>
         <li class="border-top my-3"></li>
-        <li class="mb-1">
+        <!-- <li class="mb-1">
           <button class="btn btn-toggle align-items-center rounded collapsed" data-bs-toggle="collapse" data-bs-target="#account-collapse" aria-expanded="false">
             Account
           </button>
@@ -79,7 +93,7 @@
               <li><a href="#" class="link-dark rounded">Sign out</a></li>
             </ul>
           </div>
-        </li>
+        </li> -->
         <li class="mb-1 mt-auto">
           <a href="https://github.com/eugenpt/noteplace" class="list-group-item list-group-item-action bg-light pb-4"><i class="bi-github"></i>&nbspNoteplace on GitHub</a>
         </li>
@@ -91,8 +105,6 @@
     <nav id="navbar" class="navbar navbar-light bg-light container-fluid justify-content-start">
       <a id="menu-toggle" class="btn btn-outline-secondary"><i class="bi-list-ul"></i></a>
       <button id="btnSaveFast" class="btn btn-outline-secondary">💾</button>
-      <button id="btnUndo" class="btn btn-outline-primary" title="Undo"><i class="bi-arrow-90deg-left"></i></button>
-      <button id="btnRedo" class="btn btn-outline-primary" title="Redo"><i class="bi-arrow-90deg-right"></i></button>
       <div class="d-flex" style="display: none!important;">
         <input type="number" id="number" value=100>
         <button id="btnAddLots" class="btn btn-outline-success">ADD!</button>
@@ -236,6 +248,7 @@
   </script>
 
   <script src="nodes_default.js"></script>
+  <script src="nodes.js"></script>
   <script src="places.js"></script>
   <script src="history.js"></script>
   <script src="main.js"></script>

@@ -13,10 +13,6 @@ let S = 1;
 let BODY = document.getElementsByTagName('body')[0];
 let M = 0;
 
-let _NODES = [];
-let _DOMId2node = new Map();
-let _NODEId2node = new Map();
-
 const zoomMax = 1e14;
 const zoomMin = 1e-15;
 
@@ -240,7 +236,7 @@ container.onmousedown = function (e) {
       // console.log(e);
       // e.preventDefault();
 
-      if (contentEditTextarea) {
+      if (_contentEditTextarea) {
         stopEditing();
       }
     }
@@ -499,7 +495,7 @@ window.addEventListener('keydown', (e) => {
   console.log('keydown');
   console.log(e);
   if (e.key === 'Delete') {
-    if (contentEditTextarea) {
+    if (_contentEditTextarea) {
       // pass
     }else {
       if (_selected_DOM.length > 0) {
@@ -512,7 +508,7 @@ window.addEventListener('keydown', (e) => {
       }
     }
   } else if (e.key === 'Enter') {
-    if (contentEditTextarea) {
+    if (_contentEditTextarea) {
       return 0;
     } else {
       if (_selected_DOM.length > 0) {
@@ -540,7 +536,7 @@ window.addEventListener('keydown', (e) => {
   } else if (e.key === 'v') {
     if (e.ctrlKey) {
       // Ctrl-V !
-      if (contentEditTextarea) {
+      if (_contentEditTextarea) {
         // pass
       } else {
         // moved to window paste
@@ -550,12 +546,16 @@ window.addEventListener('keydown', (e) => {
     _('#search-toggle').click();
     e.preventDefault();
   } else if ((e.code == "KeyZ") && ( (e.ctrlKey) || (e.metaKey) )) {
-    if (e.shiftKey){
-      // Shift - Meta - Z = Re-do on Macs
-      _('#btnRedo').click();
+    if (_contentEditTextarea){
+      // pass
     }else{
-      // Ctrl/Meta - Z
-      _('#btnUndo').click();
+      if (e.shiftKey){
+        // Shift - Meta - Z = Re-do on Macs
+        _('#btnRedo').click();
+      }else{
+        // Ctrl/Meta - Z
+        _('#btnUndo').click();
+      }
     }
   } else if ((e.code == "KeyY") && ( (e.ctrlKey) || (e.metaKey) )) {
     // Ctrl-Y was Re-do, right?
@@ -719,23 +719,10 @@ function selectNode (n) {
   return 0;
 }
 
-let _DOMId2nodej = new Map();
-function gen_DOMId2nodej () {
-  _DOMId2node = new Map();
-  _DOMId2nodej = new Map();
-  _NODEId2node = new Map();
-
-  for (let j = 0; j < _NODES.length; j++) {
-    _DOMId2node.set(_NODES[j].node.id, _NODES[j]);
-    _DOMId2nodej.set(_NODES[j].node.id, j);
-    _NODEId2node.set(_NODES[j].id, _NODES[j].id);
-  }
-}
-
 function deleteNode (d) {
   if ('click' in d) {
     // DOM
-    deleteNode(_DOMId2node.get(d.id));
+    deleteNode(domNode(d));
   }else {
     // _NODES
     // ixs (TODO:optimize further)
@@ -752,10 +739,10 @@ function deleteNode (d) {
 }
 
 function stopEditing () {
-  let tdom = contentEditTextarea.parentElement.parentElement;
-  contentEditTextarea.remove();
+  let tdom = _contentEditTextarea.parentElement.parentElement;
+  _contentEditTextarea.remove();
   const A = { type: 'D', node_ids: [ domNode(tdom).id ] };
-  if (contentEditTextarea.value === '') {
+  if (_contentEditTextarea.value === '') {
     //deleteNode(tdom);    
     contentEditNode = null;
   }else {
@@ -766,7 +753,7 @@ function stopEditing () {
     newNode(tdom);
   }
   applyAction(A);
-  contentEditTextarea = null;
+  _contentEditTextarea = null;
 }
 
 function save (node = null, save_ids = true) {
@@ -822,7 +809,7 @@ function save (node = null, save_ids = true) {
     stripPlace(_PLACES)
   );
 
-  localStorage['noteplace.history'] = JSON.stringify( _HISTORY);
+  localStorage['noteplace.history'] = JSON.stringify( _HISTORY );
   localStorage['noteplace.history_current'] = _HISTORY_CURRENT_ID;
 
   const tsize = localStorageSize() / (1024 * 1024);
@@ -841,7 +828,7 @@ function save (node = null, save_ids = true) {
 
 let contentEditNode = null;
 let contentEditMouseDown = false;
-let contentEditTextarea = null;
+let _contentEditTextarea = null;
 
 function textareaAutoResize (e) {
   let target = this;
@@ -888,7 +875,7 @@ function textareaBtnDown (e) {
 
     // neither preventDefault nor stopPropagation
     //    stoped newline from appearing
-    setTimeout(function () { contentEditTextarea.value = ''; contentEditTextarea.focus(); }, 10);
+    setTimeout(function () { _contentEditTextarea.value = ''; _contentEditTextarea.focus(); }, 10);
   // },10);
   }
 
@@ -928,32 +915,32 @@ function onNodeDblClick (e) {
 
   const node = domNode(contentEditNode);
 
-  contentEditTextarea = document.createElement('textarea');
-  contentEditTextarea.id = 'contentEditTextarea';
-  contentEditTextarea.value = node.text;
+  _contentEditTextarea = document.createElement('textarea');
+  _contentEditTextarea.id = '_contentEditTextarea';
+  _contentEditTextarea.value = node.text;
 
   node.startText = node.text;
 
   contentEditNode = contentEditNode.getElementsByClassName('np-n-c')[0];
 
-  // contentEditTextarea.style.fontSize = contentEditNode.dataset['fontSize']*S+'px';
-  // contentEditTextarea.style.fontFamily = 'Open Sans';
-  contentEditTextarea.dataset.initS = S;
+  // _contentEditTextarea.style.fontSize = contentEditNode.dataset['fontSize']*S+'px';
+  // _contentEditTextarea.style.fontFamily = 'Open Sans';
+  _contentEditTextarea.dataset.initS = S;
   console.log(contentEditNode.getBoundingClientRect());
-  contentEditTextarea.dataset.initWidth = Math.max(width / 3, contentEditNode.getBoundingClientRect().width + 20);
-  contentEditTextarea.dataset.initHeight = contentEditNode.getBoundingClientRect().height;
-  contentEditTextarea.style.width = contentEditTextarea.dataset.initWidth + 'px';
-  // contentEditTextarea.style.height = contentEditTextarea.dataset['initHeight'] +'px';
-  contentEditTextarea.style.height = 'auto';
+  _contentEditTextarea.dataset.initWidth = Math.max(width / 3, contentEditNode.getBoundingClientRect().width + 20);
+  _contentEditTextarea.dataset.initHeight = contentEditNode.getBoundingClientRect().height;
+  _contentEditTextarea.style.width = _contentEditTextarea.dataset.initWidth + 'px';
+  // _contentEditTextarea.style.height = _contentEditTextarea.dataset['initHeight'] +'px';
+  _contentEditTextarea.style.height = 'auto';
 
-  contentEditTextarea.onkeydown = textareaBtnDown;
-  contentEditTextarea.onkeyup = textareaAutoResize;
-  contentEditTextarea.oninput = function (e) {
-    console.log('contentEditTextarea input');
+  _contentEditTextarea.onkeydown = textareaBtnDown;
+  _contentEditTextarea.onkeyup = textareaAutoResize;
+  _contentEditTextarea.oninput = function (e) {
+    console.log('_contentEditTextarea input');
     domNode(this.parentElement.parentElement).text = this.value;
   };
 
-  contentEditTextarea.onmousedown = (e) => {
+  _contentEditTextarea.onmousedown = (e) => {
     if (e.button === 1) {
       // drag on middle button => just pass the event
     } else {
@@ -962,23 +949,15 @@ function onNodeDblClick (e) {
   };
 
   contentEditNode.innerHTML = '';
-  contentEditNode.appendChild(contentEditTextarea);
+  contentEditNode.appendChild(_contentEditTextarea);
 
-  // textareaAutoResize(contentEditTextarea);
-  contentEditTextarea.select();
+  // textareaAutoResize(_contentEditTextarea);
+  _contentEditTextarea.select();
 
   // selectNode(contentEditNode);
 }
 
 __nodeMouseDown = null;
-
-function idNode (id) {
-  return _NODEId2node.get(id);
-}
-
-function domNode (dom) {
-  return _DOMId2node.get(typeof (dom) === 'string' ? dom : dom.id);
-}
 
 function onNodeMouseDown (e) {
   console.log('onNodeMouseBtn');
@@ -1442,15 +1421,15 @@ function redraw () {
 
   // _NODES.forEach(redrawNode);
 
-  if (contentEditTextarea) {
+  if (_contentEditTextarea) {
     console.log('redraw : contextEditTextarea');
     console.log('initWidth:');
-    console.log(contentEditTextarea.dataset.initWidth);
-    console.log('initS: ' + contentEditTextarea.dataset.initS);
-    console.log('contentEditTextarea.style.width = ' + contentEditTextarea.style.width);
-    contentEditTextarea.style.width = 1 * contentEditTextarea.dataset.initWidth * S / (1 * contentEditTextarea.dataset.initS) + 'px';
-    console.log('contentEditTextarea.style.width = ' + contentEditTextarea.style.width);
-    contentEditTextarea.style.height = contentEditTextarea.dataset.initHeight * S / contentEditTextarea.dataset.initS + 'px';
+    console.log(_contentEditTextarea.dataset.initWidth);
+    console.log('initS: ' + _contentEditTextarea.dataset.initS);
+    console.log('_contentEditTextarea.style.width = ' + _contentEditTextarea.style.width);
+    _contentEditTextarea.style.width = 1 * _contentEditTextarea.dataset.initWidth * S / (1 * _contentEditTextarea.dataset.initS) + 'px';
+    console.log('_contentEditTextarea.style.width = ' + _contentEditTextarea.style.width);
+    _contentEditTextarea.style.height = _contentEditTextarea.dataset.initHeight * S / _contentEditTextarea.dataset.initS + 'px';
   }
 
   if (_selected_DOM.length > 0) {
@@ -1637,7 +1616,7 @@ _('#save').addEventListener('click', function () {
 }, false);
 
 // save everything to a single object
-function saveToG (add_history = false) {
+function saveToG (add_history = true) {
   const G = {
     T: T,
     S: S,
@@ -1691,6 +1670,20 @@ function loadFromG (G) {
   G.nodes.map(stripNode).forEach(newNode);
 
   redraw();
+
+  if ( 'history' in G ) {
+    _HISTORY = G.history;
+    if ( 'history_current_id' in G ){
+      _HISTORY_CURRENT_ID = G.history_current_id;
+    } else {
+      _HISTORY_CURRENT_ID = lastHistoryID();
+    }
+    genHistIDMap();
+    fillHistoryList();
+  } else {
+    clearAllHistory();
+  }
+
   console.log('Loading complete, now ' + _NODES.length + ' nodes');
 }
 
@@ -1796,7 +1789,7 @@ window.addEventListener('paste', function (e) {
   console.log(e);
   // items = e.clipboardData.items;
   // console.log(items);
-  if (contentEditTextarea) {
+  if (_contentEditTextarea) {
     // pass
   } else {
     // hmm, pasting something from the outside?
@@ -1902,7 +1895,7 @@ window.addEventListener('paste', function (e) {
 window.addEventListener('cut', function (e) {
   console.log('window cut');
   console.log(e);
-  if (contentEditTextarea) {
+  if (_contentEditTextarea) {
     // pass
   } else {
     e.stopPropagation();
@@ -1920,7 +1913,7 @@ window.addEventListener('cut', function (e) {
 window.addEventListener('copy', function (e) {
   console.log('window copy');
   console.log(e);
-  if (contentEditTextarea) {
+  if (_contentEditTextarea) {
     // pass
   } else {
     if (('on' in copySelection) && (copySelection.on)) {

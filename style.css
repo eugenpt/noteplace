@@ -516,6 +516,9 @@ input[type=color]::-moz-color-swatch {
 
 
 /* ----------- */
+#np-history-header button{
+  padding: 0.4rem;
+}
 
 #historyContainer{
   max-height: 60vh;

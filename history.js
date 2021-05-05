@@ -28,6 +28,7 @@
 
 const btnUndo = _('#btnUndo');
 const btnRedo = _('#btnRedo');
+const btnHistoryStatus = _('#btnHistoryStatus');
 const historyContainer = _('#historyContainer');
 
 let _HISTORY = null;
@@ -277,6 +278,13 @@ function goForwardInHistory () {
   log('_HISTORY_CURRENT_ID=' + _HISTORY_CURRENT_ID);
 }
 
+function clearAllHistory() {
+  _HISTORY = [];
+  _HISTORY_CURRENT_ID = null;
+  genHistIDMap();
+  fillHistoryList();
+}
+
 //  :::::::: ::::::::::: :::     ::::::::: ::::::::::: :::    ::: :::::::::
 // :+:    :+:    :+:   :+: :+:   :+:    :+:    :+:     :+:    :+: :+:    :+:
 // +:+           +:+  +:+   +:+  +:+    +:+    +:+     +:+    +:+ +:+    +:+
@@ -345,17 +353,20 @@ function fillHistoryList () {
     let actionStr = '';
 
     if (h.type === 'A') {
-      actionStr = 'Added';
+      actionStr = '<i class="bi-file-earmark-plus"></i>';//'Added';
     }else if(h.type === 'D'){
-      actionStr = 'Deleted';
+      actionStr = '<i class="bi-file-earmark-x"></i>';//'Deleted';
     }else if(h.type === 'M'){
-      actionStr = 'Moved';
+      actionStr = '<i class="bi-arrows-move"></i>';//'Moved';
     }else if(h.type === 'E'){
-      actionStr = 'Edited';
+      actionStr = '<i class="bi-pencil"></i>';//'Edited';
     }
 
+    let nodeStr = (h.node_ids.length > 1)
+      ? ( h.node_ids.length + ' node' + (h.node_ids.length>1?'s':'') )
+      : ( idNode(h.node_ids[0]).text.split('\n')[0] );
 
-    let allstr = actionStr + ' ' + h.node_ids.length + ' node' + (h.node_ids.length>1?'s':'') + ' ' + datestr;
+    let allstr = datestr + ' ' + actionStr + ' ' + nodeStr;
 
     const row = _ce('div'
       ,'className','row btn btn-outline-' + ( h.id == _HISTORY_CURRENT_ID ? 'primary' : 'secondary')
@@ -388,6 +399,47 @@ function fillHistoryList () {
 
     historyContainer.appendChild(row);
   }
+
+  let html = '<i class="bi-calendar2"></i>';
+  let title = 'No history';
+  if(_HISTORY.length > 0) {
+    let sameDay = false;
+    if( (new Date(_HISTORY[0].timestamp)).toLocaleDateString
+        == (new Date()).toLocaleDateString ) {
+      // same day
+      sameDay = true;
+      html = '<i class="bi-calendar2-event"></i>';
+    } else if ( ( now() - _HISTORY[0].timestamp ) < 24 * 3600 * 7 * 1000 ) {
+      // same week
+      html = '<i class="bi-calendar2-week"></i>';
+    } else {
+      html = '<i class="bi-calendar2-minus"></i>';
+    }
+    const firstDate = (new Date(_HISTORY[0].timestamp));
+    const lastHistDate = new Date(_HISTORY[_HISTORY.length - 1].timestamp);
+
+    title = _HISTORY.length + ' event'
+      + ( (_HISTORY.length > 1) ? 's' : '')
+      + ', ' + ( sameDay 
+                  ? firstDate.toLocaleDateString() + ', from ' + firstDate.toLocaleTimeString()
+                  : 'from ' + firstDate.toLocaleString()
+              )
+      + ' to ' + ( sameDay ? lastHistDate.toLocaleTimeString() : lastHistDate.toLocaleString() )
+  }
+  
+  btnHistoryStatus.innerHTML = html;
+  btnHistoryStatus.title = title;
 }
+
+_('#btnHistoryClear').onclick = function () {
+  showModalYesNo(
+    'Really?',
+    'Are you sure you want to delete all <b>History</b>?',
+    function () {
+      clearAllHistory();
+    }
+  )
+}
+
 
 fillHistoryList();
