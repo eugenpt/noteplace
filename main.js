@@ -666,55 +666,41 @@ function selectOneDOM (dom) {
 }
 
 function selectNode (n) {
-  console.log('select : [' + (n ? n.id:'null') + ']');
-  if (n) {
-    if (_selected_DOM.length > 0) {
-      if (!Array.isArray(n)) {
-        n = [n];
-      }
-      // see how many are new ones
-      if (n.every((dom) => dom.classList.contains('selected'))) {
-        // if all are already selected - deselect them!
-        n.forEach(deselectOneDOM);
-        n.forEach((dom) => {
-          _selected_DOM.splice(_selected_DOM.indexOf(dom));
-        });
-      }else {
-        // if only some are already selected - add all new ones
-        for (let dom of n) {
-          if (dom.classList.contains('selected')) {
-            continue;
-          }else {
-            selectOneDOM(dom);
-            _selected_DOM.push(dom);
-          }
+  console.log('select')
+  if ( n == null) {
+    console.log('[null]')
+    _selected_DOM.forEach(deselectOneDOM);
+    _selected_DOM = [];
+    return 0;
+  }  
+  if (!Array.isArray(n)) {
+    log(`[${n.id}]`);
+    n = [n];
+  } else {
+    log( n.map( dom => dom.id) );
+  }
+  if (_selected_DOM.length > 0) {
+    // see how many are new ones
+    if (n.every((dom) => dom.classList.contains('selected'))) {
+      // if all are already selected - deselect them!
+      n.forEach(deselectOneDOM);
+      n.forEach((dom) => {
+        _selected_DOM.splice(_selected_DOM.indexOf(dom));
+      });
+    }else {
+      // if only some are already selected - add all new ones
+      for (let dom of n) {
+        if (dom.classList.contains('selected')) {
+          continue;
+        }else {
+          selectOneDOM(dom);
+          _selected_DOM.push(dom);
         }
       }
-    }else {
-      if (!Array.isArray(n)) {
-        n = [n];
-      }
-      _selected_DOM = n.slice();
-      _selected_DOM.forEach(selectOneDOM);
     }
   }else {
-    if (_selected_DOM.length > 0) {
-      _selected_DOM.forEach(deselectOneDOM);
-      _selected_DOM = [];
-    }
-  }
-
-  if (_selected_DOM.length == 1) {
-    _('#text').disabled = false;
-    _('#fontSize').disabled = false;
-    _('#text').value = domNode(_selected_DOM[0]).text;
-    _('#fontSize').value = domNode(_selected_DOM[0]).fontSize;
-    _('#fontSize').step = _('#fontSize').value * 0.25;
-  } else {
-    _('#text').disabled = true;
-    _('#fontSize').disabled = true;
-    _('#text').value = '';
-    _('#fontSize').value = '';
+    _selected_DOM = n.slice();
+    _selected_DOM.forEach(selectOneDOM);
   }
   return 0;
 }
@@ -930,8 +916,8 @@ function onNodeDblClick (e) {
   _contentEditTextarea.dataset.initWidth = Math.max(width / 3, contentEditNode.getBoundingClientRect().width + 20);
   _contentEditTextarea.dataset.initHeight = contentEditNode.getBoundingClientRect().height;
   _contentEditTextarea.style.width = _contentEditTextarea.dataset.initWidth + 'px';
-  // _contentEditTextarea.style.height = _contentEditTextarea.dataset['initHeight'] +'px';
-  _contentEditTextarea.style.height = 'auto';
+  _contentEditTextarea.style.height = _contentEditTextarea.dataset['initHeight'] +'px';
+  // _contentEditTextarea.style.height = 'auto';
 
   _contentEditTextarea.onkeydown = textareaBtnDown;
   _contentEditTextarea.onkeyup = textareaAutoResize;
@@ -1860,9 +1846,9 @@ window.addEventListener('paste', function (e) {
               // selectNode(newNode(nnode));
             });
 
-            applyAction(A);
+            const h = applyAction(A);
 
-            selectNode(A.nodes.map( n => idNode(n.id).node ));
+            selectNode(h.node_ids.map( id => idNode(id).node ));
 
           }else {
             // I know this is not perfect (HAHAHAHAHA!!...)

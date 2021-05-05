@@ -368,9 +368,13 @@ function fillHistoryList () {
 
     let allstr = datestr + ' ' + actionStr + ' ' + nodeStr;
 
+    const nodePreview = _ce('div'
+      ,'className', 'np-h-r-c'
+      ,'innerHTML', allstr
+    )
+
     const row = _ce('div'
       ,'className','row btn btn-outline-' + ( h.id == _HISTORY_CURRENT_ID ? 'primary' : 'secondary')
-      ,'innerHTML',allstr
       ,'onmouseenter', function (e) {
         const _h_id = this.dataset['histodyID'];
         previewState(getHistory(_h_id).state);
@@ -395,6 +399,7 @@ function fillHistoryList () {
     );
     row.dataset['histodyID'] = h.id;
 
+    row.appendChild(nodePreview);
     // log(allstr);
 
     historyContainer.appendChild(row);
