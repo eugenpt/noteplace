@@ -539,3 +539,12 @@ input[type=color]::-moz-color-swatch {
   max-height: 3rem;
   overflow: hidden;
 }
+
+
+/* ----------------------- */
+
+.grid-align-line{
+  position: absolute;
+  z-index: 900;
+  border: 1px solid lightgreen;
+}

@@ -412,23 +412,103 @@ function isNodeInClientBox (node, cbxMin, cbxMax, cbyMin, cbyMax) {
   );
 }
 
+function allVisibleNodesProps(prop='x', except=[]){
+  const except_ids = except.map( n => n.id )
+  const R = new Map();
+  for( let j=0 ; j<_NODES.length ; j++){
+    const node = _NODES[j];
+    if ((!node.vis)||(node.deleted))
+      continue;
+    if (except_ids.indexOf(node.id) >= 0)
+      continue;
+    
+    R.set(node.id, node[prop]);
+  }
+  return R;
+}
+
+_theGridAlignLines = { x: null, y:null };
+
+function gridAlignLine(node1, node2, prop){
+  if(_theGridAlignLines[prop] == null){
+    _theGridAlignLines[prop] = _ce('div'
+      ,'className','grid-align-line'
+    );
+    node_container.appendChild(_theGridAlignLines[prop]);
+  }
+  const prop2 = prop == 'x' ? 'y' : 'x';
+
+  if(prop == 'x'){
+    _theGridAlignLines[prop].style.width = 1;
+    _theGridAlignLines[prop].style.left = Math.min( node1.node.style.left , node2.node.style.left)
+
+    _theGridAlignLines[prop].style.top = Math.min( node1.node.style.top , node2.node.style.top) - 10
+    _theGridAlignLines[prop].style.height = Math.max( node1.node.style.top , node2.node.style.top) - _theGridAlignLines[prop].style.top + 20
+  }else{
+    _theGridAlignLines[prop].style.height = 1;
+    _theGridAlignLines[prop].style.top = Math.min( node1.node.style.top , node2.node.style.top)
+
+    _theGridAlignLines[prop].style.left = Math.min( node1.node.style.left , node2.node.style.left) - 10
+    _theGridAlignLines[prop].style.width = Math.max( node1.node.style.left , node2.node.style.left) - _theGridAlignLines[prop].style.left + 20
+  }
+
+}
+
+function hideGridLine(prop){
+  // console
+  if(_theGridAlignLines[prop] != null) {
+    log(_theGridAlignLines[prop]);
+    _theGridAlignLines[prop].remove();
+    _theGridAlignLines[prop] = null;
+  }
+}
+
 container.onmousemove = function (e) {
   _mousePos = [e.clientX, e.clientY];
   if (_isMouseDown) {
     if (_isMouseDragging) {
+      const deltaMove = { 
+        x: (e.clientX - _mouseDragStart[0]) / S  ,
+        y: (e.clientY - _mouseDragStart[1]) / S
+      }
+      const sizeScreen = {
+        x: width,
+        y: height
+      }
       if (_isMouseDragging.node.classList.contains('selected')) {
         // move all selected
         _selected_DOM.forEach(function (dom) {
           const node = _DOMId2node.get(dom.id);
-          node.x = node.startPos.x + (e.clientX - _mouseDragStart[0]) / S;
-          node.y = node.startPos.y + (e.clientY - _mouseDragStart[1]) / S;
+          node.x = node.startPos.x + deltaMove.x;
+          node.y = node.startPos.y + deltaMove.y;
           calcBox(node);
           updateNode(node);
         });
       }else {
+        for(let prop of ['x','y']){
+          _isMouseDragging[prop] = _isMouseDragging.startPos[prop] + deltaMove[prop];
+
+           allPropsMap = allVisibleNodesProps(prop, [_isMouseDragging]);
+
+           allPropsAbs = [...allPropsMap.values()].map( v => Math.abs( v - _isMouseDragging[prop] ));
+           minAbs = Math.min(...allPropsAbs)
+           minJ = allPropsAbs.indexOf(minAbs);
+
+           minDvh = minAbs*S / sizeScreen[prop];
+
+          if(minDvh < 0.01){
+            //
+            log('seems like node '+[...allPropsMap.keys()][minJ]+' is OK, huh?');
+            _isMouseDragging[prop] = [...allPropsMap.values()][minJ];
+
+            gridAlignLine(_isMouseDragging, idNode([...allPropsMap.keys()][minJ]), prop);
+          } else {
+            hideGridLine();
+          }
+        }
         // move the node under the cursor
-        _isMouseDragging.x = _isMouseDragging.startPos.x + (e.clientX - _mouseDragStart[0]) / S;
-        _isMouseDragging.y = _isMouseDragging.startPos.y + (e.clientY - _mouseDragStart[1]) / S;
+        // _isMouseDragging.x = _isMouseDragging.startPos.x + deltaMove.x;
+        // _isMouseDragging.y = _isMouseDragging.startPos.y + deltaMove.y;
         calcBox(_isMouseDragging);
         updateNode(_isMouseDragging);
       }
@@ -1629,6 +1709,7 @@ function stripNode (d) {
     fontSize: 1 * d.fontSize,
     text: d.text,
     rotate: 'rotate' in d ? 1 * d.rotate:0,
+    deleted: 'deleted' in d ? d.deleted : false,
     style: 'style' in d ? delete_defaults(d.style, default_node_style) : undefined
   };
 }
