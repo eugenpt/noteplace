@@ -564,3 +564,16 @@ input[type=color]::-moz-color-swatch {
   z-index: 900;
   border: 1px dashed lightgreen;
 }
+
+
+
+#freehandField {
+  opacity: 0.1;
+  background-color: #000;
+}
+
+#freehandField svg{
+  opacity: 1;
+  width: 100%;
+  height: 100%;
+}

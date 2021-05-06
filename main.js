@@ -53,6 +53,84 @@ window.addEventListener('resize', function (event) {
 let mousePos = [0, 0];
 let _mousePos = [0, 0];
 
+let __freehandStatus = null; // null / 'ready' / 'drawing'
+let __freehandPoints = [];
+let __freehandPath = null;
+let __freehandSVG = null;
+
+function stopFreehand(){
+  __freehandStatus = null;
+  _('#btnFreehand').classList.remove('btn-primary');
+  _('#btnFreehand').classList.add('btn-outline-primary');
+  _('#freehandField').style.display = 'none';
+}
+
+function readyFreeHand(){
+  __freehandStatus = 'ready';
+  __freehandPath = [];
+  _('#btnFreehand').classList.add('btn-primary');
+  _('#btnFreehand').classList.remove('btn-outline-primary');
+  _('#freehandField').style.display = '';
+
+  __freehandSVG = _ce('svg'
+  );
+
+  __freehandPath = _ce('path');
+  __freehandPath.setAttribute('stoke', 'blue');
+  __freehandPath.setAttribute('stokeWidth', '2');
+  __freehandSVG.appendChild(__freehandPath);
+  __freehandSVG.setAttribute("width", width);
+  __freehandSVG.setAttribute("height", height);
+  _('#freehandField').appendChild(__freehandSVG);
+}
+
+_('#btnFreehand').onclick = function() {
+  if (__freehandStatus) {
+    stopFreehand();
+  } else {
+    readyFreeHand();
+  }
+}
+
+_('#freehandField').onmouseup = function (e) {
+  stopFreehand();
+  e.stopPropagation();
+}
+
+_('#freehandField').onmousedown = function (e) {
+  __freehandStatus = 'drawing';
+  e.stopPropagation();
+}
+
+_('#freehandField').onmousemove = function (e) {
+  if( __freehandStatus == 'drawing'){
+    __freehandPoints.push([e.clientX, e.clientY]);
+    drawFreehand();
+  }
+  e.stopPropagation();
+}
+
+function drawFreehand() {
+  if (__freehandPoints.length > 3) {
+    const ps = __freehandPoints;
+    let dstr = '';
+
+    dstr = 'M ' + ps[0][0] + ' ' + ps[0][1];
+    
+    for ( let j = 0 ; j < ps.length - 2 ; j ++ ) {
+      // const p0 = ps[j];
+      // const p1 = ps[j+1];
+      // const p2 = ps[j+2];
+
+      dstr += ' C ' + ps.slice(j,j+3).map( p => p[0]+' '+p[1]).join(', ')
+    }
+
+    __freehandPath.setAttribute('d',dstr);
+
+  }
+}
+
+
 container.ondblclick = function (e) {
   console.log('dblclick on empty field at [' + e.clientX + ',' + e.clientY + ']');
   console.log('T=' + T + ' S=' + S);
