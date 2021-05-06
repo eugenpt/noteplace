@@ -55,6 +55,16 @@ function newHistID (id = null) {
   return newID(id || 'h', getHistory);
 }
 
+function getAllHistoryProps(h){
+  const R = [];
+  h.oldValues.forEach( vs => {
+    Object.keys(vs).forEach( prop => {
+      R.push(prop);
+    })
+  })
+  return R;
+}
+
 function processAction (A) {
   // h = resulting history event
   const h = { type: A.type };
@@ -92,6 +102,7 @@ function processAction (A) {
       h.oldValues = [];
       // h.newValues = [];
       let anythingChanged = false;
+      const allProps = [];
       for (let j = 0; j < h.node_ids.length; j++) {
         const tnode = idNode(h.node_ids[j]);
         const oldValues = {};
@@ -109,6 +120,8 @@ function processAction (A) {
           if(oldValues[prop] != newValues[prop]){
             anythingChanged = true;
           }
+
+          allProps.push(prop);
         });
         h.oldValues.push(oldValues);
         // h.newValues.push(newValues);
@@ -116,6 +129,23 @@ function processAction (A) {
       if(!anythingChanged){
         return null;
       }
+
+      if (_HISTORY.length > 0) {
+        const lh = _HISTORY[_HISTORY.length - 1];
+
+        if (lh.type == h.type) {
+          if (h.node_ids.length == lh.node_ids.length) {
+            if(equalSetsOfItems(h.node_ids, lh.node_ids)) {
+              if (equalSetsOfItems(allProps, getAllHistoryProps(lh))) {
+                // same action basically,
+                //  +old Values stay the same, new ones - already applied.
+                return null;
+              }
+            }
+          }
+        }
+      }
+
       if (h.type === 'E'){
         // really redraw nodes
         h.node_ids.forEach( id => { newNode(idNode(id).node); } );

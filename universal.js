@@ -41,6 +41,28 @@ function date2str(d) {
           + int2strwz(d.getSeconds(), 2)
 }
 
+function arrayMapJ(a){
+  const R = new Map();
+  for (let j = 0 ; j < a.length ; j ++) {
+    R.set(a[j], j);
+  }
+  return R;
+}
+
+function equalSetsOfItems(a1, a2){
+  const s1 = [...arrayMapJ(a1).keys()].sort();
+  const s2 = [...arrayMapJ(a2).keys()].sort();
+  if( s1.length != s2.length ) {
+    return false;
+  }
+  for( let j = 0 ; j < s1.length ; j++) {
+    if (s1[j] != s2[j]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // if property is dot-separated (style.color for example)
 //  take obj.style.color instead of just obj['style.color']
 function dotProp(obj, prop){
