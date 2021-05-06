@@ -911,6 +911,16 @@ function save (node = null, save_ids = true) {
   }
 }
 
+function isMenuShown(){
+  return !_('#wrapper').classList.contains('toggled');
+}
+
+function showMenu(){
+  if(!isMenuShown()){
+    _('#menu-toggle').click();
+  }
+}
+
 // ::::    :::  ::::::::  :::::::::  ::::::::::      :::::::::: :::    ::: ::::    :::  ::::::::   ::::::::
 // :+:+:   :+: :+:    :+: :+:    :+: :+:             :+:        :+:    :+: :+:+:   :+: :+:    :+: :+:    :+:
 // :+:+:+  +:+ +:+    +:+ +:+    +:+ +:+             +:+        +:+    +:+ :+:+:+  +:+ +:+        +:+
@@ -2253,3 +2263,7 @@ _('#btnSaveFast').onclick = function (e) {
   }
   e.stopPropagation();
 };
+
+
+
+fillHistoryList();

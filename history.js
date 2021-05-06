@@ -466,6 +466,3 @@ _('#btnHistoryClear').onclick = function () {
     }
   )
 }
-
-
-fillHistoryList();

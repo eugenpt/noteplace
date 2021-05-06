@@ -127,6 +127,32 @@ function fillPlaces () {
   rec_fillPlace(_PLACES.items, _('#places-root'));
 }
 
+function showPlacePath(path) {
+  if (!Array.isArray(path)) {
+    path = JSON.parse(path);
+  }
+
+  showMenu();
+
+  const btns2check = [_('#btnPlaces')];
+  for(var j=0 ; j<=path.length-1 ; j++){
+    const btn = pathPlace(path.slice(0, j)).dom.hBtn;
+    if(btn.classList.contains('collapsed')){
+      btn.click();
+    }
+  }
+}
+
+function previewPlacePath(path){
+  const place = pathPlace(path);
+  const dom = 'items' in place ? place.dom.hBtn : place.dom.a;
+  dom.classList.add('np-search-place-preview');
+}
+
+function depreviewPlace(){
+  $('.np-search-place-preview').removeClass('np-search-place-preview');
+}
+
 function rec_fillPlace (places, root_dom, _P_path = '') {
   console.log('rec_fillPlace path=' + _P_path);
   for (let place of places) {

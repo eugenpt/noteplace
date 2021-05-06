@@ -421,10 +421,26 @@ body > * {
   text-overflow: ellipsis;
   white-space:nowrap;
   overflow: hidden;
+  max-height: 3rem;
 }
+
+.np-sr-row .bi-folder-symlink{
+  font-size: 180%;
+  border-radius: 0.4rem;
+  padding: 0.2rem;
+}
+
+/* .np-sr-row .bi-folder-symlink:hover{
+  background-color: black;
+  color:white;
+} */
 
 .node.np-search-preview{
   border: 2px dotted orange;
+}
+
+.np-search-place-preview{
+  background-color: orange;
 }
 
 /*----------------*/
