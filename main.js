@@ -2238,5 +2238,8 @@ function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default) {
 
 _('#btnSaveFast').onclick = function (e) {
   save();
+  if ( __GDRIVE_savedID != null ){
+    gdriveRewrite(__GDRIVE_saveFilename, __GDRIVE_savedID);
+  }
   e.stopPropagation();
 };

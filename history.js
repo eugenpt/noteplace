@@ -405,6 +405,27 @@ function fillHistoryList () {
     historyContainer.appendChild(row);
   }
 
+  // start row
+
+  const row = _ce('div'
+    ,'className','row btn btn-outline-' + ( null == _HISTORY_CURRENT_ID ? 'primary' : 'secondary')
+    ,'innerHTML','T = 0 , all STARTED'
+    ,'onmouseenter', function (e) {
+      _HISTORY.length > 0 ?  previewState(_HISTORY[0].state) : '';
+    }
+    ,'onmouseleave', function (e) {
+      _HISTORY.length > 0 ?  exitPreview() : '';
+    }
+    ,'onclick', function (e) {
+      while(_HISTORY_CURRENT_ID !== null){
+        btnUndo.click();
+      }
+    }
+  );
+  historyContainer.appendChild(row);
+
+  // history status : how many changes, when it all started, ..
+
   let html = '<i class="bi-calendar2"></i>';
   let title = 'No history';
   if(_HISTORY.length > 0) {

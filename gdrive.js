@@ -144,15 +144,16 @@ function uploadFile (name, content) {
   form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
   form.append('file', file);
 
-  fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+  return fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
     method: 'POST',
     headers: new Headers({ Authorization: 'Bearer ' + accessToken }),
     body: form
-  }).then((res) => {
-    return res.json();
-  }).then(function (val) {
-    console.log(val);
-  });
+  })
+  // .then((res) => {
+  //   return res.json();
+  // }).then(function (val) {
+  //   console.log(val);
+  // });
 }
 
 // :::        ::::::::   ::::::::      :::     :::
@@ -164,6 +165,7 @@ function uploadFile (name, content) {
 // ########## ########   ########  ###     ### ##########
 
 let __GDRIVE_saveFilename = null;
+let __GDRIVE_savedID = null;
 let __files = new Map();
 
 function fillFilesList (rowClickFun) {
@@ -247,6 +249,7 @@ _('#load_gdrive').addEventListener('click', function () {
         $('#exampleModal').modal('hide');
         // save Filename for faster save
         __GDRIVE_saveFilename = row.dataset.name;
+        __GDRIVE_savedID = row.dataset.fileId;
       }else {
         alert('error.. ' + e);
         console.log(e);
@@ -259,13 +262,38 @@ function saveToGDrive (filename) {
   uploadFile(
     filename,
     JSON.stringify(saveToG())
-  );
+  ).then((response) => {
+    return response.json();
+  })
+  .then((data) => {
+    console.log('Saved to GDRIVE');
+    // TODO: simple mobile-like notification
+    console.log(data);
+    __GDRIVE_savedID = data.id;
+  });
   // save filename
   __GDRIVE_saveFilename = filename;
 }
 
-_('#save_gdrive').addEventListener('click', function () {
-  console.log('GDrive save..');
+function gdriveRewrite(filename, id){
+  // I was not able to rewrite file content
+  //  , so I will just delete and save
+  gapi.client.drive.files.delete({
+    fileId: id
+  }).then(function (a) {
+    if (a.status == 204) {
+      // Now save
+      saveToGDrive(filename);
+      $('#exampleModal').modal('hide');
+    } else {
+      console.log(a);
+      alert('Error while rewriting...');
+    }
+  });
+}
+
+_('#saveas_gdrive').addEventListener('click', function () {
+  console.log('GDrive save as..');
 
   _('#modal-input').value = __GDRIVE_saveFilename || defaultFilename();
   _('#modal-input').oninput = function () {};
@@ -283,20 +311,18 @@ _('#save_gdrive').addEventListener('click', function () {
       'Overwrite?',
       'Really Overwrite <b>' + _row.dataset.name + '</b>?',
       function () {
-        // I was not able to rewrite file content
-        //  , so I will just delete and save
-        gapi.client.drive.files.delete({
-          fileId: _row.dataset.fileId
-        }).then(function (a) {
-          if (a.status == 204) {
-            // Now save
-            saveToGDrive(_row.dataset.name);
-            $('#exampleModal').modal('hide');
-          } else {
-            console.log(a);
-            alert('Error while rewriting...');
-          }
-        });
+        gdriveRewrite(_row.dataset.name, _row.dataset.fileId);
       });
   });
+}, false);
+
+_('#save_gdrive').addEventListener('click', function () {
+  console.log('GDrive save..');
+
+  if ( __GDRIVE_savedID !== null ) {
+    gdriveRewrite(__GDRIVE_saveFilename, __GDRIVE_savedID);
+  } else {
+    _('#saveas_gdrive').click();
+  }
+
 }, false);
