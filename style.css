@@ -1,12 +1,12 @@
 html, body {
-    margin:0px;
-    height:100%;
-    width:100%;
-    position:fixed;
-    overflow: hidden; /* Hide scrollbars */ 
-    font-family: 'Open Sans';
-    touch-action: none;
-  }
+  /* margin:0px;
+  height:100%;
+  width:100%;
+  position:fixed; */
+  overflow: hidden; /* Hide scrollbars */ 
+  font-family: 'Open Sans';
+  touch-action: none;
+}
 
   #wrapper {
     /* overflow-x: hidden; */

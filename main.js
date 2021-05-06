@@ -2119,6 +2119,16 @@ $('#menu-toggle').click(function (e) {
   $('#wrapper').toggleClass('toggled');
 });
 
+var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+var toastList = toastElList.map(function (toastEl) {
+  return new bootstrap.Toast(toastEl)
+})
+
+function toast(content) {
+  _('.toast-body')[0].innerHTML = content;
+  toastList[0].show();
+}
+
 window.onpopstate = function (e) {
   e.stopPropagation();
   e.preventDefault();

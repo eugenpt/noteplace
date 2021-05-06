@@ -285,6 +285,7 @@ function gdriveRewrite(filename, id){
       // Now save
       saveToGDrive(filename);
       $('#exampleModal').modal('hide');
+      toast(filename + ' successfully written to GDrive');
     } else {
       console.log(a);
       alert('Error while rewriting...');
