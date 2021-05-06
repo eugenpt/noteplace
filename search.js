@@ -90,6 +90,8 @@ function findSearchResults (n = null) {
 }
 
 function onSearchInput (q) {
+  depreviewNode();
+  
   console.log('onSearchInput q=' + q);
   _SEARCH.q = q;
   _SEARCH.last_dom_nodej = -1; // to restart

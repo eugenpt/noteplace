@@ -2185,9 +2185,7 @@ function nodeState (node) {
 }
 
 function depreviewNode () {
-  if (previewNode.node) {
-    previewNode.node.node.classList.remove('np-search-preview');
-  }
+  $('.np-search-preview').removeClass('np-search-preview');
 }
 
 function previewNode (node) {
