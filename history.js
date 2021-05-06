@@ -152,7 +152,7 @@ function processAction (A) {
       }
       break;
     default:
-      throw Error('revertHistory error: What type of history is [' + h.type + '] ??!');
+      throw Error('processAction error: What type of history is [' + h.type + '] ??!');
       break;
   }
   return h;
@@ -212,7 +212,7 @@ function revertHistory (id) {
    */
 
   // get history object
-  const h = id.hasOwnProperty('id') ? id:_HISTORY_Map.get(id);
+  let h = id.hasOwnProperty('id') ? id:_HISTORY_Map.get(id);
 
   switch (h.type) {
     case 'A':
@@ -231,12 +231,6 @@ function revertHistory (id) {
       break;
     case 'M':
       // move
-      for (let j = 0; j < h.node_ids.length; j++) {
-        const tnode = idNode(h.node_ids[j]);
-        tnode.x = h.oldValues[j].x;
-        tnode.y = h.oldValues[j].y;
-      }
-      break;
     case 'E':
       // edit
       log('reverting EDIT');
