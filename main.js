@@ -1724,6 +1724,8 @@ function updateNode (d) {
   n.style.top = (d.y - T[1]) * S + 'px';
   n.style.fontSize = (d.fontSize) * S + 'px';
 
+  n.style.zIndex = Math.floor(500 - 10 * Math.log((d.fontSize) * S ));
+
   let k = (S * d.fontSize / 20);
 
   if(d.is_svg){
