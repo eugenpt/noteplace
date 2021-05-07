@@ -1445,7 +1445,7 @@ function newNode (node, redraw = true) {
     
   }
   if(node.is_img){
-    tcontent.classList.add('img');
+    tdom.classList.add('img');
 
     node.img_dom = tcontent.getElementsByTagName('img')[0];
     node.img_dom.onload = function(e) {
@@ -1456,6 +1456,11 @@ function newNode (node, redraw = true) {
       console.log('node '+node.id+' img ready!!');
       node.size = [node.img_dom.width, node.img_dom.height];
     });
+  }
+
+  if (node.is_svg) {
+    // tcontent.classList.add('svg');
+    tdom.classList.add('svg');
   }
 
   // Tooltip
@@ -1724,7 +1729,7 @@ function updateNode (d) {
   n.style.top = (d.y - T[1]) * S + 'px';
   n.style.fontSize = (d.fontSize) * S + 'px';
 
-  n.style.zIndex = Math.floor(500 - 10 * Math.log((d.fontSize) * S ));
+  n.style.zIndex = Math.floor(200 - 10 * Math.log((d.fontSize) * S ));
 
   let k = (S * d.fontSize / 20);
 

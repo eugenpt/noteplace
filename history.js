@@ -379,13 +379,13 @@ function fillHistoryList () {
     let actionStr = '';
 
     if (h.type === 'A') {
-      actionStr = '<i class="bi-file-earmark-plus"></i>';//'Added';
+      actionStr = '<i class="bi-file-earmark-plus" title="Added"></i>';
     }else if(h.type === 'D'){
-      actionStr = '<i class="bi-file-earmark-x"></i>';//'Deleted';
+      actionStr = '<i class="bi-file-earmark-x" title="Deleted"></i>';
     }else if(h.type === 'M'){
-      actionStr = '<i class="bi-arrows-move"></i>';//'Moved';
+      actionStr = '<i class="bi-arrows-move" title="Moved"></i>';
     }else if(h.type === 'E'){
-      actionStr = '<i class="bi-pencil"></i>';//'Edited';
+      actionStr = '<i class="bi-pencil" title="Edited"></i>';
     }
 
     let nodeStr = (h.node_ids.length > 1)

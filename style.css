@@ -14,7 +14,7 @@ html, body {
  }
 
 #navbar{
-  z-index: 1;
+  z-index: 900;
 }
 
 #sidebar-wrapper {
@@ -24,7 +24,7 @@ html, body {
   -moz-transition: margin .25s ease-out;
   -o-transition: margin .25s ease-out;
   transition: margin .25s ease-out;
-  z-index: 1;
+  z-index: 500;
 }
 
 #sidebar-wrapper .sidebar-heading {
@@ -112,6 +112,9 @@ html, body {
     /* transition-duration: initial; */
   }
 
+  .node svg path {
+    cursor: pointer;
+  }
    .node .np-n-c.img{
     transition-duration: inherit;
   } 
@@ -590,6 +593,8 @@ input[type=color]::-moz-color-swatch {
   position: absolute;
   left: 0px;
   top:0px;
+
+  cursor: crosshair;
 }
 
 #freehandField svg{
@@ -606,4 +611,16 @@ input[type=color]::-moz-color-swatch {
 
 #freehandField svg path{
   fill:none;
+}
+
+.svg{
+  pointer-events: none;
+}
+
+.svg .np-n-tooltip{
+  pointer-events:all;
+}
+
+.svg path{
+  pointer-events: visiblePainted;
 }
