@@ -20,9 +20,7 @@ function newID(start, checkfun, addfun=null, maxTries=1000) {
   return id;
 }
 
-function log (a) {
-  console.log(a);
-}
+const log = console.log;
 
 function now () {
   return new Date().getTime();

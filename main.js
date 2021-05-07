@@ -102,22 +102,29 @@ _('#btnFreehand').onclick = function() {
 }
 
 _('#freehandField').onmouseup = function (e) {
+  console.log(e);
   stopFreehand();
   e.stopPropagation();
 
+  const minPs = [0,0];
   const maxPs = [0,0];
+  const d = 10;
   [0,1].forEach(j => {
-    const min = Math.min.apply(Math, __freehandPoints.map(a => a[j]));
-    __freehandPoints.forEach(a => { a[j] -= min;});
+    minPs[j] = -d + Math.min.apply(Math, __freehandPoints.map(a => a[j]));
+    __freehandPoints.forEach(a => { a[j] -= minPs[j];});
     maxPs[j] = Math.max.apply(Math, __freehandPoints.map(a => a[j]));
   });
   drawFreehand();
-  __freehandSVG.setAttribute('width', maxPs[0])
-  __freehandSVG.setAttribute('height', maxPs[1])
+  __freehandSVG.setAttribute('width', maxPs[0] + d )
+  __freehandSVG.setAttribute('height', maxPs[1] + d )
 
-  newNode({
-    text: __freehandSVG.outerHTML
-  })
+  setTimeout(function(){applyAction({
+    type: 'A',
+    nodes: [{
+      text: __freehandSVG.outerHTML,
+      mousePos: [e.clientX - minPs[0] , e.clientY - minPs[1]]
+    }]
+  })}, 50);
 }
 
 _('#freehandField').onmousedown = function (e) {
@@ -272,8 +279,11 @@ window.addEventListener('gesturechange', e => {
 
 function setTransitionDur (s) {
   $('.node').css('transition-duration', s + 's');
+  // $('.np-n-c').css('transition-duration', s + 's');
   $('#container img').css('transition-duration', s + 's');
-  $('#container .ui-wrapper').css('transition-duration', s + 's');
+  $('#container svg').css('transition-duration', s + 's');
+  // $('#container path').css('transition-duration', s + 's');
+  // $('#container .ui-wrapper').css('transition-duration', s + 's');
 }
 
 let __previewOldState = { T: [0, 0], S: 1 };
@@ -322,6 +332,7 @@ let __nodeMouseDown = false;
 let _dragSelected = [];
 
 let __isResizing = false;
+let __isRotating = null;
 
 container.onmousedown = function (e) {
   console.log('container.onmousedown');
@@ -415,6 +426,10 @@ window.addEventListener('mouseup', function (e) {
       _selected_DOM.push(node.node);
     });
     _dragSelected = [];
+  } else if (__isRotating) {
+
+    rotateStop({}, {angle: { current: 0 } } );
+
   } else if (_isMouseDown) {
     // stop moving
     T[0] = _mouseDownT[0] - 1 * node_container.dataset.x / S;
@@ -567,18 +582,17 @@ function gridAlignLine(node1, node2, prop){
   _theGridAlignLines[prop].style[domProp] = Math.min( node1prop , node2prop ) + 'px'
 
   let tx = Math.min( node1prop2 , node2prop2) - delta;
-  log('tx=');
-  log(tx);
+  // log('tx=');
+  // log(tx);
 
   _theGridAlignLines[prop].style[domProp2] = tx + 'px';
-  log(_theGridAlignLines[prop].style[domProp2])
+  // log(_theGridAlignLines[prop].style[domProp2])
   _theGridAlignLines[prop].style[heightprop] = (Math.max( node1prop2 , node2prop2) - tx + 2 * delta ) +'px'
 
 }
 
 function hideGridLine(prop){
-  // console
-  log(prop);
+  // log(prop);
   if(prop == null){
     Object.keys(_theGridAlignLines).forEach( hideGridLine );
     return 0;
@@ -623,7 +637,7 @@ container.onmousemove = function (e) {
 
         if(minDvh < 0.01){
           //
-          log('seems like node '+[...allPropsMap.keys()][minJ]+' is OK, huh?');
+          // log('seems like node '+[...allPropsMap.keys()][minJ]+' is OK, huh?');
           // _isMouseDragging[prop] = [...allPropsMap.values()][minJ];
           deltaMove[prop] = [...allPropsMap.values()][minJ] - _isMouseDragging.startPos[prop];
 
@@ -783,9 +797,11 @@ function deselectOneDOM (dom) {
   try {
     $(dom).rotatable('destroy');
 
-    [].forEach.call(dom.getElementsByTagName('img'), (e) => {
-      $(e).resizable('destroy').css('width', 'auto');
-    });
+    $(domNode(dom).content_dom).resizable('destroy');
+
+    // [].forEach.call(dom.getElementsByTagName('img'), (e) => {
+    //   $(e).resizable('destroy').css('width', 'auto');
+    // });
   } catch (e) {
     console.log('some error in rotatable and resizable destroy');
     console.log(e);
@@ -793,6 +809,26 @@ function deselectOneDOM (dom) {
 }
 
 let _oldValues = null;
+
+function rotateStop(e, ui) {
+  console.log('rotate stop');
+  console.log(e);
+  console.log(ui);
+
+  
+
+  // ui.angle.start = ui.angle.current;
+  applyAction({
+    type: 'E',
+    node_ids: [ __isRotating.id ],
+    oldValues: _oldValues,
+    newValues: [{ rotate: ui.angle.current }]
+  });
+
+  __isRotating.node.style.transform = 'rotate('+ui.angle.current+'rad)';
+  save(__isRotating);
+  __isRotating = null;
+}
 
 function selectOneDOM (dom) {
   dom.classList.add('selected');
@@ -804,31 +840,79 @@ function selectOneDOM (dom) {
   // https://stackoverflow.com/a/62379454/2624911
   // https://jsfiddle.net/Twisty/cdLn56f1/
   $(function () {
+    console.log('init rotation, rotate node_'+node.id+'='+node.rotate)
     const params = {
-      start: function (e) {
+      radians: node.rotate,
+      angle: node.rotate,
+      start: function (e, ui) {
         console.log('rotate start');
         console.log(e);
+        log(ui);
         _oldValues = [{ rotate: node.rotate }];
+        __isRotating = node;
       },
-      stop: function (e, ui) {
-        console.log('rotate stop');
+      stop: rotateStop 
+    };
+    log(params);
+
+    $(node.node).rotatable(params);
+
+
+    $(dom)
+      .find('.ui-rotatable-handle')
+      .on('mouseup', function (e) {
+        log('rotatable mouse up');
+        log(e);
+        // e.stopPropagation();
+      })
+      .on('click', function(e) {
+        log('rotatable click');
+        e.stopPropagation();
+      })
+      .on('dblclick', function (e) {
+        log('rotatable dblclick');
+        __isRotating = node;
+        rotateStop({}, { angle: { current: 0 }});
+        e.stopPropagation();
+      })
+
+
+    let resizeParams = {
+      // autoHide: true,
+      start: function (e, ui) {
+        console.log('resize start');
         console.log(e);
         console.log(ui);
-
-        // ui.angle.start = ui.angle.current;
+        _oldValues = [{ fontSize: node.fontSize }];
+      },
+      stop: function (e, ui) {
+        console.log('resize stop');
+        console.log(e);
+        console.log(ui);
         applyAction({
-          type: 'E',
-          node_ids: [ node.id ],
+          type:'E',
+          node_ids:[ node.id ],
           oldValues: _oldValues,
-          newValues: [{ rotate: ui.angle.current }]
-        });
-
-        save(e.target);
+          newValues: [{ fontSize: node.fontSize }]
+        })
+      },
+      resize: function (e, ui) {
+        node.fontSize = ui.size.height * _oldValues[0].fontSize / ui.originalSize.height;
+        updateNode(node);
       }
     };
 
-    $(dom).rotatable(params);
+    if (node.is_img){
+      resizeParams.aspectRatio = true;
+      // node.size = [node.img_dom.]
+    }else if(node.is_svg) {
+      resizeParams.aspectRatio = true;
+    } else {
 
+    }
+    $(node.content_dom).resizable(resizeParams);
+
+    if(0)
     [].forEach.call(dom.getElementsByTagName('img'), (img) => {
       console.log('making that img resizable:');
       console.log(img);
@@ -1301,8 +1385,25 @@ function newNode (node, redraw = true) {
 
   const tcontent = _ce('div'
     , 'className', 'np-n-c'
-    , 'innerHTML', getHTML(node.text)
+    , 'innerHTML', getHTML(node)
   );
+
+  if(node.is_svg){
+    node.svg_dom = tcontent.getElementsByTagName('svg')[0];
+  }
+  if(node.is_img){
+    tcontent.classList.add('img');
+
+    node.img_dom = tcontent.getElementsByTagName('img')[0];
+    node.img_dom.onload = function(e) {
+      console.log('img load');
+      console.log(this);
+    }
+    node.img_dom.addEventListener('load',function () {
+      console.log('node '+node.id+' img ready!!');
+      node.size = [node.img_dom.width, node.img_dom.height];
+    });
+  }
 
   // Tooltip
 
@@ -1451,28 +1552,66 @@ function updateNode (d) {
     d = _DOMId2node.get(n.id);
   }
 
-  if (d.rotate !== 0) {
-    n.style.transform = 'rotate(' + d.rotate + 'rad)';
-  }
-
+  
   n.style.left = (d.x - T[0]) * S + 'px';
   n.style.top = (d.y - T[1]) * S + 'px';
   n.style.fontSize = (d.fontSize) * S + 'px';
 
-  [].forEach.call(n.getElementsByTagName('img'), (e) => {
-    e.style.width = 'auto';
-    e.style.height = 5 * (d.fontSize) * S + 'px';
-    // e.setAttribute('draggable', false);
-    // e.onmousedown = (e)=>{e.preventDefault();};
-  });
-  setTimeout(function () {
-    [].forEach.call(n.getElementsByClassName('ui-wrapper'), (wrapper) => {
-      const img = wrapper.getElementsByTagName('img')[0];
-      wrapper.style.height = img.style.height;
-      wrapper.style.width = img.getBoundingClientRect.width;
-      img.dataset.origS = S;
-    })
-  }, 10);
+  let k = (S * d.fontSize / 20);
+
+  if(d.is_svg){
+    d.content_dom.style.position = 'relative';
+    d.content_dom.style.left = '0px';
+    d.content_dom.style.top = '0px';
+
+    
+    let ow = d.svg_dom.getAttribute('width')*1;
+    let oh = d.svg_dom.getAttribute('height')*1
+    d.content_dom.style.width = ow * k + 'px';
+    d.content_dom.style.height = oh * k + 'px';
+    d.node.style.height = oh * k + 'px';
+    d.node.style.width = ow * k + 'px';
+    // d.content_dom.style.transform = 'scale(' + k + ')';
+    d.svg_dom.style.transform = 'translate(-'+ow/2+'px,-'+oh/2+'px) scale(' + k + ')' +' translate('+ow/2+'px,'+oh/2+'px)';// + ' rotate('+d.rotate+'rad) ' ;
+  // }else{
+  }
+
+  if(d.is_img){
+    if(d.size){
+      const h = 5 * (d.fontSize) * S;
+      const w =  h * d.size[0] / d.size[1];
+      d.content_dom.style.width = w + 'px';
+      d.content_dom.style.height = h + 'px';
+      d.img_dom.style.width = w + 'px';
+      d.img_dom.style.height = h + 'px';//d.size[1] * k + 'px';
+    }
+  }else{
+    [].forEach.call(n.getElementsByTagName('img'), (e) => {
+      e.style.width = 'auto';
+      e.style.height = 5 * (d.fontSize) * S + 'px';
+      // e.setAttribute('draggable', false);
+      // e.onmousedown = (e)=>{e.preventDefault();};
+    });
+  }
+
+    if (d.rotate !== 0) {
+      if(n.classList.contains('selected')){
+
+
+      }else{
+        n.style.transform = 'rotate(' + d.rotate + 'rad)';
+      }
+    
+    }
+
+  // setTimeout(function () {
+  //   [].forEach.call(n.getElementsByClassName('ui-wrapper'), (wrapper) => {
+  //     const img = wrapper.getElementsByTagName('img')[0];
+  //     wrapper.style.height = img.style.height;
+  //     wrapper.style.width = img.getBoundingClientRect.width;
+  //     img.dataset.origS = S;
+  //   })
+  // }, 10);
   return 1;
   [].forEach.call(n.getElementsByClassName('ui-wrapper'), (wrapper) => {
     const img = wrapper.getElementsByTagName('img')[0];
@@ -1666,12 +1805,24 @@ function zoomToURL (s, smooth = true, noTemp = false) {
   );
 }
 
-function getHTML (text) {
-  return md.render(text)
-    .slice(0, -1) // md.render adds newline (?)
-    .replaceAll('\n', '<br />')
-    .replace(/href="(\?[^"]+)"/, /class="local" onclick="zoomToURL('$1',false)"/);
-  // .replaceAll(/(href="[^\?])/g,'onclick="(e)=>{console.log(e);e.stopPropagation();}" $1');
+function getHTML (node) {
+  if((node.text.slice(-4)=='svg>')
+  && (node.text.slice(0,4)=='<svg')) {
+    node.is_svg = true;
+    return node.text;
+  }else if ((node.text.slice(-1)=='>')
+  && (node.text.slice(0,4)=='<img')) {
+    node.is_img=true;
+    return node.text;
+  } else {
+    node.is_svg = false;
+    node.is_img = false;
+    return md.render(node.text)
+      .slice(0, -1) // md.render adds newline (?)
+      .replaceAll('\n', '<br />')
+      .replace(/href="(\?[^"]+)"/, /class="local" onclick="zoomToURL('$1',false)"/);
+    // .replaceAll(/(href="[^\?])/g,'onclick="(e)=>{console.log(e);e.stopPropagation();}" $1');
+  }
 }
 
 function isCurrentState () {

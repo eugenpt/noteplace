@@ -105,6 +105,21 @@ html, body {
     font-size: inherit;
   }
 
+  .node svg{
+    position: absolute;
+    left:0px;
+    top:0px;
+    /* transition-duration: initial; */
+  }
+
+   .node .np-n-c.img{
+    transition-duration: inherit;
+  } 
+/*  .node img{
+    transition-duration: inherit;
+
+  } */
+
   .node h1{
     font-size: 1.5em;
     font-weight: bold;
@@ -574,12 +589,13 @@ input[type=color]::-moz-color-swatch {
 
 #freehandField svg{
   opacity: 1;
-  position: relative;
+  position: absolute;
   left: 0px;
   top: 0px;
   width: 100%;
   height: 100%;
 }
+
 
 #freehandField svg path{
   fill:none;
