@@ -74,6 +74,7 @@ function readyFreeHand(){
 
   let svgns = 'http://www.w3.org/2000/svg';
   __freehandSVG = document.createElementNS(svgns,'svg');
+  __freehandSVG.id = 'freehandSVG'
   // __freehandSVG.style.position = 'absolute';
   // __freehandSVG.style.left = '0px';
   // __freehandSVG.style.top = '0px';
@@ -103,6 +104,7 @@ _('#btnFreehand').onclick = function() {
 
 _('#freehandField').onmouseup = function (e) {
   console.log(e);
+  // return 0
   stopFreehand();
   e.stopPropagation();
 
@@ -118,13 +120,17 @@ _('#freehandField').onmouseup = function (e) {
   __freehandSVG.setAttribute('width', maxPs[0] + d )
   __freehandSVG.setAttribute('height', maxPs[1] + d )
 
-  setTimeout(function(){applyAction({
+  // setTimeout(function(){
+  applyAction({
     type: 'A',
     nodes: [{
       text: __freehandSVG.outerHTML,
-      mousePos: [e.clientX - minPs[0] , e.clientY - minPs[1]]
+      mousePos: [ minPs[0] ,  minPs[1]]
     }]
-  })}, 50);
+  })
+  // }, 50);
+
+  __freehandSVG.parentElement.removeChild(__freehandSVG);
 }
 
 _('#freehandField').onmousedown = function (e) {
