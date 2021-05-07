@@ -127,7 +127,7 @@ _('#freehandField').onmouseup = function (e) {
     nodes: [{
       text: __freehandSVG.outerHTML,
       mousePos: [ minPs[0] ,  minPs[1]],
-      style: { color: '#0000ff', strokeWidth: 5},
+      style: { color: '#0000ff', strokeWidth: 5, fill:'none'},
     }]
   })
   // }, 50);
@@ -1403,6 +1403,8 @@ function newNode (node, redraw = true) {
 
     node.path_dom.setAttribute("stroke", node.style.color);
     node.path_dom.setAttribute("strokeWidth", node.style.strokeWidth);
+    node.path_dom.setAttribute("fill", node.style.fill);
+    
     
   }
   if(node.is_img){
@@ -1515,6 +1517,58 @@ function newNode (node, redraw = true) {
     );
     tt.appendChild(tplusbtnLW );
     tt.appendChild(tminusbtnLW );
+
+    // fill?
+    const tbutton = _ce('button'
+      ,'className', "np-n-t-btn"
+    );
+
+    const tlabel = _ce('label'
+      ,'innerHTML', node.style.fill=='none'?'<i class="bi-bucket"></i>':'<i class="bi-bucket-fill"></i>'
+      ,'ondblclick', function (e) {
+        applyAction({
+          type: 'E',
+          node_ids: [node.id],
+          oldValues: [{'style.fill': this.dataset['oldValue']}],
+          newValues: [{'style.fill': 'none'}]
+        });
+        e.stopPropagation();
+      }
+    );
+    tlabel.setAttribute('for','inputfill_'+node.id);
+    if(node.style.fill!=='none'){
+      tlabel.style.color = node.style.fill;
+    }
+
+
+    const tfillinput = _ce('input'
+      ,'type','color'
+      ,'value', node.style.fill=='none'?'#ffffff':node.style.fill
+      ,'id','inputfill_'+node.id
+      ,'style','width:0px;height:0px;'
+      // ,'hidden','hidden'
+      ,'oninput', function (e) {
+        tlabel.style.color = this.value;
+        node.style.fill = this.value;
+        node.path_dom.setAttribute('fill', this.value);
+        tlabel.innerHTML = '<i class="bi-bucket-fill"></i>';
+      }
+      ,'onchange', function (e) {
+        applyAction({
+          type: 'E',
+          node_ids: [node.id],
+          oldValues: [{'style.fill': this.dataset['oldValue']}],
+          newValues: [{'style.fill': this.value}],
+        });
+      }
+
+    )
+    tfillinput.dataset['oldValue'] = node.style.fill;
+    tbutton.appendChild(tlabel);
+    tbutton.appendChild(tfillinput);
+
+    // tt.appendChild(tfillinput);
+    tt.appendChild(tbutton);
   }
 
   tt.addEventListener('dblclick', function (e) {
