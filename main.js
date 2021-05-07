@@ -67,20 +67,29 @@ function stopFreehand(){
 
 function readyFreeHand(){
   __freehandStatus = 'ready';
-  __freehandPath = [];
+  __freehandPoints = [];
   _('#btnFreehand').classList.add('btn-primary');
   _('#btnFreehand').classList.remove('btn-outline-primary');
   _('#freehandField').style.display = '';
 
-  __freehandSVG = _ce('svg'
-  );
+  let svgns = 'http://www.w3.org/2000/svg';
+  __freehandSVG = document.createElementNS(svgns,'svg');
+  // __freehandSVG.style.position = 'absolute';
+  // __freehandSVG.style.left = '0px';
+  // __freehandSVG.style.top = '0px';
+  // __freehandSVG.style.zIndex = '999999';
+  // __freehandSVG.style.opacity = '1';
+  
+  
 
-  __freehandPath = _ce('path');
-  __freehandPath.setAttribute('stoke', 'blue');
-  __freehandPath.setAttribute('stokeWidth', '2');
+  __freehandPath = document.createElementNS(svgns, 'path');
+  __freehandPath.setAttribute( 'stroke', 'blue');
+  __freehandPath.setAttribute( 'fill', 'none');
+  __freehandPath.setAttribute( 'strokeWidth', '2');
   __freehandSVG.appendChild(__freehandPath);
-  __freehandSVG.setAttribute("width", width);
-  __freehandSVG.setAttribute("height", height);
+  // __freehandSVG.setAttribute("width", width);
+  // __freehandSVG.setAttribute("height", height);
+  // container.appendChild(__freehandSVG);
   _('#freehandField').appendChild(__freehandSVG);
 }
 
@@ -95,6 +104,20 @@ _('#btnFreehand').onclick = function() {
 _('#freehandField').onmouseup = function (e) {
   stopFreehand();
   e.stopPropagation();
+
+  const maxPs = [0,0];
+  [0,1].forEach(j => {
+    const min = Math.min.apply(Math, __freehandPoints.map(a => a[j]));
+    __freehandPoints.forEach(a => { a[j] -= min;});
+    maxPs[j] = Math.max.apply(Math, __freehandPoints.map(a => a[j]));
+  });
+  drawFreehand();
+  __freehandSVG.setAttribute('width', maxPs[0])
+  __freehandSVG.setAttribute('height', maxPs[1])
+
+  newNode({
+    text: __freehandSVG.outerHTML
+  })
 }
 
 _('#freehandField').onmousedown = function (e) {
@@ -117,15 +140,19 @@ function drawFreehand() {
 
     dstr = 'M ' + ps[0][0] + ' ' + ps[0][1];
     
-    for ( let j = 0 ; j < ps.length - 2 ; j ++ ) {
-      // const p0 = ps[j];
-      // const p1 = ps[j+1];
-      // const p2 = ps[j+2];
-
-      dstr += ' C ' + ps.slice(j,j+3).map( p => p[0]+' '+p[1]).join(', ')
+    for ( let j = 1 ; j < ps.length ; j++) {
+      dstr += " L"+ps[j][0] + ' ' + ps[j][1];
     }
 
-    __freehandPath.setAttribute('d',dstr);
+    // for ( let j = 0 ; j < ps.length - 2 ; j ++ ) {
+    //   // const p0 = ps[j];
+    //   // const p1 = ps[j+1];
+    //   // const p2 = ps[j+2];
+
+    //   dstr += ' C ' + ps.slice(j,j+3).map( p => p[0]+' '+p[1]).join(', ')
+    // }
+
+    __freehandPath.setAttributeNS(null, 'd', dstr);
 
   }
 }
@@ -1748,7 +1775,7 @@ function editFontSize (delta) {
         // node.fontSize *= k;
         // node.x = centerPos[0] + (node.x - centerPos[0]) * k;
         // node.y = centerPos[1] + (node.y - centerPos[1]) * k;
-        // updateNode(dom);
+        updateNode(dom);
 
         let wrapper = dom.getElementsByClassName('ui-wrapper');
         if (wrapper.length > 0) {

@@ -574,6 +574,13 @@ input[type=color]::-moz-color-swatch {
 
 #freehandField svg{
   opacity: 1;
+  position: relative;
+  left: 0px;
+  top: 0px;
   width: 100%;
   height: 100%;
+}
+
+#freehandField svg path{
+  fill:none;
 }
