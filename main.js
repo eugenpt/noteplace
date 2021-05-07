@@ -867,7 +867,11 @@ function selectOneDOM (dom) {
     };
     log(params);
 
-    $(node.node).rotatable(params);
+    if($(dom)
+    .find('.ui-rotatable-handle').length>0){
+
+    }else
+      $(node.node).rotatable(params);
 
 
     $(dom)
@@ -1682,6 +1686,12 @@ function newNode (node, redraw = true) {
 
   if (redraw) {
     redrawNode(node);
+  }
+
+  if(tdom.classList.contains('selected')){
+    // deselectOneDOM(tdom);
+    $(tdom).rotatable('destroy');
+    setTimeout(function(){selectOneDOM(tdom);},10);
   }
 
   return tdom;
