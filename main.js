@@ -123,9 +123,11 @@ _('#freehandField').onmouseup = function (e) {
   // setTimeout(function(){
   applyAction({
     type: 'A',
+    
     nodes: [{
       text: __freehandSVG.outerHTML,
-      mousePos: [ minPs[0] ,  minPs[1]]
+      mousePos: [ minPs[0] ,  minPs[1]],
+      style: { color: '#0000ff', strokeWidth: 5},
     }]
   })
   // }, 50);
@@ -1396,6 +1398,12 @@ function newNode (node, redraw = true) {
 
   if(node.is_svg){
     node.svg_dom = tcontent.getElementsByTagName('svg')[0];
+
+    node.path_dom = node.svg_dom.getElementsByTagName('path')[0];
+
+    node.path_dom.setAttribute("stroke", node.style.color);
+    node.path_dom.setAttribute("strokeWidth", node.style.strokeWidth);
+    
   }
   if(node.is_img){
     tcontent.classList.add('img');
@@ -1417,14 +1425,17 @@ function newNode (node, redraw = true) {
     , 'className', 'position-absolute start-0 np-n-tooltip'// translate-middle start-50
   );
 
-  if (node.text.slice(0, 2) != '![') {
-    // not entirely image-based node
+  if (node.is_img == false) {
+    // not entirely image-based node, add color select
     const tcolorselect = _ce('input'
       , 'type', 'color'
       , 'value', node.style.color
       , 'oninput', function (e) {
         node.style.color = this.value;
         node.content_dom.style.color = this.value;
+        if (node.is_svg) {
+          node.path_dom.setAttribute("stroke", this.value);
+        }
       }
       , 'onchange', function (e) {
         applyAction( { 
@@ -1437,7 +1448,9 @@ function newNode (node, redraw = true) {
     );
     tcolorselect.dataset['oldValue'] = node.style.color;
     tt.appendChild(tcolorselect);
-
+  
+  }
+  if((node.is_img == false) && (node.is_svg == false)){
     if (tcontent.innerHTML.indexOf('<br') >= 0) {
       // text align only valuable for multiline nodes
       ['left', 'center', 'right'].forEach((jta) => {
@@ -1474,15 +1487,35 @@ function newNode (node, redraw = true) {
   const tplusbtn = _ce('button'
     , 'className', 'np-n-t-btn plus-button'// btn btn-outline-primary'
     , 'onclick', function (e) { editFontSize(+1); e.stopPropagation(); }
+    , 'title', 'make BIGGER'
     , 'innerHTML', '<i class="bi bi-plus"></i>'
   );
   const tminusbtn = _ce('button'
     , 'className', 'np-n-t-btn minus-button'// 'btn btn-outline-primary'
     , 'onclick', function (e) { editFontSize(-1); e.stopPropagation(); }
+    , 'title', 'Make smaller'
     , 'innerHTML', '<i class="bi bi-dash"></i>'
   );
   tt.appendChild(tplusbtn);
   tt.appendChild(tminusbtn);
+
+  if (node.is_svg) {
+    // add line width !!
+    const tplusbtnLW = _ce('button'
+      , 'className', 'np-n-t-btn plus-button'// btn btn-outline-primary'
+      , 'onclick', function (e) { changeStrokeWidth(+1); e.stopPropagation(); }
+      , 'title', 'make <b>thicker</b>'
+      , 'innerHTML', '<div style="font-weight:900; transform:translate(-20%,0);">➖</span>'
+    );
+    const tminusbtnLW = _ce('button'
+      , 'className', 'np-n-t-btn minus-button'// 'btn btn-outline-primary'
+      , 'onclick', function (e) { changeStrokeWidth(-1); e.stopPropagation(); }
+      , 'title', 'make thinner'
+      , 'innerHTML', '<div style="font-weight:100;">—</span>'
+    );
+    tt.appendChild(tplusbtnLW );
+    tt.appendChild(tminusbtnLW );
+  }
 
   tt.addEventListener('dblclick', function (e) {
     e.stopPropagation();
@@ -1546,6 +1579,33 @@ function newNode (node, redraw = true) {
   }
 
   return tdom;
+}
+
+function changeStrokeWidth(delta=1){
+  const node_ids = [];
+  const newValues = [];
+
+  const k = Math.pow(1.25, delta);
+
+  _selected_DOM.forEach((dom) => {
+    const node = domNode(dom);
+    if (node.is_svg == false) {
+      return 0;
+    }
+
+    node_ids.push(node.id);
+    newValues.push( {
+      'style.strokeWidth': (node.style.strokeWidth || 1) * k 
+    });
+    // node.strokeWidth *= Math.pow(1.25, delta);
+    // node.strokeWidth = Math.max(1, node.strokeWidth);
+  })
+
+  applyAction( {
+    type: 'E',
+    node_ids: node_ids,
+    newValues: newValues
+  })
 }
 
 function updateNode (d) {
@@ -1815,10 +1875,12 @@ function getHTML (node) {
   if((node.text.slice(-4)=='svg>')
   && (node.text.slice(0,4)=='<svg')) {
     node.is_svg = true;
+    node.is_img = false;
     return node.text;
   }else if ((node.text.slice(-1)=='>')
   && (node.text.slice(0,4)=='<img')) {
     node.is_img=true;
+    node.is_svg = false;
     return node.text;
   } else {
     node.is_svg = false;

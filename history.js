@@ -126,6 +126,11 @@ function processAction (A) {
         h.oldValues.push(oldValues);
         // h.newValues.push(newValues);
       }
+      if (h.type === 'E'){
+        // really redraw nodes
+        h.node_ids.forEach( id => { newNode(idNode(id).node); } );
+      }
+
       if(!anythingChanged){
         return null;
       }
@@ -146,10 +151,7 @@ function processAction (A) {
         }
       }
 
-      if (h.type === 'E'){
-        // really redraw nodes
-        h.node_ids.forEach( id => { newNode(idNode(id).node); } );
-      }
+
       break;
     default:
       throw Error('processAction error: What type of history is [' + h.type + '] ??!');
