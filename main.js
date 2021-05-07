@@ -387,6 +387,8 @@ container.onmousedown = function (e) {
   }
 };
 
+let __pathMouseDown = false;
+
 window.addEventListener('mouseup', function (e) {
   console.log('window onmouseup');
   // console.log(e);
@@ -461,6 +463,8 @@ window.addEventListener('mouseup', function (e) {
   hideGridLine();
   __isResizing = false;
   _isMouseDown = false;
+  __pathMouseDown = false;
+
 });
 
 function tempSelect (node) {
@@ -1200,16 +1204,20 @@ function textareaBtnDown (e) {
 
 function onNodeDblClick (e) {
   if ('preventDefault' in e) {
-    e.preventDefault();
-    e.stopPropagation();
-
     contentEditNode = this;
   } else {
     contentEditNode = e;
   }
 
+  if((!domNode(contentEditNode).is_svg)||((domNode(contentEditNode).is_svg)&&(onNodeDblClick.path_ok))){
+
+  if ('preventDefault' in e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
   console.log('double-clicked on [' + contentEditNode.id + '] : ' + contentEditNode.innerText);
   console.log(contentEditNode);
+
 
   // console.log(contentEditNode);
 
@@ -1255,13 +1263,20 @@ function onNodeDblClick (e) {
   _contentEditTextarea.select();
 
   // selectNode(contentEditNode);
+
+}
+onNodeDblClick.path_ok = false;
 }
 
 __nodeMouseDown = null;
 
+
+
 function onNodeMouseDown (e) {
   console.log('onNodeMouseBtn');
   console.log(this.id);
+
+  if((!domNode(this).is_svg)||((domNode(this).is_svg)&&(onNodeMouseDown.path_ok))){
 
   __nodeMouseDown = domNode(this);
   // console.log(e);
@@ -1286,23 +1301,30 @@ function onNodeMouseDown (e) {
   } else {
     // pass
   }
-
+}
   if (e.ctrlKey) {
     e.preventDefault();
   }
+
+  onNodeMouseDown.path_ok=false;
 }
 
 function onNodeClick (e) {
   console.log('clicked on [' + this.id + '] : ' + this.innerText);
 
-  if (e.shiftKey) {
-    // multiselect!
-    // selectNode(this); //already handled via drag-select
-    // e.stopPropagation();
-  } else {
-    selectNode(null);
-    selectNode(this);
+  if((!domNode(this).is_svg)||((domNode(this).is_svg)&&(onNodeClick.path_ok))){
+
+    if (e.shiftKey) {
+      // multiselect!
+      // selectNode(this); //already handled via drag-select
+      // e.stopPropagation();
+    } else {
+      selectNode(null);
+      selectNode(this);
+    }
+
   }
+  onNodeClick.path_ok = false;
 }
 
 function newNodeID (id = null) {
@@ -1327,6 +1349,7 @@ function newNodeID (id = null) {
 // function addNodes(nodes){
 
 // }
+
 
 function newNode (node, redraw = true) {
   let tdom = node;
@@ -1405,6 +1428,20 @@ function newNode (node, redraw = true) {
     node.path_dom.setAttribute("strokeWidth", node.style.strokeWidth);
     node.path_dom.setAttribute("fill", node.style.fill);
     
+
+    node.svg_dom.onmousedown = function(e) {
+      //if(onNodeMouseDown.path_ok)
+    }
+    node.path_dom.onmousedown = function (e) {
+      onNodeMouseDown.path_ok = true;
+    }
+
+    node.path_dom.ondblclick = function (e) {
+      onNodeDblClick.path_ok = true;
+    }
+    node.path_dom.onclick = function (e) {
+      onNodeClick.path_ok = true;
+    }
     
   }
   if(node.is_img){
@@ -1571,6 +1608,16 @@ function newNode (node, redraw = true) {
     tt.appendChild(tbutton);
   }
 
+
+  tt.addEventListener('click', function(e) {
+    e.stopPropagation();
+  })
+  tt.addEventListener('mousedown', function(e) {
+    e.stopPropagation();
+  })
+  tt.addEventListener('mouseup', function(e) {
+    e.stopPropagation();
+  })
   tt.addEventListener('dblclick', function (e) {
     e.stopPropagation();
   });
