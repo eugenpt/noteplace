@@ -173,7 +173,7 @@ function drawFreehand() {
 }
 
 
-container.ondblclick = function (e) {
+node_container.ondblclick = function (e) {
   console.log('dblclick on empty field at [' + e.clientX + ',' + e.clientY + ']');
   console.log('T=' + T + ' S=' + S);
   applyAction({
@@ -342,7 +342,7 @@ let _dragSelected = [];
 let __isResizing = false;
 let __isRotating = null;
 
-container.onmousedown = function (e) {
+node_container.onmousedown = function (e) {
   console.log('container.onmousedown');
   console.log('T=' + T + ' S=' + S);
   // $('.node').css('transition-duration','0s');
@@ -351,8 +351,10 @@ container.onmousedown = function (e) {
     console.log('resizing..');
   } else {
     if (contentEditMouseDown) {
+      log('contentEditMouseDown')
       contentEditMouseDown = false;
     } else {
+      log('!contentEditMouseDown')
       _mouseDownPos = [e.clientX, e.clientY];
       _mouseDownT = [T[0], T[1]];
       _isMouseDown = true;
@@ -361,6 +363,7 @@ container.onmousedown = function (e) {
       // e.preventDefault();
 
       if (_contentEditTextarea) {
+        log('_contentEditTextarea')
         stopEditing();
       }
     }
@@ -376,8 +379,11 @@ container.onmousedown = function (e) {
     } else {
       if (__nodeMouseDown) {
         // pass
+        log('__nodeMouseDown');
       } else {
-        selectNode(null);
+        log('!__nodeMouseDown');
+        // throw Error('aaa');
+      setTimeout(function(){selectNode(null);},50);
       }
     }
 
@@ -808,14 +814,19 @@ function deselectOneDOM (dom) {
   dom.classList.remove('selected');
   try {
     $(dom).rotatable('destroy');
+  } catch(e) {
+    log('error in rotatable destroy..');
+    log(e);
+  }
 
+  try{
     $(domNode(dom).content_dom).resizable('destroy');
 
     // [].forEach.call(dom.getElementsByTagName('img'), (e) => {
     //   $(e).resizable('destroy').css('width', 'auto');
     // });
   } catch (e) {
-    console.log('some error in rotatable and resizable destroy');
+    console.log('some error in resizable destroy');
     console.log(e);
   }
 }
@@ -1690,7 +1701,7 @@ function newNode (node, redraw = true) {
 
   if(tdom.classList.contains('selected')){
     // deselectOneDOM(tdom);
-    $(tdom).rotatable('destroy');
+    try{$(tdom).rotatable('destroy');}catch(e){}
     setTimeout(function(){selectOneDOM(tdom);},10);
   }
 

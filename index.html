@@ -133,8 +133,6 @@
           <a class="dropdown-item" id="signout_button">Sign Out</a>
         </div>
       </div>
-      <button id="btnZoomIn" class="btn btn-outline-secondary">➕</button>
-      <button id="btnZoomOut" class="btn btn-outline-secondary">➖</button>
       <button id="btnPaletteToggle" class="btn btn-outline-primary" title="Icon palette" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePallette" aria-expanded="false" aria-controls="collapsePallette">
         <i class="bi-palette"></i>
       </button>
@@ -166,7 +164,7 @@
   <div id="container" class="container-fluid">
     <div id="freehandField" class="w-100 h-100" style="display: none;"></div>
     <div id="select-box"></div>
-    <div id="node_container">
+    <div id="node_container" class="w-100 h-100">
 
     </div>
     <div style="display: none;" class="navbar navbar-expand-sm border border-dark container-fluid position-absolute bottom-0">
@@ -180,7 +178,12 @@
     </div>
 
     <div id="searchSideBar" class="position-fixed end-0 h-100 bg-light toggled">
-      <button id="search-toggle" class="position-fixed t-0 sm-n5 mt-1" title="Search! (Ctrl/Cmd-F / F3)"><i class="bi-search"></i></button>
+      <button id="search-toggle" class="position-fixed sm-n5 mb-1" title="Search! (Ctrl/Cmd-F / F3)"><i class="bi-search"></i></button>
+      <div id="scale-box" class="position-fixed b-1 sm-n5 mb-1">
+        <button id="btnZoomIn" class="btn btn-outline-secondary">➕</button>
+        <button id="btnZoomOut" class="btn btn-outline-secondary">➖</button>
+        <!-- <i class="bi-search"></i> -->
+      </div>
       <div class="container row my-1">
         <input type="text" id="searchInput">
       </div>

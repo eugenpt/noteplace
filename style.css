@@ -628,3 +628,11 @@ input[type=color]::-moz-color-swatch {
 .svg path{
   pointer-events: visiblePainted;
 }
+
+
+/* -------- */
+#scale-box{
+  margin-left: -7vh;
+  width: 5vh;
+  bottom: 2vh;
+}
