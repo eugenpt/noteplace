@@ -698,6 +698,11 @@ container.onmousemove = function (e) {
       // redraw()
     }
   }
+
+  if(_previewNode){
+    _previewNode.style.left = e.clientX;
+    _previewNode.style.top = e.clientY;
+  }
 };
 
 // :::    ::: :::::::::: :::   ::: :::::::::   ::::::::  :::       ::: ::::    :::
@@ -1048,8 +1053,9 @@ function deleteNode (d) {
 }
 
 function stopEditing () {
+  log('stopEditing');
   let tdom = _contentEditTextarea.parentElement.parentElement;
-  _contentEditTextarea.remove();
+  _contentEditTextarea.parentElement.removeChild(_contentEditTextarea);
   const A = { type: 'D', node_ids: [ domNode(tdom).id ] };
   if (_contentEditTextarea.value === '') {
     //deleteNode(tdom);    
@@ -1059,7 +1065,7 @@ function stopEditing () {
     A.oldValues = [ { text: domNode(tdom).startText } ];
     A.newValues = [ { text: domNode(tdom).text } ];
     // A.nodes = [ domNode(tdom) ];
-    newNode(tdom);
+    // newNode(tdom);
   }
   applyAction(A);
   _contentEditTextarea = null;
@@ -1159,6 +1165,8 @@ function textareaAutoResize (e) {
 }
 
 function textareaBtnDown (e) {
+  log('textareaBtnDown');
+  log(e);
   if ((e.ctrlKey) && ((e.keyCode === 0xA) || (e.keyCode === 0xD))) {
     // Ctrl+Enter
     stopEditing();
@@ -1178,24 +1186,35 @@ function textareaBtnDown (e) {
       th = tnode_orig.content_dom.getBoundingClientRect().height;
     }
 
-    selectNode(null);
-    const new_node = newNode({
-      x: 1 * tnode.x,
-      y: 1 * tnode.y +
-        // + 1*tnode['fontSize']
-        (th / S),
-      text: '',
-      fontSize: tnode.fontSize
-    });
+    applyAction({
+      type:'A',
+      nodes: [{
+        x: 1 * tnode.x,
+        y: 1 * tnode.y +
+          // + 1*tnode['fontSize']
+          (th / S),
+        text: '',
+        fontSize: tnode.fontSize
+      }]
+    })
+    // const new_node = newNode();
 
-    selectNode(new_node);
+    setTimeout(function(){
+      selectNode(null);
 
-    onNodeDblClick(new_node);
+      console.log(_NODES[_NODES.length - 1].node)
+      selectNode(_NODES[_NODES.length - 1].node);
+  
+      onNodeDblClick(_NODES[_NODES.length - 1].node);
+  
+      // neither preventDefault nor stopPropagation
+      //    stoped newline from appearing
+      setTimeout(function () { _contentEditTextarea.value = ''; _contentEditTextarea.focus(); }, 10);
+    },10);
+    // }, 30);
 
-    // neither preventDefault nor stopPropagation
-    //    stoped newline from appearing
-    setTimeout(function () { _contentEditTextarea.value = ''; _contentEditTextarea.focus(); }, 10);
-  // },10);
+    e.stopPropagation();
+
   }
 
   if (e.keyCode === 9) {
@@ -1366,7 +1385,7 @@ function newNodeID (id = null) {
 // }
 
 
-function newNode (node, redraw = true) {
+function newNode (node, redraw=true, domOnly=false) {
   let tdom = node;
   // console.log(d);
   if ('className' in node) {
@@ -1414,10 +1433,12 @@ function newNode (node, redraw = true) {
 
     tdom.style.display = 'none';
 
-    _NODES.push(node);
-    _NODEId2node.set(node.id, node);
-    _DOMId2node.set(tdom.id, node);
-    _DOMId2nodej.set(tdom.id, _NODES.length - 1);
+    if(!domOnly){
+      _NODES.push(node);
+      _NODEId2node.set(node.id, node);
+      _DOMId2node.set(tdom.id, node);
+      _DOMId2nodej.set(tdom.id, _NODES.length - 1);
+    }
 
     //  tn.contentEditable = true;
     // tn.dataset["x"] = d.x;
@@ -1682,7 +1703,7 @@ function newNode (node, redraw = true) {
     node_container.appendChild(tdom);
   }
 
-  updateNode(node);
+  
 
   [].forEach.call(tdom.getElementsByTagName('a'), (elt) => {
     if (elt.href) {
@@ -1697,12 +1718,14 @@ function newNode (node, redraw = true) {
 
   if (redraw) {
     redrawNode(node);
+  } else {
+    updateNode(node);
   }
 
   if(tdom.classList.contains('selected')){
     // deselectOneDOM(tdom);
     try{$(tdom).rotatable('destroy');}catch(e){}
-    setTimeout(function(){selectOneDOM(tdom);},10);
+    setTimeout(function(){selectOneDOM(tdom);},1);
   }
 
   return tdom;
@@ -2539,10 +2562,36 @@ container.addEventListener('dragover', function (e) {
   e.preventDefault();
 });
 
+_previewNode = null;
+
 container.addEventListener('dragenter', function (e) {
   console.log('container dragenter');
-  // console.log(e);
+  console.log(e);
+  log( e.dataTransfer.getData('text'))
+
   container.classList.add('drag-hover');
+
+  if(_previewNode==null){
+    _previewNode = newNode({
+      text: _PLACES_dragContent || "<New Node>",
+      mousePos: [e.clientX, e.clientY]
+    }, true, true);
+
+
+    _previewNode.onmousemove = function (e) {
+      if(_previewNode){
+        _previewNode.style.left = e.clientX-1;
+        _previewNode.style.top = e.clientY-1;
+      }
+    }
+    _previewNode.ondragover = function (e) {
+      log('previewNode dragover');
+    }
+
+    console.log(_previewNode);
+  } else{
+    log('already previewing')
+  }
   e.preventDefault();
 });
 
@@ -2550,11 +2599,17 @@ container.addEventListener('dragleave', function (e) {
   console.log('container dragleave');
   container.classList.remove('drag-hover');
   // console.log(e);
+
+  // node_container.removeChild(_previewNode);
+  // _previewNode = null;
+
   e.preventDefault();
 });
 
 container.addEventListener('dragend', function (e) {
   console.log('container dragend');
+  // node_container.removeChild(_previewNode);
+  // _previewNode = null;
   // console.log(e);
 });
 

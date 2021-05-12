@@ -128,7 +128,7 @@ function processAction (A) {
       }
       if (h.type === 'E'){
         // really redraw nodes
-        h.node_ids.forEach( id => { newNode(idNode(id).node); } );
+        h.node_ids.forEach( id => { newNode(idNode(id).node, false); } );
       }
 
       if(!anythingChanged){

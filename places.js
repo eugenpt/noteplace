@@ -1,5 +1,7 @@
 // _PLACES = {}
 
+_PLACES_dragContent = null;
+
 const _PLACES_default = {
   name: 'Places',
   items: [
@@ -446,8 +448,15 @@ function createPlaceDOM (place, path) {
       console.log('place drag start');
       console.log(e);
       e.dataTransfer.effectAllowed = 'all';
-      e.dataTransfer.setData('text', 'Tap to [' + place.name + '](' + getStateURL(place.state) + ' "Goto ' + place.name + '")');
+      _PLACES_dragContent = 'Tap to [' + place.name + '](' + getStateURL(place.state) + ' "Goto ' + place.name + '")';
+      e.dataTransfer.setData('text', _PLACES_dragContent);
       console.log(e);
+    }
+    , 'ondragend', function (e) {
+      _PLACES_dragContent = null;
+    }
+    , 'ondrop', function (e) {
+      _PLACES_dragContent = null;
     }
   );
 
@@ -500,6 +509,8 @@ _('#btnNewHomeSubPlace').addEventListener('click', (e) => {
   addPlace('[]');
 });
 
+
+
 _('#btnSaveView').dataset.view = null;
 _('#btnSaveView').onclick = function () {
   const btn = _('#btnSaveView');
@@ -537,17 +548,20 @@ _('#btnSaveView').onclick = function () {
     console.log('btn drag start');
     console.log(e);
     e.dataTransfer.effectAllowed = 'all';
-    e.dataTransfer.setData('text', 'Tap to [View](' + this.dataset.view + ' "Saved View")');
+    _PLACES_dragContent = 'Tap to [View](' + this.dataset.view + ' "Saved View")';
+    e.dataTransfer.setData('text', _PLACES_dragContent);
     console.log(e);
   };
 
   btn.ondragend = function (e) {
     console.log('btn ondragend');
+    _PLACES_dragContent = null;
     console.log(e);
   };
 
   btn.ondrop = function (e) {
     console.log('btn drop');
+    _PLACES_dragContent = null;
     console.log(e);
   };
 };
