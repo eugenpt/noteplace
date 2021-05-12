@@ -417,49 +417,135 @@ fa_icon_list = [
 , "weixin whatsapp whatsapp-square wheelchair whmcs wifi wikipedia-w wind window-close window-close window-maximize window-maximize window-minimize window-minimize window-restore window-restore windows wine-bottle wine-glass wine-glass-alt"
 , "wix wizards-of-the-coast wodu wolf-pack-battalion won-sign wordpress wordpress-simple wpbeginner wpexplorer wpforms wpressr wrench x-ray xbox xing xing-square y-combinator yahoo yammer yandex"
 , "yandex-international yarn yelp yen-sign yin-yang yoast youtube youtube-square zhihu"
-    ].join(' ').split(' ')
+].join(' ').split(' ')
 
-__palette_div_html = (code,html)=>'<div class="np-palette col" data-code="'+code+'" draggable="true" title="'+code+'" style="display:none;">'+html+'</div>'
+__palette_div_html = (code,html)=>'<div class="np-palette col" data-code="'+code+'" draggable="true" title="'+code+'">'+html+'</div>'
 
+const icon_code_HTMLs = new Map();
+bs_icon_list.forEach((s)=>
+    icon_code_HTMLs.set(
+        'bs '+s,
+        __palette_div_html('Bootstrap ' + s, '<i class="bi-'+s+'"></i>')
+    )
+);
+fa_icon_list.forEach((s)=>
+    icon_code_HTMLs.set(
+        'fa '+s,
+        __palette_div_html('Font Awesome ' + s, '<i class="fas fa-' + s + '"></i>')
+    )
+);
+[...Array(emoji_codes.length).keys()].forEach((j)=>
+    icon_code_HTMLs.set(
+        'emoji ' + emoji_codes[j],
+        __palette_div_html('Emoji ' + emoji_codes[j], emojis[j])
+    )
+);
+
+const icon_codes = [...icon_code_HTMLs.keys()];
 // setTimeout(function(){
 
-
-    _('#palette-row').innerHTML = bs_icon_list.map((s)=>
-        __palette_div_html(s,'<i class="bi-'+s+'"></i>')
-    ).join('')
-     + fa_icon_list.map((s)=>
-        __palette_div_html(s,'<i class="fas fa-'+s+'"></i>')
-    ).join('')
-     + [...Array(emoji_codes.length).keys()].map((j)=>
-        __palette_div_html(emoji_codes[j],emojis[j])
-    ).join('');
-
+function fillPallette(codes){
+    _('#palette-row').innerHTML = codes.map(c => icon_code_HTMLs.get(c)).join('');
     [].forEach.call(_('.np-palette'),function(dom){
-    dom.ondragstart = function(e){
-        console.log('dom drag start')
-        console.log(e);
-        e.dataTransfer.effectAllowed = 'all';
-        e.dataTransfer.setData('text', this.innerHTML);
-        console.log(e);
-    }
-    });
+        dom.ondragstart = function(e){
+            console.log('dom drag start')
+            console.log(e);
+            e.dataTransfer.effectAllowed = 'all';
+            e.dataTransfer.setData('text', this.innerHTML);
+            console.log(e);
+        }
+    });    
+}
+
+
+    // _('#palette-row').innerHTML = bs_icon_list.map((s)=>
+    //     __palette_div_html(s,'<i class="bi-'+s+'"></i>')
+    // ).join('')
+    //  + fa_icon_list.map((s)=>
+    //     __palette_div_html(s,'<i class="fas fa-'+s+'"></i>')
+    // ).join('')
+    //  + [...Array(emoji_codes.length).keys()].map((j)=>
+    //     __palette_div_html(emoji_codes[j],emojis[j])
+    // ).join('');
+
+    // [].forEach.call(_('.np-palette'),function(dom){
+    // dom.ondragstart = function(e){
+    //     console.log('dom drag start')
+    //     console.log(e);
+    //     e.dataTransfer.effectAllowed = 'all';
+    //     e.dataTransfer.setData('text', this.innerHTML);
+    //     console.log(e);
+    // }
+    // });
 // }, 1)
+
+
 function randomizePalette(N=100){
-    elts = $('.np-palette');
-    elts.css('display','none');
+    const codes = [];
+    // elts = $('.np-palette');
+    // elts.css('display','none');
+    
     for(var j=0;j<N;j++){
-        elts[Math.floor(Math.random()*elts.length)].style.display = '';
+        codes.push(icon_codes[Math.floor(Math.random()*icon_codes.length)]);
+        // elts[Math.floor(Math.random()*elts.length)].style.display = '';
     }
+    fillPallette(codes);
 }
 
 randomizePalette();
 
+let icon_codes_q = '';
+let icon_codes_filtered = []
+let icon_codes_last_checked = -1;
 
+function iconPaletteSearchRestart(q){
+    icon_codes_q = q;
+    icon_codes_filtered = []
+    icon_codes_last_checked = -1;
+
+    _('#palette-row').innerHTML = '';
+}
+
+function iconPaletteSearchAdd(N=100){
+    const maxN = icon_codes_filtered.length + N;
+    let add_HTML = '';
+    while((icon_codes_filtered.length < maxN)
+        &&(icon_codes_last_checked < icon_codes.length-1)){
+        
+        icon_codes_last_checked++;
+        if(__isin_all(icon_codes_q, icon_codes[icon_codes_last_checked])){
+            icon_codes_filtered.push(icon_codes[icon_codes_last_checked]);
+            add_HTML += icon_code_HTMLs.get(icon_codes[icon_codes_last_checked]);
+        }
+    }
+    _('#palette-row').innerHTML += add_HTML;
+    [].forEach.call(_('.np-palette'),function(dom){
+        dom.ondragstart = function(e){
+            console.log('dom drag start')
+            console.log(e);
+            e.dataTransfer.effectAllowed = 'all';
+            e.dataTransfer.setData('text', this.innerHTML);
+            console.log(e);
+        }
+    });  
+}
 
 _('#inputIconSearch').oninput = function(){
-    [].forEach.call(_('.np-palette'), function(dom){
+    iconPaletteSearchRestart(_('#inputIconSearch').value.toLowerCase());
+    iconPaletteSearchAdd();
+    // fillPallette(icon_codes.filter(c => __isin_all(_('#inputIconSearch').value.toLowerCase(),c)));
+
+    // [].forEach.call(_('.np-palette'), function(dom){
         
-        dom.style.display = __isin_all(_('#inputIconSearch').value.toLowerCase(),dom.dataset['code'])?'':'none';
-    })
+    //     dom.style.display = __isin_all(_('#inputIconSearch').value.toLowerCase(),dom.dataset['code'])?'':'none';
+    // })
     // _('#palette-row').innerHTML = bs_icon_list.filter(s=>s.indexOf(this.value.toLowerCase())>=0).map(s=>'<div class="np-palette col" draggable="true"><i class="bi-'+s+'"></i></div>')
+}
+
+_('#palette-row').onscroll = function (e){
+    if(_('#palette-row').scrollLeft
+     + _('#palette-row').clientWidth
+     > _('#palette-row').scrollWidth * 0.9 ) {
+        iconPaletteSearchAdd();
+    }
 }
