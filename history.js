@@ -307,6 +307,9 @@ function goForwardInHistory () {
 function clearAllHistory() {
   _HISTORY = [];
   _HISTORY_CURRENT_ID = null;
+  // delete the deleted nodes ;)
+  _NODES = _NODES.filter(n => ((!('deleted' in n)) || (n.deleted == false)))
+
   genHistIDMap();
   fillHistoryList();
 }
