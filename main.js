@@ -616,7 +616,7 @@ function hideGridLine(prop){
     return 0;
   }
   if(_theGridAlignLines[prop] !== null) {
-    log(_theGridAlignLines[prop]);
+    // log(_theGridAlignLines[prop]);
     _theGridAlignLines[prop].style.display = 'none';
     // node_container.removeChild(_theGridAlignLines[prop]);
     // _theGridAlignLines[prop] = null;
@@ -1394,7 +1394,7 @@ function newNode (node, redraw=true, domOnly=false) {
     node = domNode(tdom);
   } else {
     console.log('newNode with node provided');
-    if ((!('id' in node)) || (node.id === undefined)) {
+    if ((!('id' in node)) || (node.id === undefined) || (idNode(node.id))) {
       node.id = newNodeID();
     }
     if (!('rotate' in node)) {
@@ -2246,8 +2246,10 @@ function loadFromG (G) {
   $('.node').remove();
   // delete _NODES;
   _NODES = [];
+  gen_DOMId2nodej();
 
   G.nodes.map(stripNode).forEach(newNode);
+
 
   redraw();
 

@@ -103,13 +103,16 @@ html, body {
       -webkit-line-break: after-white-space; */
   
     font-size: inherit;
+    /* transition-timing-function: linear; */
   }
 
+  
   .node svg{
     position: absolute;
     left:0px;
     top:0px;
-    /* transition-duration: initial; */
+    /* transition-timing-function: linear; */
+    /* transition-duration: inherit; */
   }
 
   .node svg path {

@@ -471,9 +471,19 @@ function iconPaletteSearchAdd(N=100){
     });  
 }
 
-_('#inputIconSearch').oninput = function(){
+_('#inputIconSearch').oninput = function(e) {
     iconPaletteSearchRestart(_('#inputIconSearch').value.toLowerCase());
     iconPaletteSearchAdd();
+}
+
+_('#inputIconSearch').onkeydown = function (e) {
+    e.stopPropagation();
+}
+_('#inputIconSearch').oncut = function (e) {
+    e.stopPropagation();
+}
+_('#inputIconSearch').oncopy = function (e) {
+    e.stopPropagation();
 }
 
 _('#palette-row').onscroll = function (e){
