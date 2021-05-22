@@ -23,6 +23,8 @@ const node_container = _('#node_container');
 
 let _selected_DOM = [];
 
+let _previewNode = null;
+
 let width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
 let height = window.innerHeight || document.documentElement.clientHeight || BODY.clientHeight;
 
