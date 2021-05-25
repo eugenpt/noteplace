@@ -80,8 +80,8 @@ function readyFreeHand(){
   // __freehandSVG.style.top = '0px';
   // __freehandSVG.style.zIndex = '999999';
   // __freehandSVG.style.opacity = '1';
-  
-  
+
+
 
   __freehandPath = document.createElementNS(svgns, 'path');
   __freehandPath.setAttribute( 'stroke', 'blue');
@@ -123,7 +123,7 @@ _('#freehandField').onmouseup = function (e) {
   // setTimeout(function(){
   applyAction({
     type: 'A',
-    
+
     nodes: [{
       text: __freehandSVG.outerHTML,
       mousePos: [ minPs[0] ,  minPs[1]],
@@ -154,7 +154,7 @@ function drawFreehand() {
     let dstr = '';
 
     dstr = 'M ' + ps[0][0] + ' ' + ps[0][1];
-    
+
     for ( let j = 1 ; j < ps.length ; j++) {
       dstr += " L"+ps[j][0] + ' ' + ps[j][1];
     }
@@ -416,7 +416,7 @@ window.addEventListener('mouseup', function (e) {
     A.oldValues = A.node_ids.map( id => idNode(id).startPos );
     A.newValues = A.node_ids.map( id => {
       const node = idNode(id);
-      return { x: node.x, y: node.y}  
+      return { x: node.x, y: node.y}
     });
 
     applyAction(A);
@@ -560,7 +560,7 @@ function allVisibleNodesProps(prop='x', except=[]){
       continue;
     if (except_ids.indexOf(node.id) >= 0)
       continue;
-    
+
     R.set(node.id, node[prop]);
   }
   return R;
@@ -627,7 +627,7 @@ container.onmousemove = function (e) {
   _mousePos = [e.clientX, e.clientY];
   if (_isMouseDown) {
     if (_isMouseDragging) {
-      const deltaMove = { 
+      const deltaMove = {
         x: (e.clientX - _mouseDragStart[0]) / S  ,
         y: (e.clientY - _mouseDragStart[1]) / S
       }
@@ -669,7 +669,7 @@ container.onmousemove = function (e) {
         node.y = node.startPos.y + deltaMove.y;
         calcBox(node);
         updateNode(node);
-      });      
+      });
         // move the node under the cursor
         // _isMouseDragging.x = _isMouseDragging.startPos.x + deltaMove.x;
         // _isMouseDragging.y = _isMouseDragging.startPos.y + deltaMove.y;
@@ -843,7 +843,7 @@ function rotateStop(e, ui) {
   console.log(e);
   console.log(ui);
 
-  
+
 
   // ui.angle.start = ui.angle.current;
   applyAction({
@@ -879,7 +879,7 @@ function selectOneDOM (dom) {
         _oldValues = [{ rotate: node.rotate }];
         __isRotating = node;
       },
-      stop: rotateStop 
+      stop: rotateStop
     };
     log(params);
 
@@ -1000,7 +1000,7 @@ function selectNode (n) {
     _selected_DOM.forEach(deselectOneDOM);
     _selected_DOM = [];
     return 0;
-  }  
+  }
   if (!Array.isArray(n)) {
     log(`[${n.id}]`);
     n = [n];
@@ -1058,7 +1058,7 @@ function stopEditing () {
   _contentEditTextarea.parentElement.removeChild(_contentEditTextarea);
   const A = { type: 'D', node_ids: [ domNode(tdom).id ] };
   if (_contentEditTextarea.value === '') {
-    //deleteNode(tdom);    
+    //deleteNode(tdom);
     contentEditNode = null;
   }else {
     A.type = 'E';
@@ -1204,9 +1204,9 @@ function textareaBtnDown (e) {
 
       console.log(_NODES[_NODES.length - 1].node)
       selectNode(_NODES[_NODES.length - 1].node);
-  
+
       onNodeDblClick(_NODES[_NODES.length - 1].node);
-  
+
       // neither preventDefault nor stopPropagation
       //    stoped newline from appearing
       setTimeout(function () { _contentEditTextarea.value = ''; _contentEditTextarea.focus(); }, 10);
@@ -1463,7 +1463,7 @@ function newNode (node, redraw=true, domOnly=false) {
     node.path_dom.setAttribute("stroke", node.style.color);
     node.path_dom.setAttribute("strokeWidth", node.style.strokeWidth);
     node.path_dom.setAttribute("fill", node.style.fill);
-    
+
 
     node.svg_dom.onmousedown = function(e) {
       //if(onNodeMouseDown.path_ok)
@@ -1478,7 +1478,7 @@ function newNode (node, redraw=true, domOnly=false) {
     node.path_dom.onclick = function (e) {
       onNodeClick.path_ok = true;
     }
-    
+
   }
   if(node.is_img){
     tdom.classList.add('img');
@@ -1500,11 +1500,9 @@ function newNode (node, redraw=true, domOnly=false) {
   }
 
   // Tooltip
-
   const tt = _ce('div'
     , 'className', 'position-absolute start-0 np-n-tooltip'// translate-middle start-50
   );
-
   if (node.is_img == false) {
     // not entirely image-based node, add color select
     const tcolorselect = _ce('input'
@@ -1518,7 +1516,7 @@ function newNode (node, redraw=true, domOnly=false) {
         }
       }
       , 'onchange', function (e) {
-        applyAction( { 
+        applyAction( {
           type: 'E',
           node_ids: [ node.id ],
           oldValues: [ { 'style.color': this.dataset['oldValue'] } ],
@@ -1528,8 +1526,8 @@ function newNode (node, redraw=true, domOnly=false) {
     );
     tcolorselect.dataset['oldValue'] = node.style.color;
     tt.appendChild(tcolorselect);
-  
   }
+
   if((node.is_img == false) && (node.is_svg == false)){
     if (tcontent.innerHTML.indexOf('<br') >= 0) {
       // text align only valuable for multiline nodes
@@ -1544,12 +1542,11 @@ function newNode (node, redraw=true, domOnly=false) {
               .removeClass('np-n-t-ta-selected')
               .find('[data-text-align="' + this.dataset.textAlign + '"]')
               .addClass('np-n-t-ta-selected');
-
             applyAction({
               type: 'E',
               node_ids: [ node.id ],
               newValues: [ { 'style.textAlign': this.dataset.textAlign } ]
-            })  
+            })
             // node.style.textAlign = this.dataset.textAlign;
             node.content_dom.style.textAlign = this.dataset.textAlign;
             // newNode(node.node);
@@ -1557,7 +1554,6 @@ function newNode (node, redraw=true, domOnly=false) {
             e.stopPropagation();
           }
         );
-
         tbtn.dataset.textAlign = jta;
         tt.appendChild(tbtn);
       });
@@ -1595,12 +1591,10 @@ function newNode (node, redraw=true, domOnly=false) {
     );
     tt.appendChild(tplusbtnLW );
     tt.appendChild(tminusbtnLW );
-
     // fill?
     const tbutton = _ce('button'
       ,'className', "np-n-t-btn"
     );
-
     const tlabel = _ce('label'
       ,'innerHTML', node.style.fill=='none'?'<i class="bi-bucket"></i>':'<i class="bi-bucket-fill"></i>'
       ,'ondblclick', function (e) {
@@ -1617,8 +1611,6 @@ function newNode (node, redraw=true, domOnly=false) {
     if(node.style.fill!=='none'){
       tlabel.style.color = node.style.fill;
     }
-
-
     const tfillinput = _ce('input'
       ,'type','color'
       ,'value', node.style.fill=='none'?'#ffffff':node.style.fill
@@ -1639,16 +1631,13 @@ function newNode (node, redraw=true, domOnly=false) {
           newValues: [{'style.fill': this.value}],
         });
       }
-
     )
     tfillinput.dataset['oldValue'] = node.style.fill;
     tbutton.appendChild(tlabel);
     tbutton.appendChild(tfillinput);
-
     // tt.appendChild(tfillinput);
     tt.appendChild(tbutton);
   }
-
 
   tt.addEventListener('click', function(e) {
     e.stopPropagation();
@@ -1668,7 +1657,6 @@ function newNode (node, redraw=true, domOnly=false) {
   for (const p of Object.keys(node.style)) {
     tcontent.style[p] = node.style[p];
   }
-
   tdom.appendChild(tcontent);
 
   // tn.innerHTML =  '';
@@ -1703,7 +1691,7 @@ function newNode (node, redraw=true, domOnly=false) {
     node_container.appendChild(tdom);
   }
 
-  
+
 
   [].forEach.call(tdom.getElementsByTagName('a'), (elt) => {
     if (elt.href) {
@@ -1745,7 +1733,7 @@ function changeStrokeWidth(delta=1){
 
     node_ids.push(node.id);
     newValues.push( {
-      'style.strokeWidth': (node.style.strokeWidth || 1) * k 
+      'style.strokeWidth': (node.style.strokeWidth || 1) * k
     });
     // node.strokeWidth *= Math.pow(1.25, delta);
     // node.strokeWidth = Math.max(1, node.strokeWidth);
@@ -1768,7 +1756,7 @@ function updateNode (d) {
     d = _DOMId2node.get(n.id);
   }
 
-  
+
   n.style.left = (d.x - T[0]) * S + 'px';
   n.style.top = (d.y - T[1]) * S + 'px';
   n.style.fontSize = (d.fontSize) * S + 'px';
@@ -1782,7 +1770,7 @@ function updateNode (d) {
     d.content_dom.style.left = '0px';
     d.content_dom.style.top = '0px';
 
-    
+
     let ow = d.svg_dom.getAttribute('width')*1;
     let oh = d.svg_dom.getAttribute('height')*1
     d.content_dom.style.width = ow * k + 'px';
@@ -1819,7 +1807,7 @@ function updateNode (d) {
       }else{
         n.style.transform = 'rotate(' + d.rotate + 'rad)';
       }
-    
+
     }
 
   // setTimeout(function () {
@@ -2132,7 +2120,7 @@ function editFontSize (delta) {
       applyAction({
         type: 'E',
         node_ids: _selected_DOM.map( dom => domNode(dom).id ),
-        newValues: _selected_DOM.map( dom => { 
+        newValues: _selected_DOM.map( dom => {
           let node = domNode(dom);
           return {
             fontSize: node.fontSize * k,
@@ -2541,7 +2529,7 @@ container.addEventListener('drop', function (e) {
     // _fileList
   } else {
     selectNode(null);
-    let h = applyAction( { 
+    let h = applyAction( {
       type: 'A',
       nodes: [{
         text: e.dataTransfer.getData('text'),
@@ -2741,27 +2729,28 @@ function addRandomNodesToView (N) {
   );
 }
 
-function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default) {
+function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_links=_LINKS_default) {
   console.log('_RESTART');
   console.log('new_nodes=[' + new_nodes + ']');
   console.log('new_places=[' + new_places + ']');
-
+  log('new_links=[' + new_links + ']');
+  //
   _NODES = [];
   newNodeID.N = 0;
   $('.node').remove();
-
-  _PLACES = stripPlace(_PLACES_default);
+  //
+  gen_DOMId2nodej();  _PLACES = stripPlace(_PLACES_default);
   fillPlaces();
-
+  //
   new_nodes.forEach(n => {
     newNode(stripNode(n));
   });
-
+  //
   _HISTORY = [];
   _HISTORY_CURRENT_ID = null;
   genHistIDMap();
   fillHistoryList();
-
+  //
   console.log('restart');
   applyZoom([0, 0], 1, false, false);
 }
