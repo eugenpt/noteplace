@@ -12,6 +12,13 @@ What else..
 Logic?
 Time??
 
+Or should I just do links as nodes? just with special properties..
+
+Hmmmm.....
+
+What is better - special types of nodes or completely different thing?
+
+I'd say that links should be different from nodes.
 
 */
 
