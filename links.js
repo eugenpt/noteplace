@@ -13,6 +13,17 @@ Logic?
 Time??
 
 
+TODO:
+[ ] Link render
+[ ] Link adding interface
+[ ] Link styles? 
+[ ] Link types
+
+[ ] wikidata link types?
+
+.. hmm
+Why not omit the whole noteplace concept entirely and just make a wikidata graph viewer?
+hmm ..
 */
 
 let _LINKS = [];
@@ -33,7 +44,6 @@ _LINKS_default = [
 		ns: [_NODES[0].id, _NODES[1].id],
         connect_style: {
             type: undefined,
-
         },
 	    style: {
             color:'black',
@@ -43,8 +53,37 @@ _LINKS_default = [
 ];
 
 
-function renderLink(link){
+function newLink(link){
+    log("newLink");
+    let tdom = link;
+    if ('className' in link){
+        // link is a DOM element already
+        log('DOM provided');
+
+    } else {
+        
+
+    }
+
     
 }
 
+function _RESTART_links(){
+_LINKS = [
+	{
+		ns: [_NODES[0].id, _NODES[1].id],
+        connect_to: ["center","center"],
+        connect_style: {
+            type: undefined,
+
+
+        },
+	    style: {
+            color:'black',
+            
+            },
+	},
+];
+
+}
 //

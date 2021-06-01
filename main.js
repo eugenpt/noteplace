@@ -1394,7 +1394,7 @@ function newNode (node, redraw=true, domOnly=false) {
     node = domNode(tdom);
   } else {
     console.log('newNode with node provided');
-    if ((!('id' in node)) || (node.id === undefined) || (idNode(node.id))) {
+    if ((!('id' in node)) || (node.id === undefined) || (node !== idNode(node.id))) {
       node.id = newNodeID();
     }
     if (!('rotate' in node)) {
