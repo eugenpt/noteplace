@@ -48,7 +48,7 @@ window.addEventListener('resize', function (event) {
 //
 //   I know, I know, it would've been
 //     way cooler if it was ~ size(universe)/size(atom nucleus)
-//       which is.. ~ 10^26/(10^-15) ~ 10^41
+//       which is.. ~ 10^27/(10^-15) ~ 10^41
 
 let mousePos = [0, 0];
 let _mousePos = [0, 0];
