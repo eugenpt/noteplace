@@ -1,3 +1,5 @@
+log(idNode(''))
+
 const md = new Remarkable('full', {
   html: true,
   typographer: true
@@ -2729,7 +2731,7 @@ function addRandomNodesToView (N) {
   );
 }
 
-function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_links=_LINKS_default) {
+function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_links=[]) {
   console.log('_RESTART');
   console.log('new_nodes=[' + new_nodes + ']');
   console.log('new_places=[' + new_places + ']');
@@ -2745,6 +2747,8 @@ function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_
   new_nodes.forEach(n => {
     newNode(stripNode(n));
   });
+  //
+  _RESTART_links(new_links);
   //
   _HISTORY = [];
   _HISTORY_CURRENT_ID = null;

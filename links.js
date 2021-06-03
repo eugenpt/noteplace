@@ -68,22 +68,25 @@ function newLink(link){
     
 }
 
-function _RESTART_links(){
-_LINKS = [
-	{
-		ns: [_NODES[0].id, _NODES[1].id],
-        connect_to: ["center","center"],
-        connect_style: {
-            type: undefined,
+function _RESTART_links(new_links=null){
+    if ( new_links === null) {
+        new_links = [
+            {
+                ns: [_NODES[0].id, _NODES[1].id],
+            connect_to: ["center","center"],
+            connect_style: {
+                type: undefined,
 
 
-        },
-	    style: {
-            color:'black',
-            
             },
-	},
-];
+            style: {
+                color:'black',
+                
+                },
+            },
+        ];
+    }
+    _LINKS = new_links; 
 
 }
 //
