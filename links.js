@@ -12,6 +12,13 @@ What else..
 Logic?
 Time??
 
+Or should I just do links as nodes? just with special properties..
+
+Hmmmm.....
+
+What is better - special types of nodes or completely different thing?
+
+I'd say that links should be different from nodes.
 
 TODO:
 [ ] Link render
@@ -52,41 +59,46 @@ _LINKS_default = [
 	},
 ];
 
+function idLink(id){
+
+    
+}
 
 function newLink(link){
     log("newLink");
     let tdom = link;
     if ('className' in link){
-        // link is a DOM element already
         log('DOM provided');
+        // hmm.. what are we supposed to do here? hmm..
 
     } else {
-        
+        log('not a DOM. so.. a.. link?');
 
+        tdom = _ce('div',
+            'className', 'link'
+            
+        );
     }
 
-    
+    return tdom;    
 }
 
 function _RESTART_links(new_links=null){
-    if ( new_links === null) {
+    if (new_links == null) {
         new_links = [
             {
                 ns: [_NODES[0].id, _NODES[1].id],
-            connect_to: ["center","center"],
-            connect_style: {
-                type: undefined,
-
-
-            },
-            style: {
-                color:'black',
-                
+                connect_to: ["center","center"],
+                connect_style: {
+                    type: undefined,
                 },
+                style: {
+                    color:'black',
+                    
+                    },
             },
         ];
     }
-    _LINKS = new_links; 
+    _LINKS = new_links;
+} //
 
-}
-//

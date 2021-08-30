@@ -50,7 +50,7 @@ window.addEventListener('resize', function (event) {
 //
 //   I know, I know, it would've been
 //     way cooler if it was ~ size(universe)/size(atom nucleus)
-//       which is.. ~ 10^26/(10^-15) ~ 10^41
+//       which is.. ~ 10^27/(10^-15) ~ 10^41
 
 let mousePos = [0, 0];
 let _mousePos = [0, 0];
@@ -1239,69 +1239,69 @@ function textareaBtnDown (e) {
 }
 
 function onNodeDblClick (e) {
-  if ('preventDefault' in e) {
-    contentEditNode = this;
-  } else {
-    contentEditNode = e;
-  }
-
-  if((!domNode(contentEditNode).is_svg)||((domNode(contentEditNode).is_svg)&&(onNodeDblClick.path_ok))){
-
-  if ('preventDefault' in e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-  console.log('double-clicked on [' + contentEditNode.id + '] : ' + contentEditNode.innerText);
-  console.log(contentEditNode);
-
-
-  // console.log(contentEditNode);
-
-  const node = domNode(contentEditNode);
-
-  _contentEditTextarea = document.createElement('textarea');
-  _contentEditTextarea.id = '_contentEditTextarea';
-  _contentEditTextarea.value = node.text;
-
-  node.startText = node.text;
-
-  contentEditNode = contentEditNode.getElementsByClassName('np-n-c')[0];
-
-  // _contentEditTextarea.style.fontSize = contentEditNode.dataset['fontSize']*S+'px';
-  // _contentEditTextarea.style.fontFamily = 'Open Sans';
-  _contentEditTextarea.dataset.initS = S;
-  console.log(contentEditNode.getBoundingClientRect());
-  _contentEditTextarea.dataset.initWidth = Math.max(width / 3, contentEditNode.getBoundingClientRect().width + 20);
-  _contentEditTextarea.dataset.initHeight = contentEditNode.getBoundingClientRect().height;
-  _contentEditTextarea.style.width = _contentEditTextarea.dataset.initWidth + 'px';
-  _contentEditTextarea.style.height = _contentEditTextarea.dataset['initHeight'] +'px';
-  // _contentEditTextarea.style.height = 'auto';
-
-  _contentEditTextarea.onkeydown = textareaBtnDown;
-  _contentEditTextarea.onkeyup = textareaAutoResize;
-  _contentEditTextarea.oninput = function (e) {
-    console.log('_contentEditTextarea input');
-    domNode(this.parentElement.parentElement).text = this.value;
-  };
-
-  _contentEditTextarea.onmousedown = (e) => {
-    if (e.button === 1) {
-      // drag on middle button => just pass the event
+    if ('preventDefault' in e) {
+        contentEditNode = this;
     } else {
-      contentEditMouseDown = true;
+        contentEditNode = e;
     }
-  };
 
-  contentEditNode.innerHTML = '';
-  contentEditNode.appendChild(_contentEditTextarea);
+    if((!domNode(contentEditNode).is_svg)||((domNode(contentEditNode).is_svg)&&(onNodeDblClick.path_ok))){
 
-  // textareaAutoResize(_contentEditTextarea);
-  _contentEditTextarea.select();
+        if ('preventDefault' in e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        console.log('double-clicked on [' + contentEditNode.id + '] : ' + contentEditNode.innerText);
+        console.log(contentEditNode);
 
-  // selectNode(contentEditNode);
 
-}
-onNodeDblClick.path_ok = false;
+        // console.log(contentEditNode);
+
+        const node = domNode(contentEditNode);
+
+        _contentEditTextarea = document.createElement('textarea');
+        _contentEditTextarea.id = '_contentEditTextarea';
+        _contentEditTextarea.value = node.text;
+
+        node.startText = node.text;
+
+        contentEditNode = contentEditNode.getElementsByClassName('np-n-c')[0];
+
+        // _contentEditTextarea.style.fontSize = contentEditNode.dataset['fontSize']*S+'px';
+        // _contentEditTextarea.style.fontFamily = 'Open Sans';
+        _contentEditTextarea.dataset.initS = S;
+        console.log(contentEditNode.getBoundingClientRect());
+        _contentEditTextarea.dataset.initWidth = Math.max(width / 3, contentEditNode.getBoundingClientRect().width + 20);
+        _contentEditTextarea.dataset.initHeight = contentEditNode.getBoundingClientRect().height;
+        _contentEditTextarea.style.width = _contentEditTextarea.dataset.initWidth + 'px';
+        _contentEditTextarea.style.height = _contentEditTextarea.dataset['initHeight'] +'px';
+        // _contentEditTextarea.style.height = 'auto';
+
+        _contentEditTextarea.onkeydown = textareaBtnDown;
+        _contentEditTextarea.onkeyup = textareaAutoResize;
+        _contentEditTextarea.oninput = function (e) {
+            console.log('_contentEditTextarea input');
+            domNode(this.parentElement.parentElement).text = this.value;
+        };
+
+        _contentEditTextarea.onmousedown = (e) => {
+            if (e.button === 1) {
+                // drag on middle button => just pass the event
+            } else {
+                contentEditMouseDown = true;
+            }
+        };
+
+        contentEditNode.innerHTML = '';
+        contentEditNode.appendChild(_contentEditTextarea);
+
+        // textareaAutoResize(_contentEditTextarea);
+        _contentEditTextarea.select();
+
+        // selectNode(contentEditNode);
+
+    }
+    onNodeDblClick.path_ok = false;
 }
 
 __nodeMouseDown = null;
