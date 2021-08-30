@@ -1436,6 +1436,7 @@ function newNode (node, redraw=true, domOnly=false) {
     tdom.style.display = 'none';
 
     if(!domOnly){
+      console.log("pushing..");
       _NODES.push(node);
       _NODEId2node.set(node.id, node);
       _DOMId2node.set(tdom.id, node);
@@ -2229,9 +2230,12 @@ function stripNode (d) {
   };
 }
 
+_G = null;
 // load everything from single object
 function loadFromG (G) {
   console.log('Loading..');
+  
+  _G = G;
 
   T = [1 * G.T[0], 1 * G.T[1]];
   S = 1 * G.S;
@@ -2250,7 +2254,7 @@ function loadFromG (G) {
   _NODES = [];
   gen_DOMId2nodej();
 
-  G.nodes.map(stripNode).forEach(newNode);
+  G.nodes.map(stripNode).forEach(node => newNode(node,false,false));
 
 
   redraw();
