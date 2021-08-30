@@ -2214,9 +2214,12 @@ function stripNode (d) {
   };
 }
 
+_G = {}
 // load everything from single object
 function loadFromG (G) {
   console.log('Loading..');
+  
+  _G = G;
 
   T = [1 * G.T[0], 1 * G.T[1]];
   S = 1 * G.S;
@@ -2256,12 +2259,14 @@ function loadFromG (G) {
   console.log('Loading complete, now ' + _NODES.length + ' nodes');
 }
 
+_FILETEXT = ''
 _('#file').oninput = function () {
   let fr = new FileReader();
   fr.onload = function () {
     console.log('Received file..');
-
-    loadFromG(JSON.parse(fr.result));
+    
+    _FILETEXT = fr.result
+    loadFromG(JSON.parse(_FILETEXT));
 
     $('#file').value = '';
   };
@@ -2703,7 +2708,7 @@ function nodeState (node) {
 
 function depreviewNode () {
   $('.np-search-preview').removeClass('np-search-preview');
-}
+// }
 
 function previewNode (node) {
   previewState(nodeState(node));
@@ -2728,7 +2733,7 @@ function addRandomNodesToView (N) {
   );
 }
 
-function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_links=[]) {
+function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_links=null) {
   console.log('_RESTART');
   console.log('new_nodes=[' + new_nodes + ']');
   console.log('new_places=[' + new_places + ']');
