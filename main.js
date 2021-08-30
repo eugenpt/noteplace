@@ -2214,7 +2214,7 @@ function stripNode (d) {
   };
 }
 
-_G = {}
+_G = {};
 // load everything from single object
 function loadFromG (G) {
   console.log('Loading..');
@@ -2259,13 +2259,13 @@ function loadFromG (G) {
   console.log('Loading complete, now ' + _NODES.length + ' nodes');
 }
 
-_FILETEXT = ''
+_FILETEXT = '';
 _('#file').oninput = function () {
   let fr = new FileReader();
   fr.onload = function () {
     console.log('Received file..');
     
-    _FILETEXT = fr.result
+    _FILETEXT = fr.result;
     loadFromG(JSON.parse(_FILETEXT));
 
     $('#file').value = '';
@@ -2774,3 +2774,4 @@ _('#btnSaveFast').onclick = function (e) {
 
 
 fillHistoryList();
+
