@@ -61,6 +61,10 @@ function equalSetsOfItems(a1, a2){
   return true;
 }
 
+Array.prototype.contains = function(elt) {
+  return this.indexOf(elt)>=0;
+}
+
 function Max() {
   var a = arguments.length==1 ? arguments[0] : arguments;
   return Math.max.apply(Math,a);
@@ -105,6 +109,14 @@ function setDotProp(obj, prop, value){
   dotProp(obj, propParts.slice(0,-1).join('.'))[propParts[propParts.length-1]] = value;
 }
 
+// // This is fun but it's getting called by jQuery for some reason.
+// Object.prototype.ep_get = function (prop) {
+//   return dotProp(this, prop);
+// }
+// Object.prototype.ep_set = function (prop, value) {
+//   return setDotProp(this, prop);
+// }
+
 function delete_defaults (obj, def) {
   const r = {};
   for (let p of Object.keys(obj)) {
@@ -136,43 +148,6 @@ function toStr (a) {
             ? '{' + Object.keys(a).map(k => k + ':' + toStr(a[k])).join(', ') + '}'
             : a)
       );
-}
-
-const imageFileTypes = [
-  'image/apng'
-  ,'image/avif'
-  ,'image/gif'
-  ,'image/jpeg'
-  ,'image/png'
-  ,'image/svg+xml'
-  ,'image/webp'
-  ,'image/bmp'
-  ,'image/x-icon'
-  ,'image/tiff'
-]
-
-function isImage (file) {
-  return imageFileTypes.indexOf(file.type) >= 0;
-}
-
-function localStorageSize (verbose=false) {
-  let _lsTotal = 0;
-  let _xLen = 0;
-  let _x = 0;
-  for (_x in localStorage) {
-    if (!localStorage.hasOwnProperty(_x)) {
-      continue
-    }
-    _xLen = ((localStorage[_x].length + _x.length) * 2);
-    _lsTotal += _xLen;
-    if (verbose) {
-      console.log(_x.substr(0, 50) + ' = ' + (_xLen / 1024).toFixed(2) + ' KB');
-    }
-  }
-  if (verbose) {
-    console.log('Total = ' + (_lsTotal / 1024).toFixed(2) + ' KB');
-  }
-  return _lsTotal;
 }
 
 function isString(obj){

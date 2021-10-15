@@ -6,6 +6,23 @@
 // #+#            #+#     #+#        #+#       #+#    #+#
 // ###        ########### ########## ########## ########
 
+const imageFileTypes = [
+  'image/apng'
+  ,'image/avif'
+  ,'image/gif'
+  ,'image/jpeg'
+  ,'image/png'
+  ,'image/svg+xml'
+  ,'image/webp'
+  ,'image/bmp'
+  ,'image/x-icon'
+  ,'image/tiff'
+]
+
+function isImage (file) {
+  return imageFileTypes.indexOf(file.type) >= 0;
+}
+
 function defaultFilename () {
   return 'Noteplace_' + date2str(new Date()) + '.json';
 }

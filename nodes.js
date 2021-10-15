@@ -11,8 +11,8 @@ function gen_DOMId2nodej () {
   _NODEId2node = new Map();
 
   for (let j = 0; j < _NODES.length; j++) {
-    _DOMId2node.set(_NODES[j].node.id, _NODES[j]);
-    _DOMId2nodej.set(_NODES[j].node.id, j);
+    _DOMId2node.set(_NODES[j].dom.id, _NODES[j]);
+    _DOMId2nodej.set(_NODES[j].dom.id, j);
     _NODEId2node.set(_NODES[j].id, _NODES[j].id);
   }
 }
@@ -55,30 +55,33 @@ function pushNodeNDom(node, tdom) {
   _DOMId2nodej.set(tdom.id, _NODES.length - 1);
 }
 
-function getNodeLocalStorageKey (node){
-  return  'noteplace.node_' + node.id
+function getNodeIdLocalStorageKey(node_id){
+  return  'noteplace.node_' + node_id
 }
 
-function getNodeDomLocalStorageKey (dom) {
+function getNodeLocalStorageKey(node){
+  return getNodeIdLocalStorageKey(node.id)
+}
+
+function getNodeDomLocalStorageKey(dom) {
  return 'noteplace.' + dom.id;
 }
 
-function deleteNode (d) {
+function deleteNode(d) {
   if (isDom(d)) {
-    deleteNode(domNode(d));
-  } else {
-    // _NODES
-    // ixs (TODO:optimize further)
-    gen_DOMId2nodej();
-    // remove from _NODES
-    _NODES.splice(_DOMId2nodej.get(d.node.id), 1);
-    // remove from index
-    _DOMId2node.delete(d.node.id);
-    // remove from DOM
-    node_container.removeChild(d.node);
-    // remove from saved
-    localStorage.removeItem(getNodeLocalStorageKey(d));
+    d = domNode(d);
   }
+  // _NODES
+  // ixs (TODO:optimize further)
+  gen_DOMId2nodej();
+  // remove from _NODES
+  _NODES.splice(_DOMId2nodej.get(d.dom.id), 1);
+  // remove from index
+  _DOMId2node.delete(d.dom.id);
+  // remove from DOM
+  node_container.removeChild(d.dom);
+  // remove from saved
+  removeNodeFromLocalStorage(d);
 }
 
 // ::::    ::: :::::::::: :::       ::: ::::    :::  ::::::::  :::::::::  ::::::::::
@@ -360,7 +363,8 @@ function newNode (node, redraw=true, addToNodes=true) {
   //   e.stopPropagation();
   // }
   // tn.appendChild(ta);
-  node.node = tdom;
+  // node.node = tdom;
+  node.dom = tdom;
   node.content_dom = tcontent;
 
   if (!('className' in node)) {
