@@ -414,7 +414,7 @@ const icon_codes = [...icon_code_HTMLs.keys()];
 
 function fillPallette(codes){
     _('#palette-row').innerHTML = codes.map(c => icon_code_HTMLs.get(c)).join('');
-    [].forEach.call(_('.np-palette'),function(dom){
+    _('.np-palette').forEach(function(dom){
         dom.ondragstart = function(e){
             console.log('dom drag start')
             console.log(e);
@@ -460,7 +460,7 @@ function iconPaletteSearchAdd(N=100){
         }
     }
     _('#palette-row').innerHTML += add_HTML;
-    [].forEach.call(_('.np-palette'),function(dom){
+    _('.np-palette').forEach(function(dom){
         dom.ondragstart = function(e){
             console.log('dom drag start')
             console.log(e);

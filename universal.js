@@ -61,6 +61,31 @@ function equalSetsOfItems(a1, a2){
   return true;
 }
 
+function Max() {
+  var a = arguments.length==1 ? arguments[0] : arguments;
+  return Math.max.apply(Math,a);
+}
+
+function Min() {
+  var a = arguments.length==1 ? arguments[0] : arguments;
+  return Math.min.apply(Math,a);
+}
+
+function listForEach(arr, fun){
+  [].forEach.call(arr, fun);
+}
+
+function listMap(arr, fun) {
+  return [].map.call(arr, fun);
+}
+
+// add map and forEach to some DOM-related array-like thingies
+['map','forEach'].forEach( (fun_name) => {
+  [NodeList, HTMLCollection].forEach( (obj) => {
+    obj.prototype[fun_name] = function(fun) { return [][fun_name].call(this, fun); };
+  })
+})
+
 // if property is dot-separated (style.color for example)
 //  take obj.style.color instead of just obj['style.color']
 function dotProp(obj, prop){
@@ -150,6 +175,10 @@ function localStorageSize (verbose=false) {
   return _lsTotal;
 }
 
+function isString(obj){
+  return typeof(obj) === 'string';
+}
+
 // :::::::::   ::::::::  ::::    ::::  
 // :+:    :+: :+:    :+: +:+:+: :+:+:+ 
 // +:+    +:+ +:+    +:+ +:+ +:+:+ +:+ 
@@ -157,6 +186,10 @@ function localStorageSize (verbose=false) {
 // +#+    +#+ +#+    +#+ +#+       +#+ 
 // #+#    #+# #+#    #+# #+#       #+# 
 // #########   ########  ###       ### 
+
+function isDom(obj){
+  return 'click' in obj
+}
 
 function _ (s) {
   if (s[0] === '#') {
@@ -172,10 +205,15 @@ function _ (s) {
 function _ce (tag, plopName='className', plopVal='class') {
   const elt = document.createElement(tag);
   for (let j = 1; j < arguments.length; j += 2) {
-    elt[arguments[j]] = arguments[j + 1];
+    if (arguments[j] in elt){
+      elt[arguments[j]] = arguments[j + 1];
+    }else{
+      setDotProp(elt, arguments[j], arguments[j + 1]);
+    }
   }
   return elt;
 }
+
 
 const copyToClipboard = str => {
   const el = document.createElement('textarea');

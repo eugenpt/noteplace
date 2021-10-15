@@ -52,9 +52,6 @@ window.addEventListener('resize', function (event) {
 //     way cooler if it was ~ size(universe)/size(atom nucleus)
 //       which is.. ~ 10^26/(10^-15) ~ 10^41
 
-let mousePos = [0, 0];
-let _mousePos = [0, 0];
-
 
 _FreeHand = new FreeHand()
 
@@ -211,38 +208,46 @@ function applyZoom (T_, S_, smooth = true, noTemp = false) {
 applyZoom.zoomResetTimeout = null;
 applyZoom.lastSmooth = false;
 
-let _isMouseDown = false;
-let _mouseDownPos = [0, 0];
-let _mouseDownT = [0, 0];
-let _isMouseDragging = false;
-let _mouseDragStart = [0, 0];
-let _mouseDragPos = [0, 0];
-
-let _isDragSelecting = false;
-
-let __nodeMouseDown = false;
-
-let _dragSelected = [];
-
-let __isResizing = false;
-let __isRotating = null;
+let _Mouse = {
+  is:  {
+    down: false,
+    downContentEdit: false,
+    downPath: false,
+    dragging: false,
+    dragSelecting: false,
+    resizing: false,
+  },
+  pos: [0, 0],
+  clipboard: [],          // stores nodes with relative coordinates (x-centerX)*S
+  dragSelected: [],
+  rotatingNode: null,
+  down:{
+    pos: [0,0],
+    T: [0,0],
+    node: null,
+  },
+  drag:{
+    start: [0, 0],
+    pos: [0, 0],
+  },
+}
 
 node_container.onmousedown = function (e) {
   console.log('container.onmousedown');
   console.log('T=' + T + ' S=' + S);
   // $('.node').css('transition-duration','0s');
   // $('.node').removeClass('zoom'); // disable visible transition
-  if (__isResizing) {
+  if (_Mouse.is.resizing) {
     console.log('resizing..');
   } else {
-    if (contentEditMouseDown) {
-      log('contentEditMouseDown')
-      contentEditMouseDown = false;
+    if (_Mouse.is.downContentEdit) {
+      log('_Mouse.is.downContentEdit')
+      _Mouse.is.downContentEdit = false;
     } else {
-      log('!contentEditMouseDown')
-      _mouseDownPos = [e.clientX, e.clientY];
-      _mouseDownT = [T[0], T[1]];
-      _isMouseDown = true;
+      log('!_Mouse.is.downContentEdit')
+      _Mouse.down.pos = [e.clientX, e.clientY];
+      _Mouse.down.T = [T[0], T[1]];
+      _Mouse.is.down = true;
 
       // console.log(e);
       // e.preventDefault();
@@ -254,7 +259,7 @@ node_container.onmousedown = function (e) {
     }
 
     if (e.shiftKey) {
-      _isDragSelecting = true;
+      _Mouse.is.dragSelecting = true;
 
       _('#select-box').style.display = 'block';
       _('#select-box').style.width = 0;
@@ -262,41 +267,39 @@ node_container.onmousedown = function (e) {
       _('#select-box').style.top = e.clientX + 'px';
       _('#select-box').style.left = e.clientY + 'px';
     } else {
-      if (__nodeMouseDown) {
+      if (_Mouse.down.node) {
         // pass
-        log('__nodeMouseDown');
+        log('_Mouse.down.node');
       } else {
-        log('!__nodeMouseDown');
+        log('!_Mouse.down.node');
         // throw Error('aaa');
       setTimeout(function(){selectNode(null);},50);
       }
     }
 
-    // if(_selected_DOM!==__nodeMouseDown){
+    // if(_selected_DOM!==_Mouse.down.node){
     //   selectNode(null);
     // }
   }
 };
-
-let __pathMouseDown = false;
 
 window.addEventListener('mouseup', function (e) {
   console.log('window onmouseup');
   // console.log(e);
   console.log('T=' + T + ' S=' + S);
 
-  __nodeMouseDown = null;
+  _Mouse.down.node = null;
 
-  if (_isMouseDragging) {
+  if (_Mouse.is.dragging) {
     // stop dragging
     const A = { type: 'M' }
 
-    if (_selected_DOM.indexOf(_isMouseDragging.node) >= 0) {
+    if (_selected_DOM.indexOf(_Mouse.is.dragging.node) >= 0) {
       // moving all selected
       A.node_ids = _selected_DOM.map( dom => domNode(dom).id );
     } else {
       // moving just the one node
-      A.node_ids = [ _isMouseDragging.id ];
+      A.node_ids = [ _Mouse.is.dragging.id ];
     }
     A.oldValues = A.node_ids.map( id => idNode(id).startPos );
     A.newValues = A.node_ids.map( id => {
@@ -305,36 +308,36 @@ window.addEventListener('mouseup', function (e) {
     });
 
     applyAction(A);
-    // save(_isMouseDragging);
+    // save(_Mouse.is.dragging);
 
-    _isMouseDragging = false;
-  } else if (_isDragSelecting) {
+    _Mouse.is.dragging = false;
+  } else if (_Mouse.is.dragSelecting) {
     _('#select-box').style.display = 'none';
     _('#select-box').style.width = 0;
     _('#select-box').style.height = 0;
     _('#select-box').style.top = 0;
     _('#select-box').style.left = 0;
 
-    _isDragSelecting = false;
+    _Mouse.is.dragSelecting = false;
 
-    console.log('updating _dragSelected..');
+    console.log('updating _Mouse.dragSelected..');
     updateDragSelect();
-    console.log('now ' + _dragSelected.length + ' _dragSelected');
+    console.log('now ' + _Mouse.dragSelected.length + ' _Mouse.dragSelected');
 
-    console.log('pushing _dragSelected doms to _selected_DOM');
-    _dragSelected.forEach((node) => {
+    console.log('pushing _Mouse.dragSelected doms to _selected_DOM');
+    _Mouse.dragSelected.forEach((node) => {
       console.log(node.node.id);
       _selected_DOM.push(node.node);
     });
-    _dragSelected = [];
-  } else if (__isRotating) {
+    _Mouse.dragSelected = [];
+  } else if (_Mouse.rotatingNode) {
 
     rotateStop({}, {angle: { current: 0 } } );
 
-  } else if (_isMouseDown) {
+  } else if (_Mouse.is.down) {
     // stop moving
-    T[0] = _mouseDownT[0] - 1 * node_container.dataset.x / S;
-    T[1] = _mouseDownT[1] - 1 * node_container.dataset.y / S;
+    T[0] = _Mouse.down.T[0] - 1 * node_container.dataset.x / S;
+    T[1] = _Mouse.down.T[1] - 1 * node_container.dataset.y / S;
 
     node_container.dataset.x = 0;
     node_container.dataset.y = 0;
@@ -352,9 +355,9 @@ window.addEventListener('mouseup', function (e) {
   // }
 
   hideGridLine();
-  __isResizing = false;
-  _isMouseDown = false;
-  __pathMouseDown = false;
+  _Mouse.is.resizing = false;
+  _Mouse.is.down = false;
+  _Mouse.is.downPath = false;
 
 });
 
@@ -362,10 +365,10 @@ function tempSelect (node) {
   if (_selected_DOM.indexOf(node.node) >= 0) {
     // already really selected
   } else {
-    if (_dragSelected.indexOf(node) < 0) {
+    if (_Mouse.dragSelected.indexOf(node) < 0) {
       node.node.classList.add('selected');
 
-      _dragSelected.push(node);
+      _Mouse.dragSelected.push(node);
     }
   }
 }
@@ -376,7 +379,7 @@ function tempDeselect (node) {
     // selected previously..
   } else {
     node.node.classList.remove('selected');
-    _dragSelected.splice(_dragSelected.indexOf(node), 1);
+    _Mouse.dragSelected.splice(_Mouse.dragSelected.indexOf(node), 1);
   }
 }
 
@@ -391,15 +394,15 @@ function updateDragSelect () {
     }
   }
   //
-  _dragSelected.forEach((node) => {
+  _Mouse.dragSelected.forEach((node) => {
     node.stillSelected = false;
   });
   _NODES.forEach((node) => {
     // if(node.vis){
     if (!node.deleted) {
       if (isNodeInClientBox(node,
-        Math.min(_mousePos[0], _mouseDownPos[0]), Math.max(_mousePos[0], _mouseDownPos[0]),
-        Math.min(_mousePos[1], _mouseDownPos[1]), Math.max(_mousePos[1], _mouseDownPos[1])
+        Math.min(_Mouse.pos[0], _Mouse.down.pos[0]), Math.max(_Mouse.pos[0], _Mouse.down.pos[0]),
+        Math.min(_Mouse.pos[1], _Mouse.down.pos[1]), Math.max(_Mouse.pos[1], _Mouse.down.pos[1])
       )) {
         tempSelect(node);
         node.stillSelected = true;
@@ -407,7 +410,7 @@ function updateDragSelect () {
     }
   });
   //
-  _dragSelected.forEach((node) => {
+  _Mouse.dragSelected.forEach((node) => {
     if (node.stillSelected === false) {
       tempDeselect(node);
     }
@@ -509,30 +512,30 @@ function hideGridLine(prop){
 }
 
 container.onmousemove = function (e) {
-  _mousePos = [e.clientX, e.clientY];
-  if (_isMouseDown) {
-    if (_isMouseDragging) {
+  _Mouse.pos = [e.clientX, e.clientY];
+  if (_Mouse.is.down) {
+    if (_Mouse.is.dragging) {
       const deltaMove = { 
-        x: (e.clientX - _mouseDragStart[0]) / S  ,
-        y: (e.clientY - _mouseDragStart[1]) / S
+        x: (e.clientX - _Mouse.drag.start[0]) / S  ,
+        y: (e.clientY - _Mouse.drag.start[1]) / S
       }
       const sizeScreen = {
         x: width,
         y: height
       }
-      let updatePosNodes = [_isMouseDragging];
+      let updatePosNodes = [_Mouse.is.dragging];
 
-      if (_isMouseDragging.node.classList.contains('selected')) {
+      if (_Mouse.is.dragging.node.classList.contains('selected')) {
         // move all selected
         updatePosNodes = _selected_DOM.map(domNode);
       }
 
       for(let prop of ['x','y']){
-        _isMouseDragging[prop] = _isMouseDragging.startPos[prop] + deltaMove[prop];
+        _Mouse.is.dragging[prop] = _Mouse.is.dragging.startPos[prop] + deltaMove[prop];
 
-          allPropsMap = allVisibleNodesProps(prop, [_isMouseDragging]);
+          allPropsMap = allVisibleNodesProps(prop, [_Mouse.is.dragging]);
 
-          allPropsAbs = [...allPropsMap.values()].map( v => Math.abs( v - _isMouseDragging[prop] ));
+          allPropsAbs = [...allPropsMap.values()].map( v => Math.abs( v - _Mouse.is.dragging[prop] ));
           minAbs = Math.min(...allPropsAbs)
           minJ = allPropsAbs.indexOf(minAbs);
 
@@ -541,10 +544,10 @@ container.onmousemove = function (e) {
         if(minDvh < 0.01){
           //
           // log('seems like node '+[...allPropsMap.keys()][minJ]+' is OK, huh?');
-          // _isMouseDragging[prop] = [...allPropsMap.values()][minJ];
-          deltaMove[prop] = [...allPropsMap.values()][minJ] - _isMouseDragging.startPos[prop];
+          // _Mouse.is.dragging[prop] = [...allPropsMap.values()][minJ];
+          deltaMove[prop] = [...allPropsMap.values()][minJ] - _Mouse.is.dragging.startPos[prop];
 
-          gridAlignLine(_isMouseDragging, idNode([...allPropsMap.keys()][minJ]), prop);
+          gridAlignLine(_Mouse.is.dragging, idNode([...allPropsMap.keys()][minJ]), prop);
         } else {
           hideGridLine(prop);
         }
@@ -556,27 +559,27 @@ container.onmousemove = function (e) {
         updateNode(node);
       });      
         // move the node under the cursor
-        // _isMouseDragging.x = _isMouseDragging.startPos.x + deltaMove.x;
-        // _isMouseDragging.y = _isMouseDragging.startPos.y + deltaMove.y;
-        // calcBox(_isMouseDragging);
-        // updateNode(_isMouseDragging);
+        // _Mouse.is.dragging.x = _Mouse.is.dragging.startPos.x + deltaMove.x;
+        // _Mouse.is.dragging.y = _Mouse.is.dragging.startPos.y + deltaMove.y;
+        // calcBox(_Mouse.is.dragging);
+        // updateNode(_Mouse.is.dragging);
       // }
-    } else if (__isResizing) {
+    } else if (_Mouse.is.resizing) {
       // pass
-    } else if (_isDragSelecting) {
-      _('#select-box').style.left = Math.min(e.clientX, _mouseDownPos[0]) + 'px';
-      _('#select-box').style.width = Math.abs(e.clientX - _mouseDownPos[0]) + 'px';
-      _('#select-box').style.top = Math.min(e.clientY, _mouseDownPos[1]) + 'px';
-      _('#select-box').style.height = Math.abs(e.clientY - _mouseDownPos[1]) + 'px';
+    } else if (_Mouse.is.dragSelecting) {
+      _('#select-box').style.left = Math.min(e.clientX, _Mouse.down.pos[0]) + 'px';
+      _('#select-box').style.width = Math.abs(e.clientX - _Mouse.down.pos[0]) + 'px';
+      _('#select-box').style.top = Math.min(e.clientY, _Mouse.down.pos[1]) + 'px';
+      _('#select-box').style.height = Math.abs(e.clientY - _Mouse.down.pos[1]) + 'px';
 
       updateDragSelect();
       // clearTimeout(_dragSelectingTimeout);
       // _dragSelectingTimeout = setTimeout(updateDragSelect, 500);
     } else {
-      // T[0] = _mouseDownT[0] -  (e.clientX - _mouseDownPos[0])/S;
-      // T[1] = _mouseDownT[1] -  (e.clientY - _mouseDownPos[1])/S;
-      node_container.dataset.x = (e.clientX - _mouseDownPos[0]);
-      node_container.dataset.y = (e.clientY - _mouseDownPos[1]);
+      // T[0] = _Mouse.down.T[0] -  (e.clientX - _Mouse.down.pos[0])/S;
+      // T[1] = _Mouse.down.T[1] -  (e.clientY - _Mouse.down.pos[1])/S;
+      node_container.dataset.x = (e.clientX - _Mouse.down.pos[0]);
+      node_container.dataset.y = (e.clientY - _Mouse.down.pos[1]);
       node_container.style.left = node_container.dataset.x + 'px';
       node_container.style.top = node_container.dataset.y + 'px';
 
@@ -598,7 +601,6 @@ container.onmousemove = function (e) {
 // #+#   #+#  #+#           #+#    #+#    #+# #+#    #+#  #+#+# #+#+#  #+#   #+#+#
 // ###    ### ##########    ###    #########   ########    ###   ###   ###    ####
 
-let _clipBoard = []; // stores nodes with relative coordinates (x-centerX)*S
 
 function calcCenterPos (nodes) {
   const R = [0, 0];
@@ -611,16 +613,16 @@ function calcCenterPos (nodes) {
 
 function copySelection (de_id = false) {
   copySelection.on = true;
-  _clipBoard = _selected_DOM.map(domNode).map(stripNode);
-  const centerPos = calcCenterPos(_clipBoard);
-  _clipBoard.forEach((node) => {
+  _Mouse.clipboard = _selected_DOM.map(domNode).map(stripNode);
+  const centerPos = calcCenterPos(_Mouse.clipboard);
+  _Mouse.clipboard.forEach((node) => {
     // yeah, my definition of S is counterintuitive here..
     node.x = (node.x - centerPos[0]) * S;
     node.y = (node.y - centerPos[1]) * S;
     node.fontSize *= S;
   });
 
-  copyToClipboard(JSON.stringify(_clipBoard));
+  copyToClipboard(JSON.stringify(_Mouse.clipboard));
 
   copySelection.on = false;
 }
@@ -643,6 +645,7 @@ window.addEventListener('keydown', (e) => {
     }
   } else if (e.key === 'Enter') {
     if (_contentEditTextarea) {
+      e.stopPropagation();
       return 0;
     } else {
       if (_selected_DOM.length > 0) {
@@ -711,10 +714,6 @@ function deselectOneDOM (dom) {
 
   try{
     $(domNode(dom).content_dom).resizable('destroy');
-
-    // [].forEach.call(dom.getElementsByTagName('img'), (e) => {
-    //   $(e).resizable('destroy').css('width', 'auto');
-    // });
   } catch (e) {
     console.log('some error in resizable destroy');
     console.log(e);
@@ -733,14 +732,14 @@ function rotateStop(e, ui) {
   // ui.angle.start = ui.angle.current;
   applyAction({
     type: 'E',
-    node_ids: [ __isRotating.id ],
+    node_ids: [ _Mouse.rotatingNode.id ],
     oldValues: _oldValues,
     newValues: [{ rotate: ui.angle.current }]
   });
 
-  __isRotating.node.style.transform = 'rotate('+ui.angle.current+'rad)';
-  save(__isRotating);
-  __isRotating = null;
+  _Mouse.rotatingNode.node.style.transform = 'rotate('+ui.angle.current+'rad)';
+  save(_Mouse.rotatingNode);
+  _Mouse.rotatingNode = null;
 }
 
 function selectOneDOM (dom) {
@@ -762,7 +761,7 @@ function selectOneDOM (dom) {
         console.log(e);
         log(ui);
         _oldValues = [{ rotate: node.rotate }];
-        __isRotating = node;
+        _Mouse.rotatingNode = node;
       },
       stop: rotateStop 
     };
@@ -788,7 +787,7 @@ function selectOneDOM (dom) {
       })
       .on('dblclick', function (e) {
         log('rotatable dblclick');
-        __isRotating = node;
+        _Mouse.rotatingNode = node;
         rotateStop({}, { angle: { current: 0 }});
         e.stopPropagation();
       })
@@ -830,7 +829,7 @@ function selectOneDOM (dom) {
     $(node.content_dom).resizable(resizeParams);
 
     if(0)
-    [].forEach.call(dom.getElementsByTagName('img'), (img) => {
+    dom.getElementsByTagName('img').forEach( img => {
       console.log('making that img resizable:');
       console.log(img);
       img.dataset.parent_node_id = dom.id;
@@ -869,7 +868,7 @@ function selectOneDOM (dom) {
       .on('mousedown', function (e) {
         console.log('resize mouse down');
         // e.stopPropagation();
-        __isResizing = true;
+        _Mouse.is.resizing = true;
       })
       .on('mouseup', function (e) {
         console.log('resize mouse up');
@@ -918,24 +917,6 @@ function selectNode (n) {
   return 0;
 }
 
-function deleteNode (d) {
-  if ('click' in d) {
-    // DOM
-    deleteNode(domNode(d));
-  }else {
-    // _NODES
-    // ixs (TODO:optimize further)
-    gen_DOMId2nodej();
-    // remove rom _NODES
-    _NODES.splice(_DOMId2nodej.get(d.node.id), 1);
-    // remove from index
-    _DOMId2node.delete(d.node.id);
-    // remove from DOM
-    node_container.removeChild(d.node);
-    // remove from saved
-    localStorage.removeItem('noteplace.' + d.node.id);
-  }
-}
 
 function stopEditing () {
   log('stopEditing');
@@ -962,44 +943,35 @@ function save (node = null, save_ids = true) {
   //  if node == 'ids', saves ids
   // additional argument:
   //  save_ids [bool] : true => save ids too
-  // log('save!');
-  // log(node);
+  var nodes2save = [node];
   if (node === null) {
-    // save all
-    const node_ids = [];
-    _NODES.forEach((node) => {
-      save(node, false);
-      node_ids.push(node.id);
-      // nodes.push(JSON.parse(JSON.stringify(node.dataset)));
-    });
-    localStorage['noteplace.node_ids'] = JSON.stringify(node_ids);
+    nodes2save = _NODES;
+    save_ids = true;
   } else if ( typeof(node) === 'string'){
     if (node === 'ids') {
       save_ids = true;
-    } else if (node === 'places') {
-      // do nothing, I intend on saving places anyway
-    } else {
-      // ID
-      localStorage['noteplace.node_' + node] = JSON.stringify(stripNode(idNode(node)));
+      nodes2save = [];
     }
   } else if (Array.isArray(node)) {
-    // you know, array is for saving all of them
-    node.forEach( save );
-    // aand ids, just in case.
-    save('ids');
-  } else {
-    // node provided, save only node
-    if ('x' in node) {
-      // original object
-      localStorage['noteplace.node_' + node.id] = JSON.stringify(stripNode(node));
-    } else if ('id' in node) {
-      // DOM node
-      localStorage['noteplace.' + node.id] = JSON.stringify(stripNode(domNode(node)));
+    nodes2save = node;
+    save_ids = true;
+  }
+  
+  nodes2save.forEach( (node) => {
+    if (isString(node)) {
+      node = idNode(node);
+    }
+    if (isDom(node)) {
+      node = domNode(node);
+    }
+    if (isNode(node)) {
+      localStorage[getNodeLocalStorageKey(node)] = JSON.stringify(stripNode(node));
     } else {
       log(node);
       throw Error('What did you aim for, calling save('+node+') ??');
     }
-  }
+  })
+  
   if (save_ids) {
     localStorage['noteplace.node_ids'] = JSON.stringify(
       _NODES.map((node) => node.id)
@@ -1037,7 +1009,6 @@ function showMenu(){
 // ###    ####  ########  #########  ##########      ###         ########  ###    ####  ########   ########
 
 let contentEditNode = null;
-let contentEditMouseDown = false;
 let _contentEditTextarea = null;
 
 function textareaAutoResize (e) {
@@ -1053,18 +1024,19 @@ function textareaBtnDown (e) {
   log('textareaBtnDown');
   log(e);
   if ((e.ctrlKey) && ((e.keyCode === 0xA) || (e.keyCode === 0xD))) {
-    // Ctrl+Enter
+    log('Ctrl+Enter!');
     stopEditing();
+    e.stopPropagation();
+    
   }
-  if ((e.keyCode === 13) && (e.shiftKey)) {
-    // Shift-enter
+  if ((e.key === 'Enter') && (e.shiftKey)) {
+    log('Shift-enter');
     const tnode_orig = domNode(contentEditNode.parentElement);
     const tnode = stripNode(tnode_orig);
     let th = contentEditNode.getBoundingClientRect().height;
-    // Shift+Enter
+    
     stopEditing();
 
-    // setTimeout(function(){
     if (contentEditNode) {
       // if the node has not been deleted (as empty)
       //  , get actual height (not height of markdown textarea)
@@ -1082,7 +1054,6 @@ function textareaBtnDown (e) {
         fontSize: tnode.fontSize
       }]
     })
-    // const new_node = newNode();
 
     setTimeout(function(){
       selectNode(null);
@@ -1096,13 +1067,12 @@ function textareaBtnDown (e) {
       //    stoped newline from appearing
       setTimeout(function () { _contentEditTextarea.value = ''; _contentEditTextarea.focus(); }, 10);
     },10);
-    // }, 30);
 
     e.stopPropagation();
 
   }
 
-  if (e.keyCode === 9) {
+  if (e.key === 'Tab') {
     // Tab
 
     // no jump-to-next-field
@@ -1112,6 +1082,8 @@ function textareaBtnDown (e) {
   // https://stackoverflow.com/a/3369624/2624911
   if (contentEditNode) {
     if (e.key === 'Escape') { // escape key maps to keycode `27`
+      log('Escape!');
+    
       selectNode(contentEditNode.parentElement);
 
       stopEditing();
@@ -1171,7 +1143,7 @@ function onNodeDblClick (e) {
     if (e.button === 1) {
       // drag on middle button => just pass the event
     } else {
-      contentEditMouseDown = true;
+      _Mouse.is.downContentEdit = true;
     }
   };
 
@@ -1187,9 +1159,6 @@ function onNodeDblClick (e) {
 onNodeDblClick.path_ok = false;
 }
 
-__nodeMouseDown = null;
-
-
 
 function onNodeMouseDown (e) {
   console.log('onNodeMouseBtn');
@@ -1197,11 +1166,11 @@ function onNodeMouseDown (e) {
 
   if((!domNode(this).is_svg)||((domNode(this).is_svg)&&(onNodeMouseDown.path_ok))){
 
-  __nodeMouseDown = domNode(this);
+  _Mouse.down.node = domNode(this);
   // console.log(e);
   if (e.button === 1) {
-    _isMouseDragging = __nodeMouseDown;
-    _mouseDragStart = [e.clientX, e.clientY];
+    _Mouse.is.dragging = _Mouse.down.node;
+    _Mouse.drag.start = [e.clientX, e.clientY];
 
     let applyDrag = [ this ];
     if (this.classList.contains('selected')) {
@@ -1244,377 +1213,6 @@ function onNodeClick (e) {
 
   }
   onNodeClick.path_ok = false;
-}
-
-function newNodeID (id = null) {
-  return newID(id || 'n', idNode);
-}
-
-// ::::    ::: :::::::::: :::       ::: ::::    :::  ::::::::  :::::::::  ::::::::::
-// :+:+:   :+: :+:        :+:       :+: :+:+:   :+: :+:    :+: :+:    :+: :+:
-// :+:+:+  +:+ +:+        +:+       +:+ :+:+:+  +:+ +:+    +:+ +:+    +:+ +:+
-// +#+ +:+ +#+ +#++:++#   +#+  +:+  +#+ +#+ +:+ +#+ +#+    +:+ +#+    +:+ +#++:++#
-// +#+  +#+#+# +#+        +#+ +#+#+ +#+ +#+  +#+#+# +#+    +#+ +#+    +#+ +#+
-// #+#   #+#+# #+#         #+#+# #+#+#  #+#   #+#+# #+#    #+# #+#    #+# #+#
-// ###    #### ##########   ###   ###   ###    ####  ########  #########  ##########
-
-// function addNode(node){
-
-//   _NODES.push(node);
-//   _DOMId2node.set(tdom.id, node);
-//   _DOMId2nodej.set(tdom.id, _NODES.length-1);
-// }
-
-// function addNodes(nodes){
-
-// }
-
-
-function newNode (node, redraw=true, domOnly=false) {
-  let tdom = node;
-  // console.log(d);
-  if ('className' in node) {
-    console.log('newNode with DOM node provided:');
-    // console.log(tn);
-    node = domNode(tdom);
-  } else {
-    console.log('newNode with node provided');
-    if ((!('id' in node)) || (node.id === undefined) || (idNode(node.id))) {
-      node.id = newNodeID();
-    }
-    if (!('rotate' in node)) {
-      node.rotate = 0;
-    }
-    if (!('x' in node)) {
-      let mousePos = _mousePos;
-      if ('mousePos' in node) {
-        mousePos = node.mousePos;
-      }
-      const mouseXY = clientToNode(mousePos);
-      node.x = mouseXY[0];
-      node.y = mouseXY[1];
-    }
-    if (!('fontSize' in node)) {
-      node.fontSize = 20 / S;
-    }
-    if ((!node.hasOwnProperty('style'))||
-        (node.style === undefined)) {
-      node.style = Object.assign({}, default_node_style);
-    } else {
-      node.style = Object.assign({}, default_node_style, node.style);
-    }
-
-    tdom = _ce('div'
-      , 'id', 'node_' + node.id
-      , 'className', 'node ui-rotatable'
-      , 'onclick', onNodeClick
-      , 'ondblclick', onNodeDblClick
-      , 'onmousedown', onNodeMouseDown
-    );
-    // tdom.dataset['bsHtml']='true';
-    // tdom.dataset['bsPlacement']='top';
-    // tdom.dataset['bsToggle']='popover';
-    // tdom.dataset['bsContainer']="body";
-
-    tdom.style.display = 'none';
-
-    if(!domOnly){
-      console.log("pushing..");
-      _NODES.push(node);
-      _NODEId2node.set(node.id, node);
-      _DOMId2node.set(tdom.id, node);
-      _DOMId2nodej.set(tdom.id, _NODES.length - 1);
-    }
-
-    //  tn.contentEditable = true;
-    // tn.dataset["x"] = d.x;
-    // tn.dataset["y"] = d.y;
-    // tn.dataset["rotate"] = d.rotate;
-    // tn.dataset["fontSize"] = d.fontSize;
-    // tn.dataset['text'] = d.text;
-    // tn.dataset['id'] = d.id;
-  }
-  tdom.innerHTML = '';
-
-  const tcontent = _ce('div'
-    , 'className', 'np-n-c'
-    , 'innerHTML', getHTML(node)
-  );
-
-  if(node.is_svg){
-    node.svg_dom = tcontent.getElementsByTagName('svg')[0];
-
-    node.path_dom = node.svg_dom.getElementsByTagName('path')[0];
-
-    node.path_dom.setAttribute("stroke", node.style.color);
-    node.path_dom.setAttribute("strokeWidth", node.style.strokeWidth);
-    node.path_dom.setAttribute("fill", node.style.fill);
-    
-
-    node.svg_dom.onmousedown = function(e) {
-      //if(onNodeMouseDown.path_ok)
-    }
-    node.path_dom.onmousedown = function (e) {
-      onNodeMouseDown.path_ok = true;
-    }
-
-    node.path_dom.ondblclick = function (e) {
-      onNodeDblClick.path_ok = true;
-    }
-    node.path_dom.onclick = function (e) {
-      onNodeClick.path_ok = true;
-    }
-    
-  }
-  if(node.is_img){
-    tdom.classList.add('img');
-
-    node.img_dom = tcontent.getElementsByTagName('img')[0];
-    node.img_dom.onload = function(e) {
-      console.log('img load');
-      console.log(this);
-    }
-    node.img_dom.addEventListener('load',function () {
-      console.log('node '+node.id+' img ready!!');
-      node.size = [node.img_dom.width, node.img_dom.height];
-    });
-  }
-
-  if (node.is_svg) {
-    // tcontent.classList.add('svg');
-    tdom.classList.add('svg');
-  }
-
-  // Tooltip
-
-  const tt = _ce('div'
-    , 'className', 'position-absolute start-0 np-n-tooltip'// translate-middle start-50
-  );
-
-  if (node.is_img == false) {
-    // not entirely image-based node, add color select
-    const tcolorselect = _ce('input'
-      , 'type', 'color'
-      , 'value', node.style.color
-      , 'oninput', function (e) {
-        node.style.color = this.value;
-        node.content_dom.style.color = this.value;
-        if (node.is_svg) {
-          node.path_dom.setAttribute("stroke", this.value);
-        }
-      }
-      , 'onchange', function (e) {
-        applyAction( { 
-          type: 'E',
-          node_ids: [ node.id ],
-          oldValues: [ { 'style.color': this.dataset['oldValue'] } ],
-          newValues: [ { 'style.color': this.value } ]
-        })
-      }
-    );
-    tcolorselect.dataset['oldValue'] = node.style.color;
-    tt.appendChild(tcolorselect);
-  
-  }
-  if((node.is_img == false) && (node.is_svg == false)){
-    if (tcontent.innerHTML.indexOf('<br') >= 0) {
-      // text align only valuable for multiline nodes
-      ['left', 'center', 'right'].forEach((jta) => {
-        let tbtn = _ce('button'
-          , 'className', 'np-n-t-btn np-n-t-ta' + (node.style.textAlign == jta ? ' np-n-t-ta-selected':'')
-          , 'innerHTML', '<i class="bi-text-' + jta + '"></i>'
-          , 'onclick', function (e) {
-            console.log('clicked on text-align=' + this.dataset.textAlign);
-            $(this.parent)
-              .find('.np-n-t-ta')
-              .removeClass('np-n-t-ta-selected')
-              .find('[data-text-align="' + this.dataset.textAlign + '"]')
-              .addClass('np-n-t-ta-selected');
-
-            applyAction({
-              type: 'E',
-              node_ids: [ node.id ],
-              newValues: [ { 'style.textAlign': this.dataset.textAlign } ]
-            })  
-            // node.style.textAlign = this.dataset.textAlign;
-            node.content_dom.style.textAlign = this.dataset.textAlign;
-            // newNode(node.node);
-            // selectNode(node)
-            e.stopPropagation();
-          }
-        );
-
-        tbtn.dataset.textAlign = jta;
-        tt.appendChild(tbtn);
-      });
-    }
-  }
-
-  const tplusbtn = _ce('button'
-    , 'className', 'np-n-t-btn plus-button'// btn btn-outline-primary'
-    , 'onclick', function (e) { editFontSize(+1); e.stopPropagation(); }
-    , 'title', 'make BIGGER'
-    , 'innerHTML', '<i class="bi bi-plus"></i>'
-  );
-  const tminusbtn = _ce('button'
-    , 'className', 'np-n-t-btn minus-button'// 'btn btn-outline-primary'
-    , 'onclick', function (e) { editFontSize(-1); e.stopPropagation(); }
-    , 'title', 'Make smaller'
-    , 'innerHTML', '<i class="bi bi-dash"></i>'
-  );
-  tt.appendChild(tplusbtn);
-  tt.appendChild(tminusbtn);
-
-  if (node.is_svg) {
-    // add line width !!
-    const tplusbtnLW = _ce('button'
-      , 'className', 'np-n-t-btn plus-button'// btn btn-outline-primary'
-      , 'onclick', function (e) { changeStrokeWidth(+1); e.stopPropagation(); }
-      , 'title', 'make <b>thicker</b>'
-      , 'innerHTML', '<div style="font-weight:900; transform:translate(-20%,0);">➖</span>'
-    );
-    const tminusbtnLW = _ce('button'
-      , 'className', 'np-n-t-btn minus-button'// 'btn btn-outline-primary'
-      , 'onclick', function (e) { changeStrokeWidth(-1); e.stopPropagation(); }
-      , 'title', 'make thinner'
-      , 'innerHTML', '<div style="font-weight:100;">—</span>'
-    );
-    tt.appendChild(tplusbtnLW );
-    tt.appendChild(tminusbtnLW );
-
-    // fill?
-    const tbutton = _ce('button'
-      ,'className', "np-n-t-btn"
-    );
-
-    const tlabel = _ce('label'
-      ,'innerHTML', node.style.fill=='none'?'<i class="bi-bucket"></i>':'<i class="bi-bucket-fill"></i>'
-      ,'ondblclick', function (e) {
-        applyAction({
-          type: 'E',
-          node_ids: [node.id],
-          oldValues: [{'style.fill': this.dataset['oldValue']}],
-          newValues: [{'style.fill': 'none'}]
-        });
-        e.stopPropagation();
-      }
-    );
-    tlabel.setAttribute('for','inputfill_'+node.id);
-    if(node.style.fill!=='none'){
-      tlabel.style.color = node.style.fill;
-    }
-
-
-    const tfillinput = _ce('input'
-      ,'type','color'
-      ,'value', node.style.fill=='none'?'#ffffff':node.style.fill
-      ,'id','inputfill_'+node.id
-      ,'style','width:0px;height:0px;'
-      // ,'hidden','hidden'
-      ,'oninput', function (e) {
-        tlabel.style.color = this.value;
-        node.style.fill = this.value;
-        node.path_dom.setAttribute('fill', this.value);
-        tlabel.innerHTML = '<i class="bi-bucket-fill"></i>';
-      }
-      ,'onchange', function (e) {
-        applyAction({
-          type: 'E',
-          node_ids: [node.id],
-          oldValues: [{'style.fill': this.dataset['oldValue']}],
-          newValues: [{'style.fill': this.value}],
-        });
-      }
-
-    )
-    tfillinput.dataset['oldValue'] = node.style.fill;
-    tbutton.appendChild(tlabel);
-    tbutton.appendChild(tfillinput);
-
-    // tt.appendChild(tfillinput);
-    tt.appendChild(tbutton);
-  }
-
-
-  tt.addEventListener('click', function(e) {
-    e.stopPropagation();
-  })
-  tt.addEventListener('mousedown', function(e) {
-    e.stopPropagation();
-  })
-  tt.addEventListener('mouseup', function(e) {
-    e.stopPropagation();
-  })
-  tt.addEventListener('dblclick', function (e) {
-    e.stopPropagation();
-  });
-
-  tdom.appendChild(tt);
-
-  for (const p of Object.keys(node.style)) {
-    tcontent.style[p] = node.style[p];
-  }
-
-  tdom.appendChild(tcontent);
-
-  // tn.innerHTML =  '';
-  // ta = document.createElement('a');
-  // ta.href = '(?Tx='+tn.dataset["x"]+'&Ty='+tn.dataset["y"]+'&S='+30/tn.dataset["fontSize"];
-  // ta.className = 'node_a';
-  // ta.innerHTML = getHTML(tn.dataset['text']);
-  // ta.onclick = function(e){
-  //   console.log('a click!');
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  // }
-  // ta.onauxclick = function(e){
-  //   // middle mouse button click!!
-  //   e.preventDefault();
-  // }
-  // ta.onmousedown = function(e){
-  //   console.log('a onmousedown!');
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  // }
-  // ta.onmouseup = function(e){
-  //   console.log('a onmouseup!');
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  // }
-  // tn.appendChild(ta);
-  node.node = tdom;
-  node.content_dom = tcontent;
-
-  if (!('className' in node)) {
-    node_container.appendChild(tdom);
-  }
-
-  
-
-  [].forEach.call(tdom.getElementsByTagName('a'), (elt) => {
-    if (elt.href) {
-      elt.onclick = (e) => {
-        e.stopPropagation();
-      };
-      elt.onmousedown = (e) => {
-        e.stopPropagation();
-      };
-    }
-  });
-
-  if (redraw) {
-    redrawNode(node);
-  } else {
-    updateNode(node);
-  }
-
-  if(tdom.classList.contains('selected')){
-    // deselectOneDOM(tdom);
-    try{$(tdom).rotatable('destroy');}catch(e){}
-    setTimeout(function(){selectOneDOM(tdom);},1);
-  }
-
-  return tdom;
 }
 
 function changeStrokeWidth(delta=1){
@@ -1690,7 +1288,7 @@ function updateNode (d) {
       d.img_dom.style.height = h + 'px';//d.size[1] * k + 'px';
     }
   }else{
-    [].forEach.call(n.getElementsByTagName('img'), (e) => {
+    n.getElementsByTagName('img').forEach( (e) => {
       e.style.width = 'auto';
       e.style.height = 5 * (d.fontSize) * S + 'px';
       // e.setAttribute('draggable', false);
@@ -1708,19 +1306,11 @@ function updateNode (d) {
     
     }
 
-  // setTimeout(function () {
-  //   [].forEach.call(n.getElementsByClassName('ui-wrapper'), (wrapper) => {
-  //     const img = wrapper.getElementsByTagName('img')[0];
-  //     wrapper.style.height = img.style.height;
-  //     wrapper.style.width = img.getBoundingClientRect.width;
-  //     img.dataset.origS = S;
-  //   })
-  // }, 10);
   return 1;
-  [].forEach.call(n.getElementsByClassName('ui-wrapper'), (wrapper) => {
+  
+  n.getElementsByClassName('ui-wrapper').forEach( (wrapper) => {
     const img = wrapper.getElementsByTagName('img')[0];
-    // e.style.height = img.clientHeight+'px';
-    // e.style.width = img.clientWidth+'px';
+    
     wrapper.style.width = wrapper.style.width.slice(0, -2) * S / img.dataset.origS + 'px';
     wrapper.style.height = wrapper.style.height.slice(0, -2) * S / img.dataset.origS + 'px';
     img.dataset.origS = S;
@@ -1957,10 +1547,6 @@ const zoom_urlReplaceTimeout = setInterval(function () {
   }
 }, 200);
 
-function getDOM (id) {
-  return document.getElementById('node_' + id);
-}
-
 function onFontSizeEdit () {
   if (_selected_DOM.length === 1) {
     const dom = _selected_DOM[0];
@@ -1981,9 +1567,6 @@ function onTextEditChange () {
   if (_selected_DOM !== null) {
     _selected_DOM.dataset.text = this.value;
     newNode(_selected_DOM);
-
-    // this.style.height = "5px";
-    // this.style.height = (this.scrollHeight)+"px";
 
     save(_selected_DOM);
   }
@@ -2053,124 +1636,6 @@ function showModalYesNo (title, body, yes_callback) {
   $('#modalYesNo').modal('show');
 }
 
-// :::::::::: ::::::::::: :::        :::::::::: ::::::::
-// :+:            :+:     :+:        :+:       :+:    :+:
-// +:+            +:+     +:+        +:+       +:+
-// :#::+::#       +#+     +#+        +#++:++#  +#++:++#++
-// +#+            +#+     +#+        +#+              +#+
-// #+#            #+#     #+#        #+#       #+#    #+#
-// ###        ########### ########## ########## ########
-
-function defaultFilename () {
-  return 'Noteplace_' + date2str(new Date()) + '.json';
-}
-
-// Start file download.
-_('#save').addEventListener('click', function () {
-  _('#modal-input').value = defaultFilename();
-  _('#modal-save').style.display = '';
-  _('#exampleModalLabel').innerHTML = 'Save to local file:';
-
-  _('#modal-save').onclick = function () {
-    download(
-      _('#modal-input').value,
-      JSON.stringify(saveToG())
-    );
-  };
-  _('#modal-list').innerHTML = '';
-}, false);
-
-// save everything to a single object
-function saveToG (add_history = true) {
-  const G = {
-    T: T,
-    S: S,
-    nodes: (
-      add_history
-        ? _NODES
-        : _NODES.filter(node => !node.deleted)
-    ).map(stripNode),
-    places: stripPlace()
-  };
-  if (add_history) {
-    G.history = _HISTORY;
-    G.history_current_id = _HISTORY_CURRENT_ID;
-  }
-  return G;
-}
-
-function stripNode (d) {
-  // strips only relevant data for nodes, also convert to numerical
-  return {
-    id: ('id' in d) ? d.id+'' : newNodeID(), // newNodeID(),//
-    x: 1 * d.x,
-    y: 1 * d.y,
-    fontSize: 1 * d.fontSize,
-    text: d.text,
-    rotate: 'rotate' in d ? 1 * d.rotate:0,
-    deleted: 'deleted' in d ? d.deleted : false,
-    style: 'style' in d ? delete_defaults(d.style, default_node_style) : undefined
-  };
-}
-
-_G = null;
-// load everything from single object
-function loadFromG (G) {
-  console.log('Loading..');
-  
-  _G = G;
-
-  T = [1 * G.T[0], 1 * G.T[1]];
-  S = 1 * G.S;
-
-  // delete _PLACES;
-  if ('places' in G) {
-    _PLACES = G.places;
-  } else {
-    _PLACES = _PLACES_default;
-  }
-  fillPlaces();
-
-  // applyZoom([1*G.T[0],1*G.T[1]], 1*G.S);
-  $('.node').remove();
-  // delete _NODES;
-  _NODES = [];
-  gen_DOMId2nodej();
-
-  G.nodes.map(stripNode).forEach(node => newNode(node,false,false));
-
-
-  redraw();
-
-  if ( 'history' in G ) {
-    _HISTORY = G.history;
-    if ( 'history_current_id' in G ){
-      _HISTORY_CURRENT_ID = G.history_current_id;
-    } else {
-      _HISTORY_CURRENT_ID = lastHistoryID();
-    }
-    genHistIDMap();
-    fillHistoryList();
-  } else {
-    clearAllHistory();
-  }
-
-  console.log('Loading complete, now ' + _NODES.length + ' nodes');
-}
-
-_('#file').oninput = function () {
-  let fr = new FileReader();
-  fr.onload = function () {
-    console.log('Received file..');
-
-    loadFromG(JSON.parse(fr.result));
-
-    $('#file').value = '';
-  };
-
-  fr.readAsText(this.files[0]);
-};
-
 //  :::::::: ::::::::::: :::     ::::::::: ::::::::::: :::    ::: :::::::::
 // :+:    :+:    :+:   :+: :+:   :+:    :+:    :+:     :+:    :+: :+:    :+:
 // +:+           +:+  +:+   +:+  +:+    +:+    +:+     +:+    +:+ +:+    +:+
@@ -2207,7 +1672,7 @@ _('#btnFontPlus').onclick = function () {
 
 // Load nodes?
 
-if ($('.node').length) {
+if (_('.node').length) {
   console.log('seems we already have nodes.');
 
   save();
@@ -2279,9 +1744,11 @@ window.addEventListener('paste', function (e) {
 
         E = e;
 
-        let tstuff = [].map.call(e, je => [].map.call(
-          je.addedNodes, n => 'innerHTML' in n ? n.innerHTML:n.textContent
-        ).join('')).join('');
+        let tstuff = e.map( 
+          je => je.addedNodes.map( 
+            (n) => 'innerHTML' in n ? n.innerHTML:n.textContent 
+          ).join('')
+        ).join('');
 
         setTimeout(function () {
           tstuff = _('#copydiv').innerHTML;
@@ -2292,7 +1759,7 @@ window.addEventListener('paste', function (e) {
           let json_parsed = false;
           if (tstuff[0] == '[') {
             try {
-              _clipBoard = JSON.parse(
+              _Mouse.clipboard = JSON.parse(
               // I know, right?
               //  why does pasting JSON-encoded html
               //    create this sort of nonsense?
@@ -2309,20 +1776,20 @@ window.addEventListener('paste', function (e) {
           }
 
           if (json_parsed) {
-            console.log('Pasting JSON-parsed _clipBoard');
+            console.log('Pasting JSON-parsed _Mouse.clipboard');
             selectNode(null);
             // paste Under the cursor?
 
             const A = { type: 'A', nodes: [] };
 
-            _clipBoard.forEach((node) => {
+            _Mouse.clipboard.forEach((node) => {
               const nnode = stripNode(node);
               // de-duplicate if
               nnode.id = newNodeID(nnode.id);
               nnode.x /= S;
               nnode.y /= S;
               nnode.fontSize /= S;
-              const tmousePos = clientToNode(_mousePos);
+              const tmousePos = clientToNode(_Mouse.pos);
               nnode.x += tmousePos[0];
               nnode.y += tmousePos[1];
 
@@ -2354,10 +1821,7 @@ window.addEventListener('paste', function (e) {
             selectNode(_NODES[_NODES.length - 1].node);
           }
 
-        // node_container.removeChild(copydiv);
         }, 50);
-      // e.stopPropagation();
-        // })
       });
     }
   }

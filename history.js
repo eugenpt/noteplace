@@ -366,6 +366,8 @@ btnRedo.onclick = function(e) {
 }
 
 function fillHistoryList () {
+  console.log("idNode");
+  console.log(idNode);
   historyContainer.innerHTML = '';
 
   const nowDate = new Date();
@@ -390,10 +392,19 @@ function fillHistoryList () {
     }else if(h.type === 'E'){
       actionStr = '<i class="bi-pencil" title="Edited"></i>';
     }
-
-    let nodeStr = (h.node_ids.length > 1)
-      ? ( h.node_ids.length + ' node' + (h.node_ids.length>1?'s':'') )
-      : ( idNode(h.node_ids[0]).text.split('\n')[0] );
+  
+    let nodeStr = '';
+    if(h.node_ids.length > 1) {
+      nodeStr =  h.node_ids.length + ' node' + (h.node_ids.length>1?'s':'') ;
+    } else {
+      var temp =  idNode(h.node_ids[0]);
+      if(temp) {
+        nodeStr = temp.text.split('\n')[0];
+      }else{
+        nodeStr = '???';
+        console.error('No node with id=',h.node_ids[0])
+      }
+    }
 
     let allstr = datestr + ' ' + actionStr + ' ' + nodeStr;
 

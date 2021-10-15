@@ -6,7 +6,6 @@ class FreeHand{
   
   static svgns = 'http://www.w3.org/2000/svg';
 
-
   stop(){
     this.status = null;
     this.toggleButton(false);
@@ -67,6 +66,7 @@ class FreeHand{
   
     }
   }
+  
   constructor() {
     var T = this
     _('#btnFreehand').onclick = function() {
