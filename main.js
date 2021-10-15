@@ -1143,79 +1143,61 @@ function changeStrokeWidth(delta=1){
   })
 }
 
-function updateNode (d) {
-  // here, sadly, d s for _NODES element, and n is for DOM element..
-  let n = d;
-  if (d.hasOwnProperty('dom')) {
-    n = d.dom;
+function updateNode (node_) {
+  let node = node_;
+  if (node.hasOwnProperty('dom')) {
+    dom = node.dom;
   } else {
-    n = d;
-    d = _DOMId2node.get(n.id);
+    dom = node_;
+    node = domNode(dom);
   }
-
   
-  n.style.left = (d.x - T[0]) * S + 'px';
-  n.style.top = (d.y - T[1]) * S + 'px';
-  n.style.fontSize = (d.fontSize) * S + 'px';
+  dom.style.left = (node.x - T[0]) * S + 'px';
+  dom.style.top = (node.y - T[1]) * S + 'px';
+  dom.style.fontSize = (node.fontSize) * S + 'px';
 
-  n.style.zIndex = Math.floor(200 - 10 * Math.log((d.fontSize) * S ));
+  dom.style.zIndex = Math.floor(200 - 10 * Math.log((node.fontSize) * S ));
 
-  let k = (S * d.fontSize / 20);
+  let k = (S * node.fontSize / 20);
 
-  if(d.is_svg){
-    d.content_dom.style.position = 'relative';
-    d.content_dom.style.left = '0px';
-    d.content_dom.style.top = '0px';
+  if(node.is_svg){
+    node.content_dom.style.position = 'relative';
+    node.content_dom.style.left = '0px';
+    node.content_dom.style.top = '0px';
 
     
-    let ow = d.svg_dom.getAttribute('width')*1;
-    let oh = d.svg_dom.getAttribute('height')*1
-    d.content_dom.style.width = ow * k + 'px';
-    d.content_dom.style.height = oh * k + 'px';
-    d.dom.style.height = oh * k + 'px';
-    d.dom.style.width = ow * k + 'px';
-    // d.content_dom.style.transform = 'scale(' + k + ')';
-    d.svg_dom.style.transform = 'translate(-'+ow/2+'px,-'+oh/2+'px) scale(' + k + ')' +' translate('+ow/2+'px,'+oh/2+'px)';// + ' rotate('+d.rotate+'rad) ' ;
-  // }else{
+    let ow = node.svg_dom.getAttribute('width')*1;
+    let oh = node.svg_dom.getAttribute('height')*1
+    node.content_dom.style.width = ow * k + 'px';
+    node.content_dom.style.height = oh * k + 'px';
+    node.dom.style.height = oh * k + 'px';
+    node.dom.style.width = ow * k + 'px';
+    node.svg_dom.style.transform = 'translate(-'+ow/2+'px,-'+oh/2+'px) scale(' + k + ')' +' translate('+ow/2+'px,'+oh/2+'px)';// + ' rotate('+node.rotate+'rad) ' ;
   }
 
-  if(d.is_img){
-    if(d.size){
-      const h = 5 * (d.fontSize) * S;
-      const w =  h * d.size[0] / d.size[1];
-      d.content_dom.style.width = w + 'px';
-      d.content_dom.style.height = h + 'px';
-      d.img_dom.style.width = w + 'px';
-      d.img_dom.style.height = h + 'px';//d.size[1] * k + 'px';
+  if(node.is_img){
+    if(node.size){
+      const h = 5 * (node.fontSize) * S;
+      const w =  h * node.size[0] / node.size[1];
+      node.content_dom.style.width = w + 'px';
+      node.content_dom.style.height = h + 'px';
+      node.img_dom.style.width = w + 'px';
+      node.img_dom.style.height = h + 'px';
     }
   }else{
-    n.getElementsByTagName('img').forEach( (e) => {
+    dom.getElementsByTagName('img').forEach( (e) => {
       e.style.width = 'auto';
-      e.style.height = 5 * (d.fontSize) * S + 'px';
-      // e.setAttribute('draggable', false);
-      // e.onmousedown = (e)=>{e.preventDefault();};
+      e.style.height = 5 * (node.fontSize) * S + 'px';
     });
   }
 
-    if (d.rotate !== 0) {
-      if(n.classList.contains('selected')){
+  if (node.rotate !== 0) {
+    if(dom.classList.contains('selected')){
 
-
-      }else{
-        n.style.transform = 'rotate(' + d.rotate + 'rad)';
-      }
-    
+    }else{
+      dom.style.transform = 'rotate(' + node.rotate + 'rad)';
     }
-
-  return 1;
-  
-  n.getElementsByClassName('ui-wrapper').forEach( (wrapper) => {
-    const img = wrapper.getElementsByTagName('img')[0];
-    
-    wrapper.style.width = wrapper.style.width.slice(0, -2) * S / img.dataset.origS + 'px';
-    wrapper.style.height = wrapper.style.height.slice(0, -2) * S / img.dataset.origS + 'px';
-    img.dataset.origS = S;
-  });
+  }
 }
 
 function updateSizes () {
@@ -1258,12 +1240,7 @@ function isVisible (d) {
     && isInBox(d.x, d.xMax, d.y, d.yMax,
       T[0] - width * 0.5 / S, T[0] + width * 1.5 / (1 * S),
       T[1] - height * 0.5 / S, T[1] + width * 1.5 / (1 * S))
-    // &&(d.x<=T[0]+width*1.5/(1*S))
-    // &&(d.y<=T[1]+width*1.5/(1*S))
-    // &&(d.xMax>=T[0] - width*0.5/S)
-    // &&(d.yMax>=T[1] - height*0.5/S)
   );
-
 }
 
 function calcVisible (d, onhide, onshow) {
@@ -1576,21 +1553,16 @@ _('#btnFontPlus').onclick = function () {
 if (_('.node').length) {
   console.log('seems we already have nodes.');
 
-  save();
+  _localStorage.save();
 } else {
   console.log('No nodes in html..');
   let nodes = [];
   let nodeIDs = [];
   try {
-  // if(localStorage['noteplace.node_ids']){
-    nodeIDs = JSON.parse(localStorage['noteplace.node_ids']);
-    nodes = nodeIDs.map(function (id) {
-      console.log(id);
-      console.log('noteplace.node_' + id);
-
-      return JSON.parse(localStorage[getNodeIdLocalStorageKey(id)]);
-    });
+    nodeIDs = _localStorage.nodeIDs.load();
+    nodes = nodeIDs.map(_localStorage.node.load);
   }catch (e) {
+    console.trace(e);
     console.log('no nodes in localStorage, loading default');
     nodes = nodes_default;
   }
@@ -1600,14 +1572,14 @@ if (_('.node').length) {
 }
 
 try {
-  _PLACES = JSON.parse(localStorage['noteplace.places']);
+  _PLACES = _localStorage.places.load();
 }catch (e) {
   _PLACES = stripPlace(_PLACES_default);
 }
 
 fillPlaces();
 
-save();
+_localStorage.save();
 
 $('#exampleModal').on('shown.bs.modal', function () {
   $('#modal-input').trigger('focus');
@@ -2006,7 +1978,7 @@ function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default) {
 }
 
 _('#btnSaveFast').onclick = function (e) {
-  save();
+  _localStorage.save();
   if ( __GDRIVE_savedID != null ){
     gdriveRewrite(__GDRIVE_saveFilename, __GDRIVE_savedID);
   }

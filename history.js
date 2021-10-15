@@ -192,7 +192,7 @@ function applyAction (A) {
     _HISTORY_j_Map.set(h.id, _HISTORY.length - 1);
 
     // save?
-    save(h.node_ids);
+    _localStorage.save(h.node_ids);
 
     fillHistoryList();
 

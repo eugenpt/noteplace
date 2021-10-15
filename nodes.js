@@ -55,17 +55,6 @@ function pushNodeNDom(node, tdom) {
   _DOMId2nodej.set(tdom.id, _NODES.length - 1);
 }
 
-function getNodeIdLocalStorageKey(node_id){
-  return  'noteplace.node_' + node_id
-}
-
-function getNodeLocalStorageKey(node){
-  return getNodeIdLocalStorageKey(node.id)
-}
-
-function getNodeDomLocalStorageKey(dom) {
- return 'noteplace.' + dom.id;
-}
 
 function deleteNode(d) {
   if (isDom(d)) {
@@ -81,7 +70,8 @@ function deleteNode(d) {
   // remove from DOM
   node_container.removeChild(d.dom);
   // remove from saved
-  removeNodeFromLocalStorage(d);
+  _localStorage.removeNode(d);
+  // removeNodeFromLocalStorage(d);
 }
 
 // ::::    ::: :::::::::: :::       ::: ::::    :::  ::::::::  :::::::::  ::::::::::
@@ -338,32 +328,6 @@ function newNode (node, redraw=true, addToNodes=true) {
 
   tdom.appendChild(tcontent);
 
-  // tn.innerHTML =  '';
-  // ta = document.createElement('a');
-  // ta.href = '(?Tx='+tn.dataset["x"]+'&Ty='+tn.dataset["y"]+'&S='+30/tn.dataset["fontSize"];
-  // ta.className = 'node_a';
-  // ta.innerHTML = getHTML(tn.dataset['text']);
-  // ta.onclick = function(e){
-  //   console.log('a click!');
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  // }
-  // ta.onauxclick = function(e){
-  //   // middle mouse button click!!
-  //   e.preventDefault();
-  // }
-  // ta.onmousedown = function(e){
-  //   console.log('a onmousedown!');
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  // }
-  // ta.onmouseup = function(e){
-  //   console.log('a onmouseup!');
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  // }
-  // tn.appendChild(ta);
-  // node.node = tdom;
   node.dom = tdom;
   node.content_dom = tcontent;
 
