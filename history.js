@@ -128,7 +128,7 @@ function processAction (A) {
       }
       if (h.type === 'E'){
         // really redraw nodes
-        h.node_ids.forEach( id => { newNode(idNode(id).node, false); } );
+        h.node_ids.forEach( id => { newNode(idNode(id).dom, false); } );
       }
 
       if(!anythingChanged){
@@ -192,7 +192,7 @@ function applyAction (A) {
     _HISTORY_j_Map.set(h.id, _HISTORY.length - 1);
 
     // save?
-    save(h.node_ids);
+    _localStorage.save(h.node_ids);
 
     fillHistoryList();
 
@@ -256,7 +256,7 @@ function revertHistory (id) {
         h.newValues.push(newValues);
       }
       // sometimes an Update just won't cut it
-      h.node_ids.forEach( id => { newNode(idNode(id).node); } );
+      h.node_ids.forEach( id => { newNode(idNode(id).dom); } );
       break;
     default:
       throw Error('revertHistory error: What type of history is [' + h.type + '] ??!');
@@ -366,6 +366,8 @@ btnRedo.onclick = function(e) {
 }
 
 function fillHistoryList () {
+  console.log("idNode");
+  console.log(idNode);
   historyContainer.innerHTML = '';
 
   const nowDate = new Date();
@@ -390,10 +392,19 @@ function fillHistoryList () {
     }else if(h.type === 'E'){
       actionStr = '<i class="bi-pencil" title="Edited"></i>';
     }
-
-    let nodeStr = (h.node_ids.length > 1)
-      ? ( h.node_ids.length + ' node' + (h.node_ids.length>1?'s':'') )
-      : ( idNode(h.node_ids[0]).text.split('\n')[0] );
+  
+    let nodeStr = '';
+    if(h.node_ids.length > 1) {
+      nodeStr =  h.node_ids.length + ' node' + (h.node_ids.length>1?'s':'') ;
+    } else {
+      var temp =  idNode(h.node_ids[0]);
+      if(temp) {
+        nodeStr = temp.text.split('\n')[0];
+      }else{
+        nodeStr = '???';
+        console.error('No node with id=',h.node_ids[0])
+      }
+    }
 
     let allstr = datestr + ' ' + actionStr + ' ' + nodeStr;
 

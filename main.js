@@ -3,9 +3,6 @@ const md = new Remarkable('full', {
   typographer: true
 });
 
-// https://stackoverflow.com/a/17111220/2624911
-let dragInitiated = false;
-
 // Translate and Scale parameters
 let T = [0, 0];
 let S = 1;
@@ -23,6 +20,8 @@ const node_container = _('#node_container');
 
 let _selected_DOM = [];
 
+let _previewNode = null;
+
 let width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
 let height = window.innerHeight || document.documentElement.clientHeight || BODY.clientHeight;
 
@@ -34,8 +33,6 @@ window.addEventListener('resize', function (event) {
     width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
     height = window.innerHeight || document.documentElement.clientHeight || BODY.clientHeight;
 
-    // filterNodes2Draw();
-    // redraw();
   }, 500); // run update only every 100ms
 });
 
@@ -50,128 +47,8 @@ window.addEventListener('resize', function (event) {
 //     way cooler if it was ~ size(universe)/size(atom nucleus)
 //       which is.. ~ 10^27/(10^-15) ~ 10^41
 
-let mousePos = [0, 0];
-let _mousePos = [0, 0];
 
-let __freehandStatus = null; // null / 'ready' / 'drawing'
-let __freehandPoints = [];
-let __freehandPath = null;
-let __freehandSVG = null;
-
-function stopFreehand(){
-  __freehandStatus = null;
-  _('#btnFreehand').classList.remove('btn-primary');
-  _('#btnFreehand').classList.add('btn-outline-primary');
-  _('#freehandField').style.display = 'none';
-}
-
-function readyFreeHand(){
-  __freehandStatus = 'ready';
-  __freehandPoints = [];
-  _('#btnFreehand').classList.add('btn-primary');
-  _('#btnFreehand').classList.remove('btn-outline-primary');
-  _('#freehandField').style.display = '';
-
-  let svgns = 'http://www.w3.org/2000/svg';
-  __freehandSVG = document.createElementNS(svgns,'svg');
-  __freehandSVG.id = 'freehandSVG'
-  // __freehandSVG.style.position = 'absolute';
-  // __freehandSVG.style.left = '0px';
-  // __freehandSVG.style.top = '0px';
-  // __freehandSVG.style.zIndex = '999999';
-  // __freehandSVG.style.opacity = '1';
-
-
-
-  __freehandPath = document.createElementNS(svgns, 'path');
-  __freehandPath.setAttribute( 'stroke', 'blue');
-  __freehandPath.setAttribute( 'fill', 'none');
-  __freehandPath.setAttribute( 'strokeWidth', '2');
-  __freehandSVG.appendChild(__freehandPath);
-  // __freehandSVG.setAttribute("width", width);
-  // __freehandSVG.setAttribute("height", height);
-  // container.appendChild(__freehandSVG);
-  _('#freehandField').appendChild(__freehandSVG);
-}
-
-_('#btnFreehand').onclick = function() {
-  if (__freehandStatus) {
-    stopFreehand();
-  } else {
-    readyFreeHand();
-  }
-}
-
-_('#freehandField').onmouseup = function (e) {
-  console.log(e);
-  // return 0
-  stopFreehand();
-  e.stopPropagation();
-
-  const minPs = [0,0];
-  const maxPs = [0,0];
-  const d = 10;
-  [0,1].forEach(j => {
-    minPs[j] = -d + Math.min.apply(Math, __freehandPoints.map(a => a[j]));
-    __freehandPoints.forEach(a => { a[j] -= minPs[j];});
-    maxPs[j] = Math.max.apply(Math, __freehandPoints.map(a => a[j]));
-  });
-  drawFreehand();
-  __freehandSVG.setAttribute('width', maxPs[0] + d )
-  __freehandSVG.setAttribute('height', maxPs[1] + d )
-
-  // setTimeout(function(){
-  applyAction({
-    type: 'A',
-
-    nodes: [{
-      text: __freehandSVG.outerHTML,
-      mousePos: [ minPs[0] ,  minPs[1]],
-      style: { color: '#0000ff', strokeWidth: 5, fill:'none'},
-    }]
-  })
-  // }, 50);
-
-  __freehandSVG.parentElement.removeChild(__freehandSVG);
-}
-
-_('#freehandField').onmousedown = function (e) {
-  __freehandStatus = 'drawing';
-  e.stopPropagation();
-}
-
-_('#freehandField').onmousemove = function (e) {
-  if( __freehandStatus == 'drawing'){
-    __freehandPoints.push([e.clientX, e.clientY]);
-    drawFreehand();
-  }
-  e.stopPropagation();
-}
-
-function drawFreehand() {
-  if (__freehandPoints.length > 3) {
-    const ps = __freehandPoints;
-    let dstr = '';
-
-    dstr = 'M ' + ps[0][0] + ' ' + ps[0][1];
-
-    for ( let j = 1 ; j < ps.length ; j++) {
-      dstr += " L"+ps[j][0] + ' ' + ps[j][1];
-    }
-
-    // for ( let j = 0 ; j < ps.length - 2 ; j ++ ) {
-    //   // const p0 = ps[j];
-    //   // const p1 = ps[j+1];
-    //   // const p2 = ps[j+2];
-
-    //   dstr += ' C ' + ps.slice(j,j+3).map( p => p[0]+' '+p[1]).join(', ')
-    // }
-
-    __freehandPath.setAttributeNS(null, 'd', dstr);
-
-  }
-}
-
+_FreeHand = new FreeHand()
 
 node_container.ondblclick = function (e) {
   console.log('dblclick on empty field at [' + e.clientX + ',' + e.clientY + ']');
@@ -182,22 +59,12 @@ node_container.ondblclick = function (e) {
       { text: 'test' + _NODES.length }
     ]
   });
-  // console.log(e);
-  // let id = newNodeID();
-  // let node = {
-  //   id: id,
-  //   x: e.clientX / S + T[0],
-  //   y: e.clientY / S + T[1],
-  //   fontSize: 20 / S,
-  //   text: 'test' + id
-  // };
-  // newdom = newNode(node);
-  // no dblclick zoom!
+
   e.preventDefault();
   e.stopPropagation();
 
   setTimeout(function () {
-    onNodeDblClick(_NODES[_NODES.length - 1].node);
+    onNodeDblClick(_NODES[_NODES.length - 1].dom);
   }, 10);
 };
 
@@ -326,50 +193,55 @@ function applyZoom (T_, S_, smooth = true, noTemp = false) {
 applyZoom.zoomResetTimeout = null;
 applyZoom.lastSmooth = false;
 
-let _isMouseDown = false;
-let _mouseDownPos = [0, 0];
-let _mouseDownT = [0, 0];
-let _isMouseDragging = false;
-let _mouseDragStart = [0, 0];
-let _mouseDragPos = [0, 0];
-
-let _isDragSelecting = false;
-
-let __nodeMouseDown = false;
-
-let _dragSelected = [];
-
-let __isResizing = false;
-let __isRotating = null;
+let _Mouse = {
+  is:  {
+    down: false,
+    downContentEdit: false,
+    downPath: false,
+    dragging: false,
+    dragSelecting: false,
+    resizing: false,
+  },
+  pos: [0, 0],
+  clipboard: [],          // stores nodes with relative coordinates (x-centerX)*S
+  dragSelected: [],
+  rotatingNode: null,
+  down:{
+    pos: [0,0],
+    T: [0,0],
+    node: null,
+  },
+  drag:{
+    start: [0, 0],
+    pos: [0, 0],
+    node: null,
+  },
+}
 
 node_container.onmousedown = function (e) {
   console.log('container.onmousedown');
   console.log('T=' + T + ' S=' + S);
-  // $('.node').css('transition-duration','0s');
-  // $('.node').removeClass('zoom'); // disable visible transition
-  if (__isResizing) {
+  
+  if (_Mouse.is.resizing) {
     console.log('resizing..');
   } else {
-    if (contentEditMouseDown) {
-      log('contentEditMouseDown')
-      contentEditMouseDown = false;
+    if (_Mouse.is.downContentEdit) {
+      log('_Mouse.is.downContentEdit')
+      _Mouse.is.downContentEdit = false;
     } else {
-      log('!contentEditMouseDown')
-      _mouseDownPos = [e.clientX, e.clientY];
-      _mouseDownT = [T[0], T[1]];
-      _isMouseDown = true;
+      log('!_Mouse.is.downContentEdit')
+      _Mouse.down.pos = [e.clientX, e.clientY];
+      _Mouse.down.T = [T[0], T[1]];
+      _Mouse.is.down = true;
 
-      // console.log(e);
-      // e.preventDefault();
-
-      if (_contentEditTextarea) {
-        log('_contentEditTextarea')
-        stopEditing();
+      if (_ContentEditing.textarea) {
+        log('_ContentEditing.textarea')
+        _ContentEditing.stop();
       }
     }
 
     if (e.shiftKey) {
-      _isDragSelecting = true;
+      _Mouse.is.dragSelecting = true;
 
       _('#select-box').style.display = 'block';
       _('#select-box').style.width = 0;
@@ -377,41 +249,38 @@ node_container.onmousedown = function (e) {
       _('#select-box').style.top = e.clientX + 'px';
       _('#select-box').style.left = e.clientY + 'px';
     } else {
-      if (__nodeMouseDown) {
+      if (_Mouse.down.node) {
         // pass
-        log('__nodeMouseDown');
+        log('_Mouse.down.node');
       } else {
-        log('!__nodeMouseDown');
+        log('!_Mouse.down.node');
         // throw Error('aaa');
       setTimeout(function(){selectNode(null);},50);
       }
     }
 
-    // if(_selected_DOM!==__nodeMouseDown){
+    // if(_selected_DOM!==_Mouse.down.node){
     //   selectNode(null);
     // }
   }
 };
 
-let __pathMouseDown = false;
-
 window.addEventListener('mouseup', function (e) {
   console.log('window onmouseup');
-  // console.log(e);
   console.log('T=' + T + ' S=' + S);
 
-  __nodeMouseDown = null;
+  _Mouse.down.node = null;
 
-  if (_isMouseDragging) {
+  if (_Mouse.drag.node) {
     // stop dragging
     const A = { type: 'M' }
 
-    if (_selected_DOM.indexOf(_isMouseDragging.node) >= 0) {
+    if (_selected_DOM.contains(_Mouse.drag.node.dom)) {
       // moving all selected
       A.node_ids = _selected_DOM.map( dom => domNode(dom).id );
     } else {
       // moving just the one node
-      A.node_ids = [ _isMouseDragging.id ];
+      A.node_ids = [ _Mouse.drag.node.id ];
     }
     A.oldValues = A.node_ids.map( id => idNode(id).startPos );
     A.newValues = A.node_ids.map( id => {
@@ -420,36 +289,36 @@ window.addEventListener('mouseup', function (e) {
     });
 
     applyAction(A);
-    // save(_isMouseDragging);
+    // save(_Mouse.drag.node);
 
-    _isMouseDragging = false;
-  } else if (_isDragSelecting) {
+    _Mouse.drag.node = false;
+  } else if (_Mouse.is.dragSelecting) {
     _('#select-box').style.display = 'none';
     _('#select-box').style.width = 0;
     _('#select-box').style.height = 0;
     _('#select-box').style.top = 0;
     _('#select-box').style.left = 0;
 
-    _isDragSelecting = false;
+    _Mouse.is.dragSelecting = false;
 
-    console.log('updating _dragSelected..');
+    console.log('updating _Mouse.dragSelected..');
     updateDragSelect();
-    console.log('now ' + _dragSelected.length + ' _dragSelected');
+    console.log('now ' + _Mouse.dragSelected.length + ' _Mouse.dragSelected');
 
-    console.log('pushing _dragSelected doms to _selected_DOM');
-    _dragSelected.forEach((node) => {
-      console.log(node.node.id);
-      _selected_DOM.push(node.node);
+    console.log('pushing _Mouse.dragSelected doms to _selected_DOM');
+    _Mouse.dragSelected.forEach((node) => {
+      console.log(node.dom.id);
+      _selected_DOM.push(node.dom);
     });
-    _dragSelected = [];
-  } else if (__isRotating) {
+    _Mouse.dragSelected = [];
+  } else if (_Mouse.rotatingNode) {
 
     rotateStop({}, {angle: { current: 0 } } );
 
-  } else if (_isMouseDown) {
+  } else if (_Mouse.is.down) {
     // stop moving
-    T[0] = _mouseDownT[0] - 1 * node_container.dataset.x / S;
-    T[1] = _mouseDownT[1] - 1 * node_container.dataset.y / S;
+    T[0] = _Mouse.down.T[0] - 1 * node_container.dataset.x / S;
+    T[1] = _Mouse.down.T[1] - 1 * node_container.dataset.y / S;
 
     node_container.dataset.x = 0;
     node_container.dataset.y = 0;
@@ -467,31 +336,31 @@ window.addEventListener('mouseup', function (e) {
   // }
 
   hideGridLine();
-  __isResizing = false;
-  _isMouseDown = false;
-  __pathMouseDown = false;
+  _Mouse.is.resizing = false;
+  _Mouse.is.down = false;
+  _Mouse.is.downPath = false;
 
 });
 
 function tempSelect (node) {
-  if (_selected_DOM.indexOf(node.node) >= 0) {
+  if (_selected_DOM.indexOf(node.dom) >= 0) {
     // already really selected
   } else {
-    if (_dragSelected.indexOf(node) < 0) {
-      node.node.classList.add('selected');
+    if (_Mouse.dragSelected.indexOf(node) < 0) {
+      node.dom.classList.add('selected');
 
-      _dragSelected.push(node);
+      _Mouse.dragSelected.push(node);
     }
   }
 }
 
 function tempDeselect (node) {
-  console.log('deselecting: ' + node.node.id);
-  if (_selected_DOM.indexOf(node.node) >= 0) {
+  console.log('deselecting: ' + node.dom.id);
+  if (_selected_DOM.indexOf(node.dom) >= 0) {
     // selected previously..
   } else {
-    node.node.classList.remove('selected');
-    _dragSelected.splice(_dragSelected.indexOf(node), 1);
+    node.dom.classList.remove('selected');
+    _Mouse.dragSelected.splice(_Mouse.dragSelected.indexOf(node), 1);
   }
 }
 
@@ -506,15 +375,15 @@ function updateDragSelect () {
     }
   }
   //
-  _dragSelected.forEach((node) => {
+  _Mouse.dragSelected.forEach((node) => {
     node.stillSelected = false;
   });
   _NODES.forEach((node) => {
     // if(node.vis){
     if (!node.deleted) {
       if (isNodeInClientBox(node,
-        Math.min(_mousePos[0], _mouseDownPos[0]), Math.max(_mousePos[0], _mouseDownPos[0]),
-        Math.min(_mousePos[1], _mouseDownPos[1]), Math.max(_mousePos[1], _mouseDownPos[1])
+        Math.min(_Mouse.pos[0], _Mouse.down.pos[0]), Math.max(_Mouse.pos[0], _Mouse.down.pos[0]),
+        Math.min(_Mouse.pos[1], _Mouse.down.pos[1]), Math.max(_Mouse.pos[1], _Mouse.down.pos[1])
       )) {
         tempSelect(node);
         node.stillSelected = true;
@@ -522,7 +391,7 @@ function updateDragSelect () {
     }
   });
   //
-  _dragSelected.forEach((node) => {
+  _Mouse.dragSelected.forEach((node) => {
     if (node.stillSelected === false) {
       tempDeselect(node);
     }
@@ -591,10 +460,10 @@ function gridAlignLine(node1, node2, prop){
 
   const delta = 0;
 
-  node1prop = node1.node.style[domProp].slice(0,-2) * 1;
-  node2prop = node2.node.style[domProp].slice(0,-2) * 1;
-  node1prop2 = node1.node.style[domProp2].slice(0,-2) * 1;
-  node2prop2 = node2.node.style[domProp2].slice(0,-2) * 1;
+  node1prop = node1.dom.style[domProp].slice(0,-2) * 1;
+  node2prop = node2.dom.style[domProp].slice(0,-2) * 1;
+  node1prop2 = node1.dom.style[domProp2].slice(0,-2) * 1;
+  node2prop2 = node2.dom.style[domProp2].slice(0,-2) * 1;
 
   _theGridAlignLines[prop].style[widthprop] = 1;
   _theGridAlignLines[prop].style[domProp] = Math.min( node1prop , node2prop ) + 'px'
@@ -616,38 +485,35 @@ function hideGridLine(prop){
     return 0;
   }
   if(_theGridAlignLines[prop] !== null) {
-    // log(_theGridAlignLines[prop]);
     _theGridAlignLines[prop].style.display = 'none';
-    // node_container.removeChild(_theGridAlignLines[prop]);
-    // _theGridAlignLines[prop] = null;
   }
 }
 
 container.onmousemove = function (e) {
-  _mousePos = [e.clientX, e.clientY];
-  if (_isMouseDown) {
-    if (_isMouseDragging) {
-      const deltaMove = {
-        x: (e.clientX - _mouseDragStart[0]) / S  ,
-        y: (e.clientY - _mouseDragStart[1]) / S
+  _Mouse.pos = [e.clientX, e.clientY];
+  if (_Mouse.is.down) {
+    if (_Mouse.drag.node) {
+      const deltaMove = { 
+        x: (e.clientX - _Mouse.drag.start[0]) / S  ,
+        y: (e.clientY - _Mouse.drag.start[1]) / S
       }
       const sizeScreen = {
         x: width,
         y: height
       }
-      let updatePosNodes = [_isMouseDragging];
+      let updatePosNodes = [_Mouse.drag.node];
 
-      if (_isMouseDragging.node.classList.contains('selected')) {
+      if (_Mouse.drag.node.dom.classList.contains('selected')) {
         // move all selected
         updatePosNodes = _selected_DOM.map(domNode);
       }
 
       for(let prop of ['x','y']){
-        _isMouseDragging[prop] = _isMouseDragging.startPos[prop] + deltaMove[prop];
+        _Mouse.drag.node[prop] = _Mouse.drag.node.startPos[prop] + deltaMove[prop];
 
-          allPropsMap = allVisibleNodesProps(prop, [_isMouseDragging]);
+          allPropsMap = allVisibleNodesProps(prop, [_Mouse.drag.node]);
 
-          allPropsAbs = [...allPropsMap.values()].map( v => Math.abs( v - _isMouseDragging[prop] ));
+          allPropsAbs = [...allPropsMap.values()].map( v => Math.abs( v - _Mouse.drag.node[prop] ));
           minAbs = Math.min(...allPropsAbs)
           minJ = allPropsAbs.indexOf(minAbs);
 
@@ -656,10 +522,10 @@ container.onmousemove = function (e) {
         if(minDvh < 0.01){
           //
           // log('seems like node '+[...allPropsMap.keys()][minJ]+' is OK, huh?');
-          // _isMouseDragging[prop] = [...allPropsMap.values()][minJ];
-          deltaMove[prop] = [...allPropsMap.values()][minJ] - _isMouseDragging.startPos[prop];
+          // _Mouse.drag.node[prop] = [...allPropsMap.values()][minJ];
+          deltaMove[prop] = [...allPropsMap.values()][minJ] - _Mouse.drag.node.startPos[prop];
 
-          gridAlignLine(_isMouseDragging, idNode([...allPropsMap.keys()][minJ]), prop);
+          gridAlignLine(_Mouse.drag.node, idNode([...allPropsMap.keys()][minJ]), prop);
         } else {
           hideGridLine(prop);
         }
@@ -671,27 +537,27 @@ container.onmousemove = function (e) {
         updateNode(node);
       });
         // move the node under the cursor
-        // _isMouseDragging.x = _isMouseDragging.startPos.x + deltaMove.x;
-        // _isMouseDragging.y = _isMouseDragging.startPos.y + deltaMove.y;
-        // calcBox(_isMouseDragging);
-        // updateNode(_isMouseDragging);
+        // _Mouse.drag.node.x = _Mouse.drag.node.startPos.x + deltaMove.x;
+        // _Mouse.drag.node.y = _Mouse.drag.node.startPos.y + deltaMove.y;
+        // calcBox(_Mouse.drag.node);
+        // updateNode(_Mouse.drag.node);
       // }
-    } else if (__isResizing) {
+    } else if (_Mouse.is.resizing) {
       // pass
-    } else if (_isDragSelecting) {
-      _('#select-box').style.left = Math.min(e.clientX, _mouseDownPos[0]) + 'px';
-      _('#select-box').style.width = Math.abs(e.clientX - _mouseDownPos[0]) + 'px';
-      _('#select-box').style.top = Math.min(e.clientY, _mouseDownPos[1]) + 'px';
-      _('#select-box').style.height = Math.abs(e.clientY - _mouseDownPos[1]) + 'px';
+    } else if (_Mouse.is.dragSelecting) {
+      _('#select-box').style.left = Math.min(e.clientX, _Mouse.down.pos[0]) + 'px';
+      _('#select-box').style.width = Math.abs(e.clientX - _Mouse.down.pos[0]) + 'px';
+      _('#select-box').style.top = Math.min(e.clientY, _Mouse.down.pos[1]) + 'px';
+      _('#select-box').style.height = Math.abs(e.clientY - _Mouse.down.pos[1]) + 'px';
 
       updateDragSelect();
       // clearTimeout(_dragSelectingTimeout);
       // _dragSelectingTimeout = setTimeout(updateDragSelect, 500);
     } else {
-      // T[0] = _mouseDownT[0] -  (e.clientX - _mouseDownPos[0])/S;
-      // T[1] = _mouseDownT[1] -  (e.clientY - _mouseDownPos[1])/S;
-      node_container.dataset.x = (e.clientX - _mouseDownPos[0]);
-      node_container.dataset.y = (e.clientY - _mouseDownPos[1]);
+      // T[0] = _Mouse.down.T[0] -  (e.clientX - _Mouse.down.pos[0])/S;
+      // T[1] = _Mouse.down.T[1] -  (e.clientY - _Mouse.down.pos[1])/S;
+      node_container.dataset.x = (e.clientX - _Mouse.down.pos[0]);
+      node_container.dataset.y = (e.clientY - _Mouse.down.pos[1]);
       node_container.style.left = node_container.dataset.x + 'px';
       node_container.style.top = node_container.dataset.y + 'px';
 
@@ -713,7 +579,6 @@ container.onmousemove = function (e) {
 // #+#   #+#  #+#           #+#    #+#    #+# #+#    #+#  #+#+# #+#+#  #+#   #+#+#
 // ###    ### ##########    ###    #########   ########    ###   ###   ###    ####
 
-let _clipBoard = []; // stores nodes with relative coordinates (x-centerX)*S
 
 function calcCenterPos (nodes) {
   const R = [0, 0];
@@ -724,27 +589,31 @@ function calcCenterPos (nodes) {
   return [R[0] / nodes.length, R[1] / nodes.length];
 }
 
-function copySelection (de_id = false) {
-  copySelection.on = true;
-  _clipBoard = _selected_DOM.map(domNode).map(stripNode);
-  const centerPos = calcCenterPos(_clipBoard);
-  _clipBoard.forEach((node) => {
-    // yeah, my definition of S is counterintuitive here..
-    node.x = (node.x - centerPos[0]) * S;
-    node.y = (node.y - centerPos[1]) * S;
-    node.fontSize *= S;
-  });
-
-  copyToClipboard(JSON.stringify(_clipBoard));
-
-  copySelection.on = false;
+function copySelectedNodesToClipboard (de_id = false) {
+  if (('on' in copySelectedNodesToClipboard) && (copySelectedNodesToClipboard.on)) {
+    // pass
+  } else {
+    copySelectedNodesToClipboard.on = true;
+    _Mouse.clipboard = _selected_DOM.map(domNode).map(stripNode);
+    const centerPos = calcCenterPos(_Mouse.clipboard);
+    _Mouse.clipboard.forEach((node) => {
+      // yeah, my definition of S is counterintuitive here..
+      node.x = (node.x - centerPos[0]) * S;
+      node.y = (node.y - centerPos[1]) * S;
+      node.fontSize *= S;
+    });
+  
+    copyToClipboard(JSON.stringify(_Mouse.clipboard));
+  
+    copySelectedNodesToClipboard.on = false;
+  }
 }
 
 window.addEventListener('keydown', (e) => {
   console.log('keydown');
   console.log(e);
   if (e.key === 'Delete') {
-    if (_contentEditTextarea) {
+    if (_ContentEditing.textarea) {
       // pass
     }else {
       if (_selected_DOM.length > 0) {
@@ -757,7 +626,8 @@ window.addEventListener('keydown', (e) => {
       }
     }
   } else if (e.key === 'Enter') {
-    if (_contentEditTextarea) {
+    if (_ContentEditing.textarea) {
+      e.stopPropagation();
       return 0;
     } else {
       if (_selected_DOM.length > 0) {
@@ -772,20 +642,20 @@ window.addEventListener('keydown', (e) => {
     if (e.ctrlKey) {
       // Ctrl-C !
       // moved to copy event
-      // copySelection();
+      // copySelectedNodesToClipboard();
     }
   } else if (e.key === 'x') {
     if (e.ctrlKey) {
       // Ctrl-X
       // moved to cut event
-      // copySelection();
+      // copySelectedNodesToClipboard();
       // _selected_DOM.forEach(deleteNode);
       // _selected_DOM = [];
     }
   } else if (e.key === 'v') {
     if (e.ctrlKey) {
       // Ctrl-V !
-      if (_contentEditTextarea) {
+      if (_ContentEditing.textarea) {
         // pass
       } else {
         // moved to window paste
@@ -795,7 +665,7 @@ window.addEventListener('keydown', (e) => {
     _('#search-toggle').click();
     e.preventDefault();
   } else if ((e.code == "KeyZ") && ( (e.ctrlKey) || (e.metaKey) )) {
-    if (_contentEditTextarea){
+    if (_ContentEditing.textarea){
       // pass
     }else{
       if (e.shiftKey){
@@ -820,19 +690,15 @@ function deselectOneDOM (dom) {
   try {
     $(dom).rotatable('destroy');
   } catch(e) {
-    log('error in rotatable destroy..');
-    log(e);
+    // log('error in rotatable destroy..');
+    // log(e);
   }
 
   try{
     $(domNode(dom).content_dom).resizable('destroy');
-
-    // [].forEach.call(dom.getElementsByTagName('img'), (e) => {
-    //   $(e).resizable('destroy').css('width', 'auto');
-    // });
   } catch (e) {
-    console.log('some error in resizable destroy');
-    console.log(e);
+    // console.log('some error in resizable destroy');
+    // console.log(e);
   }
 }
 
@@ -848,14 +714,14 @@ function rotateStop(e, ui) {
   // ui.angle.start = ui.angle.current;
   applyAction({
     type: 'E',
-    node_ids: [ __isRotating.id ],
+    node_ids: [ _Mouse.rotatingNode.id ],
     oldValues: _oldValues,
     newValues: [{ rotate: ui.angle.current }]
   });
 
-  __isRotating.node.style.transform = 'rotate('+ui.angle.current+'rad)';
-  save(__isRotating);
-  __isRotating = null;
+  _Mouse.rotatingNode.dom.style.transform = 'rotate('+ui.angle.current+'rad)';
+  save(_Mouse.rotatingNode);
+  _Mouse.rotatingNode = null;
 }
 
 function selectOneDOM (dom) {
@@ -863,7 +729,7 @@ function selectOneDOM (dom) {
 
   const node = domNode(dom);
   node.startPos = {x: node.x, y: node.y};
-  //
+
   // https://jsfiddle.net/Twisty/7zc36sug/
   // https://stackoverflow.com/a/62379454/2624911
   // https://jsfiddle.net/Twisty/cdLn56f1/
@@ -877,18 +743,16 @@ function selectOneDOM (dom) {
         console.log(e);
         log(ui);
         _oldValues = [{ rotate: node.rotate }];
-        __isRotating = node;
+        _Mouse.rotatingNode = node;
       },
       stop: rotateStop
     };
     log(params);
 
     if($(dom)
-    .find('.ui-rotatable-handle').length>0){
-
+      .find('.ui-rotatable-handle').length>0){
     }else
-      $(node.node).rotatable(params);
-
+      $(node.dom).rotatable(params);
 
     $(dom)
       .find('.ui-rotatable-handle')
@@ -903,11 +767,10 @@ function selectOneDOM (dom) {
       })
       .on('dblclick', function (e) {
         log('rotatable dblclick');
-        __isRotating = node;
+        _Mouse.rotatingNode = node;
         rotateStop({}, { angle: { current: 0 }});
         e.stopPropagation();
       })
-
 
     let resizeParams = {
       // autoHide: true,
@@ -936,55 +799,17 @@ function selectOneDOM (dom) {
 
     if (node.is_img){
       resizeParams.aspectRatio = true;
-      // node.size = [node.img_dom.]
     }else if(node.is_svg) {
       resizeParams.aspectRatio = true;
-    } else {
-
     }
+    
     $(node.content_dom).resizable(resizeParams);
-
-    if(0)
-    [].forEach.call(dom.getElementsByTagName('img'), (img) => {
-      console.log('making that img resizable:');
-      console.log(img);
-      img.dataset.parent_node_id = dom.id;
-      img.dataset.origS = S;
-      __IMG = img;
-      $(img).resizable({
-        aspectRatio: true,
-        start: function (e, ui) {
-          console.log('resize start');
-          console.log(e);
-          console.log(ui);
-          _oldValues = [{ fontSize: node.fontSize }];
-        },
-        stop: function (e, ui) {
-          console.log('resize stop');
-          console.log(e);
-          console.log(ui);
-          applyAction({
-            type:'E',
-            node_ids:[ node.id ],
-            oldValues: _oldValues,
-            newValues: [{ fontSize: ui.size.height / (5 * S) }]
-          })
-          // let hid = ui.originalElement[0].dataset.parent_node_id;
-          // domNode(hid).fontSize = ui.size.height / (5 * S);
-          // save(domNode(hid));
-          // updateNode(_('#' + hid));
-
-          // ui.originalElement.style.width='auto';
-          __X = ui;
-        }
-      });
-    });
     $(dom)
       .find('.ui-resizable-handle')
       .on('mousedown', function (e) {
         console.log('resize mouse down');
         // e.stopPropagation();
-        __isResizing = true;
+        _Mouse.is.resizing = true;
       })
       .on('mouseup', function (e) {
         console.log('resize mouse up');
@@ -1033,105 +858,6 @@ function selectNode (n) {
   return 0;
 }
 
-function deleteNode (d) {
-  if ('click' in d) {
-    // DOM
-    deleteNode(domNode(d));
-  }else {
-    // _NODES
-    // ixs (TODO:optimize further)
-    gen_DOMId2nodej();
-    // remove rom _NODES
-    _NODES.splice(_DOMId2nodej.get(d.node.id), 1);
-    // remove from index
-    _DOMId2node.delete(d.node.id);
-    // remove from DOM
-    node_container.removeChild(d.node);
-    // remove from saved
-    localStorage.removeItem('noteplace.' + d.node.id);
-  }
-}
-
-function stopEditing () {
-  log('stopEditing');
-  let tdom = _contentEditTextarea.parentElement.parentElement;
-  _contentEditTextarea.parentElement.removeChild(_contentEditTextarea);
-  const A = { type: 'D', node_ids: [ domNode(tdom).id ] };
-  if (_contentEditTextarea.value === '') {
-    //deleteNode(tdom);
-    contentEditNode = null;
-  }else {
-    A.type = 'E';
-    A.oldValues = [ { text: domNode(tdom).startText } ];
-    A.newValues = [ { text: domNode(tdom).text } ];
-    // A.nodes = [ domNode(tdom) ];
-    // newNode(tdom);
-  }
-  applyAction(A);
-  _contentEditTextarea = null;
-}
-
-function save (node = null, save_ids = true) {
-  // save node state to localStorage.
-  //  if node === null, saves all nodes
-  //  if node == 'ids', saves ids
-  // additional argument:
-  //  save_ids [bool] : true => save ids too
-  // log('save!');
-  // log(node);
-  if (node === null) {
-    // save all
-    const node_ids = [];
-    _NODES.forEach((node) => {
-      save(node, false);
-      node_ids.push(node.id);
-      // nodes.push(JSON.parse(JSON.stringify(node.dataset)));
-    });
-    localStorage['noteplace.node_ids'] = JSON.stringify(node_ids);
-  } else if ( typeof(node) === 'string'){
-    if (node === 'ids') {
-      save_ids = true;
-    } else if (node === 'places') {
-      // do nothing, I intend on saving places anyway
-    } else {
-      // ID
-      localStorage['noteplace.node_' + node] = JSON.stringify(stripNode(idNode(node)));
-    }
-  } else if (Array.isArray(node)) {
-    // you know, array is for saving all of them
-    node.forEach( save );
-    // aand ids, just in case.
-    save('ids');
-  } else {
-    // node provided, save only node
-    if ('x' in node) {
-      // original object
-      localStorage['noteplace.node_' + node.id] = JSON.stringify(stripNode(node));
-    } else if ('id' in node) {
-      // DOM node
-      localStorage['noteplace.' + node.id] = JSON.stringify(stripNode(domNode(node)));
-    } else {
-      log(node);
-      throw Error('What did you aim for, calling save('+node+') ??');
-    }
-  }
-  if (save_ids) {
-    localStorage['noteplace.node_ids'] = JSON.stringify(
-      _NODES.map((node) => node.id)
-    );
-  }
-  localStorage['noteplace.places'] = JSON.stringify(
-    stripPlace(_PLACES)
-  );
-
-  localStorage['noteplace.history'] = JSON.stringify( _HISTORY );
-  localStorage['noteplace.history_current'] = _HISTORY_CURRENT_ID;
-
-  const tsize = localStorageSize() / (1024 * 1024);
-  if (tsize > 4) {
-    console.error('localStorage ' + tsize.toFixed(3) + ' MB, limit is 5. you know what to do.');
-  }
-}
 
 function isMenuShown(){
   return !_('#wrapper').classList.contains('toggled');
@@ -1151,15 +877,40 @@ function showMenu(){
 // #+#   #+#+# #+#    #+# #+#    #+# #+#             #+#        #+#    #+# #+#   #+#+# #+#    #+# #+#    #+#
 // ###    ####  ########  #########  ##########      ###         ########  ###    ####  ########   ########
 
-let contentEditNode = null;
-let contentEditMouseDown = false;
-let _contentEditTextarea = null;
+let _ContentEditing = {
+  dom: null,
+  textarea: null,
+  stop: function(){
+    log('_ContentEditing.stop');
+    let tdom = _ContentEditing.textarea.parentElement.parentElement;
+    _ContentEditing.textarea.parentElement.removeChild(_ContentEditing.textarea);
+    const A = { type: 'D', node_ids: [ domNode(tdom).id ] };
+    if (_ContentEditing.textarea.value === '') {
+      //deleteNode(tdom);    
+      _ContentEditing.dom = null;
+    }else {
+      A.type = 'E';
+      A.oldValues = [ { text: domNode(tdom).startText } ];
+      A.newValues = [ { text: domNode(tdom).text } ];
+      // A.nodes = [ domNode(tdom) ];
+      // newNode(tdom);
+    }
+    applyAction(A);
+    _ContentEditing.textarea = null;
+  },
+  start: function(node){
+  
+  },
+};
+
+function nodeEditInProgress() {
+  return _ContentEditing.dom;
+}
+// let _ContentEditing.dom = null;
+// let _ContentEditing.textarea = null;
 
 function textareaAutoResize (e) {
-  let target = this;
-  if ('style' in e) {
-    target = e;
-  }
+  var target = ('style' in e) ? e : this;
   target.style.height = 'auto';
   target.style.height = target.scrollHeight + 'px';
 }
@@ -1168,19 +919,20 @@ function textareaBtnDown (e) {
   log('textareaBtnDown');
   log(e);
   if ((e.ctrlKey) && ((e.keyCode === 0xA) || (e.keyCode === 0xD))) {
-    // Ctrl+Enter
-    stopEditing();
+    log('Ctrl+Enter!');
+    _ContentEditing.stop();
+    e.stopPropagation();
+    
   }
-  if ((e.keyCode === 13) && (e.shiftKey)) {
-    // Shift-enter
-    const tnode_orig = domNode(contentEditNode.parentElement);
+  if ((e.key === 'Enter') && (e.shiftKey)) {
+    log('Shift-enter');
+    const tnode_orig = domNode(_ContentEditing.dom.parentElement);
     const tnode = stripNode(tnode_orig);
-    let th = contentEditNode.getBoundingClientRect().height;
-    // Shift+Enter
-    stopEditing();
+    let th = _ContentEditing.dom.getBoundingClientRect().height;
+    
+    _ContentEditing.stop();
 
-    // setTimeout(function(){
-    if (contentEditNode) {
+    if (nodeEditInProgress()) {
       // if the node has not been deleted (as empty)
       //  , get actual height (not height of markdown textarea)
       th = tnode_orig.content_dom.getBoundingClientRect().height;
@@ -1197,27 +949,28 @@ function textareaBtnDown (e) {
         fontSize: tnode.fontSize
       }]
     })
-    // const new_node = newNode();
 
     setTimeout(function(){
       selectNode(null);
 
-      console.log(_NODES[_NODES.length - 1].node)
-      selectNode(_NODES[_NODES.length - 1].node);
-
-      onNodeDblClick(_NODES[_NODES.length - 1].node);
-
+      console.log(_NODES[_NODES.length - 1].dom)
+      selectNode(_NODES[_NODES.length - 1].dom);
+  
+      onNodeDblClick(_NODES[_NODES.length - 1].dom);
+  
       // neither preventDefault nor stopPropagation
       //    stoped newline from appearing
-      setTimeout(function () { _contentEditTextarea.value = ''; _contentEditTextarea.focus(); }, 10);
+      setTimeout(function () { 
+        _ContentEditing.textarea.value = ''; 
+        _ContentEditing.textarea.focus(); 
+      }, 10);
     },10);
-    // }, 30);
 
     e.stopPropagation();
 
   }
 
-  if (e.keyCode === 9) {
+  if (e.key === 'Tab') {
     // Tab
 
     // no jump-to-next-field
@@ -1225,11 +978,13 @@ function textareaBtnDown (e) {
   }
 
   // https://stackoverflow.com/a/3369624/2624911
-  if (contentEditNode) {
+  if (nodeEditInProgress()) {
     if (e.key === 'Escape') { // escape key maps to keycode `27`
-      selectNode(contentEditNode.parentElement);
+      log('Escape!');
+    
+      selectNode(_ContentEditing.dom.parentElement);
 
-      stopEditing();
+      _ContentEditing.stop();
 
       e.stopPropagation();
     }
@@ -1238,72 +993,71 @@ function textareaBtnDown (e) {
 
 function onNodeDblClick (e) {
   if ('preventDefault' in e) {
-    contentEditNode = this;
+    _ContentEditing.dom = this;
   } else {
-    contentEditNode = e;
+    _ContentEditing.dom = e;
   }
 
-  if((!domNode(contentEditNode).is_svg)||((domNode(contentEditNode).is_svg)&&(onNodeDblClick.path_ok))){
-
-  if ('preventDefault' in e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-  console.log('double-clicked on [' + contentEditNode.id + '] : ' + contentEditNode.innerText);
-  console.log(contentEditNode);
-
-
-  // console.log(contentEditNode);
-
-  const node = domNode(contentEditNode);
-
-  _contentEditTextarea = document.createElement('textarea');
-  _contentEditTextarea.id = '_contentEditTextarea';
-  _contentEditTextarea.value = node.text;
-
-  node.startText = node.text;
-
-  contentEditNode = contentEditNode.getElementsByClassName('np-n-c')[0];
-
-  // _contentEditTextarea.style.fontSize = contentEditNode.dataset['fontSize']*S+'px';
-  // _contentEditTextarea.style.fontFamily = 'Open Sans';
-  _contentEditTextarea.dataset.initS = S;
-  console.log(contentEditNode.getBoundingClientRect());
-  _contentEditTextarea.dataset.initWidth = Math.max(width / 3, contentEditNode.getBoundingClientRect().width + 20);
-  _contentEditTextarea.dataset.initHeight = contentEditNode.getBoundingClientRect().height;
-  _contentEditTextarea.style.width = _contentEditTextarea.dataset.initWidth + 'px';
-  _contentEditTextarea.style.height = _contentEditTextarea.dataset['initHeight'] +'px';
-  // _contentEditTextarea.style.height = 'auto';
-
-  _contentEditTextarea.onkeydown = textareaBtnDown;
-  _contentEditTextarea.onkeyup = textareaAutoResize;
-  _contentEditTextarea.oninput = function (e) {
-    console.log('_contentEditTextarea input');
-    domNode(this.parentElement.parentElement).text = this.value;
-  };
-
-  _contentEditTextarea.onmousedown = (e) => {
-    if (e.button === 1) {
-      // drag on middle button => just pass the event
-    } else {
-      contentEditMouseDown = true;
+  if ( (!domNode(_ContentEditing.dom).is_svg)
+       ||((domNode(_ContentEditing.dom).is_svg)
+          &&(onNodeDblClick.path_ok))) {
+  
+    if ('preventDefault' in e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-  };
-
-  contentEditNode.innerHTML = '';
-  contentEditNode.appendChild(_contentEditTextarea);
-
-  // textareaAutoResize(_contentEditTextarea);
-  _contentEditTextarea.select();
-
-  // selectNode(contentEditNode);
-
+    console.log('double-clicked on [' + _ContentEditing.dom.id + '] : ' + _ContentEditing.dom.innerText);
+    console.log(_ContentEditing.dom);
+  
+  
+    // console.log(_ContentEditing.dom);
+  
+    const node = domNode(_ContentEditing.dom);
+  
+    _ContentEditing.textarea = document.createElement('textarea');
+    _ContentEditing.textarea.id = '_ContentEditing.textarea';
+    _ContentEditing.textarea.value = node.text;
+  
+    node.startText = node.text;
+  
+    _ContentEditing.dom = _ContentEditing.dom.getElementsByClassName('np-n-c')[0];
+  
+    // _ContentEditing.textarea.style.fontSize = _ContentEditing.dom.dataset['fontSize']*S+'px';
+    // _ContentEditing.textarea.style.fontFamily = 'Open Sans';
+    _ContentEditing.textarea.dataset.initS = S;
+    console.log(_ContentEditing.dom.getBoundingClientRect());
+    _ContentEditing.textarea.dataset.initWidth = Math.max(width / 3, _ContentEditing.dom.getBoundingClientRect().width + 20);
+    _ContentEditing.textarea.dataset.initHeight = _ContentEditing.dom.getBoundingClientRect().height;
+    _ContentEditing.textarea.style.width = _ContentEditing.textarea.dataset.initWidth + 'px';
+    _ContentEditing.textarea.style.height = _ContentEditing.textarea.dataset['initHeight'] +'px';
+    // _ContentEditing.textarea.style.height = 'auto';
+  
+    _ContentEditing.textarea.onkeydown = textareaBtnDown;
+    _ContentEditing.textarea.onkeyup = textareaAutoResize;
+    _ContentEditing.textarea.oninput = function (e) {
+      console.log('_ContentEditing.textarea input');
+      domNode(this.parentElement.parentElement).text = this.value;
+    };
+  
+    _ContentEditing.textarea.onmousedown = (e) => {
+      if (e.button === 1) {
+        // drag on middle button => just pass the event
+      } else {
+        _Mouse.is.downContentEdit = true;
+      }
+    };
+  
+    _ContentEditing.dom.innerHTML = '';
+    _ContentEditing.dom.appendChild(_ContentEditing.textarea);
+  
+    // textareaAutoResize(_ContentEditing.textarea);
+    _ContentEditing.textarea.select();
+  
+    // selectNode(_ContentEditing.dom);
+  
+  }
+  onNodeDblClick.path_ok = false;
 }
-onNodeDblClick.path_ok = false;
-}
-
-__nodeMouseDown = null;
-
 
 
 function onNodeMouseDown (e) {
@@ -1312,11 +1066,11 @@ function onNodeMouseDown (e) {
 
   if((!domNode(this).is_svg)||((domNode(this).is_svg)&&(onNodeMouseDown.path_ok))){
 
-  __nodeMouseDown = domNode(this);
+  _Mouse.down.node = domNode(this);
   // console.log(e);
   if (e.button === 1) {
-    _isMouseDragging = __nodeMouseDown;
-    _mouseDragStart = [e.clientX, e.clientY];
+    _Mouse.drag.node = _Mouse.down.node;
+    _Mouse.drag.start = [e.clientX, e.clientY];
 
     let applyDrag = [ this ];
     if (this.classList.contains('selected')) {
@@ -1361,364 +1115,6 @@ function onNodeClick (e) {
   onNodeClick.path_ok = false;
 }
 
-function newNodeID (id = null) {
-  return newID(id || 'n', idNode);
-}
-
-// ::::    ::: :::::::::: :::       ::: ::::    :::  ::::::::  :::::::::  ::::::::::
-// :+:+:   :+: :+:        :+:       :+: :+:+:   :+: :+:    :+: :+:    :+: :+:
-// :+:+:+  +:+ +:+        +:+       +:+ :+:+:+  +:+ +:+    +:+ +:+    +:+ +:+
-// +#+ +:+ +#+ +#++:++#   +#+  +:+  +#+ +#+ +:+ +#+ +#+    +:+ +#+    +:+ +#++:++#
-// +#+  +#+#+# +#+        +#+ +#+#+ +#+ +#+  +#+#+# +#+    +#+ +#+    +#+ +#+
-// #+#   #+#+# #+#         #+#+# #+#+#  #+#   #+#+# #+#    #+# #+#    #+# #+#
-// ###    #### ##########   ###   ###   ###    ####  ########  #########  ##########
-
-// function addNode(node){
-
-//   _NODES.push(node);
-//   _DOMId2node.set(tdom.id, node);
-//   _DOMId2nodej.set(tdom.id, _NODES.length-1);
-// }
-
-// function addNodes(nodes){
-
-// }
-
-
-function newNode (node, redraw=true, domOnly=false) {
-  let tdom = node;
-  // console.log(d);
-  if ('className' in node) {
-    console.log('newNode with DOM node provided:');
-    // console.log(tn);
-    node = domNode(tdom);
-  } else {
-    console.log('newNode with node provided');
-    if ((!('id' in node)) || (node.id === undefined) || (idNode(node.id))) {
-      node.id = newNodeID();
-    }
-    if (!('rotate' in node)) {
-      node.rotate = 0;
-    }
-    if (!('x' in node)) {
-      let mousePos = _mousePos;
-      if ('mousePos' in node) {
-        mousePos = node.mousePos;
-      }
-      const mouseXY = clientToNode(mousePos);
-      node.x = mouseXY[0];
-      node.y = mouseXY[1];
-    }
-    if (!('fontSize' in node)) {
-      node.fontSize = 20 / S;
-    }
-    if ((!node.hasOwnProperty('style'))||
-        (node.style === undefined)) {
-      node.style = Object.assign({}, default_node_style);
-    } else {
-      node.style = Object.assign({}, default_node_style, node.style);
-    }
-
-    tdom = _ce('div'
-      , 'id', 'node_' + node.id
-      , 'className', 'node ui-rotatable'
-      , 'onclick', onNodeClick
-      , 'ondblclick', onNodeDblClick
-      , 'onmousedown', onNodeMouseDown
-    );
-    // tdom.dataset['bsHtml']='true';
-    // tdom.dataset['bsPlacement']='top';
-    // tdom.dataset['bsToggle']='popover';
-    // tdom.dataset['bsContainer']="body";
-
-    tdom.style.display = 'none';
-
-    if(!domOnly){
-      _NODES.push(node);
-      _NODEId2node.set(node.id, node);
-      _DOMId2node.set(tdom.id, node);
-      _DOMId2nodej.set(tdom.id, _NODES.length - 1);
-    }
-
-    //  tn.contentEditable = true;
-    // tn.dataset["x"] = d.x;
-    // tn.dataset["y"] = d.y;
-    // tn.dataset["rotate"] = d.rotate;
-    // tn.dataset["fontSize"] = d.fontSize;
-    // tn.dataset['text'] = d.text;
-    // tn.dataset['id'] = d.id;
-  }
-  tdom.innerHTML = '';
-
-  const tcontent = _ce('div'
-    , 'className', 'np-n-c'
-    , 'innerHTML', getHTML(node)
-  );
-
-  if(node.is_svg){
-    node.svg_dom = tcontent.getElementsByTagName('svg')[0];
-
-    node.path_dom = node.svg_dom.getElementsByTagName('path')[0];
-
-    node.path_dom.setAttribute("stroke", node.style.color);
-    node.path_dom.setAttribute("strokeWidth", node.style.strokeWidth);
-    node.path_dom.setAttribute("fill", node.style.fill);
-
-
-    node.svg_dom.onmousedown = function(e) {
-      //if(onNodeMouseDown.path_ok)
-    }
-    node.path_dom.onmousedown = function (e) {
-      onNodeMouseDown.path_ok = true;
-    }
-
-    node.path_dom.ondblclick = function (e) {
-      onNodeDblClick.path_ok = true;
-    }
-    node.path_dom.onclick = function (e) {
-      onNodeClick.path_ok = true;
-    }
-
-  }
-  if(node.is_img){
-    tdom.classList.add('img');
-
-    node.img_dom = tcontent.getElementsByTagName('img')[0];
-    node.img_dom.onload = function(e) {
-      console.log('img load');
-      console.log(this);
-    }
-    node.img_dom.addEventListener('load',function () {
-      console.log('node '+node.id+' img ready!!');
-      node.size = [node.img_dom.width, node.img_dom.height];
-    });
-  }
-
-  if (node.is_svg) {
-    // tcontent.classList.add('svg');
-    tdom.classList.add('svg');
-  }
-
-  // Tooltip
-  const tt = _ce('div'
-    , 'className', 'position-absolute start-0 np-n-tooltip'// translate-middle start-50
-  );
-  if (node.is_img == false) {
-    // not entirely image-based node, add color select
-    const tcolorselect = _ce('input'
-      , 'type', 'color'
-      , 'value', node.style.color
-      , 'oninput', function (e) {
-        node.style.color = this.value;
-        node.content_dom.style.color = this.value;
-        if (node.is_svg) {
-          node.path_dom.setAttribute("stroke", this.value);
-        }
-      }
-      , 'onchange', function (e) {
-        applyAction( {
-          type: 'E',
-          node_ids: [ node.id ],
-          oldValues: [ { 'style.color': this.dataset['oldValue'] } ],
-          newValues: [ { 'style.color': this.value } ]
-        })
-      }
-    );
-    tcolorselect.dataset['oldValue'] = node.style.color;
-    tt.appendChild(tcolorselect);
-  }
-
-  if((node.is_img == false) && (node.is_svg == false)){
-    if (tcontent.innerHTML.indexOf('<br') >= 0) {
-      // text align only valuable for multiline nodes
-      ['left', 'center', 'right'].forEach((jta) => {
-        let tbtn = _ce('button'
-          , 'className', 'np-n-t-btn np-n-t-ta' + (node.style.textAlign == jta ? ' np-n-t-ta-selected':'')
-          , 'innerHTML', '<i class="bi-text-' + jta + '"></i>'
-          , 'onclick', function (e) {
-            console.log('clicked on text-align=' + this.dataset.textAlign);
-            $(this.parent)
-              .find('.np-n-t-ta')
-              .removeClass('np-n-t-ta-selected')
-              .find('[data-text-align="' + this.dataset.textAlign + '"]')
-              .addClass('np-n-t-ta-selected');
-            applyAction({
-              type: 'E',
-              node_ids: [ node.id ],
-              newValues: [ { 'style.textAlign': this.dataset.textAlign } ]
-            })
-            // node.style.textAlign = this.dataset.textAlign;
-            node.content_dom.style.textAlign = this.dataset.textAlign;
-            // newNode(node.node);
-            // selectNode(node)
-            e.stopPropagation();
-          }
-        );
-        tbtn.dataset.textAlign = jta;
-        tt.appendChild(tbtn);
-      });
-    }
-  }
-
-  const tplusbtn = _ce('button'
-    , 'className', 'np-n-t-btn plus-button'// btn btn-outline-primary'
-    , 'onclick', function (e) { editFontSize(+1); e.stopPropagation(); }
-    , 'title', 'make BIGGER'
-    , 'innerHTML', '<i class="bi bi-plus"></i>'
-  );
-  const tminusbtn = _ce('button'
-    , 'className', 'np-n-t-btn minus-button'// 'btn btn-outline-primary'
-    , 'onclick', function (e) { editFontSize(-1); e.stopPropagation(); }
-    , 'title', 'Make smaller'
-    , 'innerHTML', '<i class="bi bi-dash"></i>'
-  );
-  tt.appendChild(tplusbtn);
-  tt.appendChild(tminusbtn);
-
-  if (node.is_svg) {
-    // add line width !!
-    const tplusbtnLW = _ce('button'
-      , 'className', 'np-n-t-btn plus-button'// btn btn-outline-primary'
-      , 'onclick', function (e) { changeStrokeWidth(+1); e.stopPropagation(); }
-      , 'title', 'make <b>thicker</b>'
-      , 'innerHTML', '<div style="font-weight:900; transform:translate(-20%,0);">➖</span>'
-    );
-    const tminusbtnLW = _ce('button'
-      , 'className', 'np-n-t-btn minus-button'// 'btn btn-outline-primary'
-      , 'onclick', function (e) { changeStrokeWidth(-1); e.stopPropagation(); }
-      , 'title', 'make thinner'
-      , 'innerHTML', '<div style="font-weight:100;">—</span>'
-    );
-    tt.appendChild(tplusbtnLW );
-    tt.appendChild(tminusbtnLW );
-    // fill?
-    const tbutton = _ce('button'
-      ,'className', "np-n-t-btn"
-    );
-    const tlabel = _ce('label'
-      ,'innerHTML', node.style.fill=='none'?'<i class="bi-bucket"></i>':'<i class="bi-bucket-fill"></i>'
-      ,'ondblclick', function (e) {
-        applyAction({
-          type: 'E',
-          node_ids: [node.id],
-          oldValues: [{'style.fill': this.dataset['oldValue']}],
-          newValues: [{'style.fill': 'none'}]
-        });
-        e.stopPropagation();
-      }
-    );
-    tlabel.setAttribute('for','inputfill_'+node.id);
-    if(node.style.fill!=='none'){
-      tlabel.style.color = node.style.fill;
-    }
-    const tfillinput = _ce('input'
-      ,'type','color'
-      ,'value', node.style.fill=='none'?'#ffffff':node.style.fill
-      ,'id','inputfill_'+node.id
-      ,'style','width:0px;height:0px;'
-      // ,'hidden','hidden'
-      ,'oninput', function (e) {
-        tlabel.style.color = this.value;
-        node.style.fill = this.value;
-        node.path_dom.setAttribute('fill', this.value);
-        tlabel.innerHTML = '<i class="bi-bucket-fill"></i>';
-      }
-      ,'onchange', function (e) {
-        applyAction({
-          type: 'E',
-          node_ids: [node.id],
-          oldValues: [{'style.fill': this.dataset['oldValue']}],
-          newValues: [{'style.fill': this.value}],
-        });
-      }
-    )
-    tfillinput.dataset['oldValue'] = node.style.fill;
-    tbutton.appendChild(tlabel);
-    tbutton.appendChild(tfillinput);
-    // tt.appendChild(tfillinput);
-    tt.appendChild(tbutton);
-  }
-
-  tt.addEventListener('click', function(e) {
-    e.stopPropagation();
-  })
-  tt.addEventListener('mousedown', function(e) {
-    e.stopPropagation();
-  })
-  tt.addEventListener('mouseup', function(e) {
-    e.stopPropagation();
-  })
-  tt.addEventListener('dblclick', function (e) {
-    e.stopPropagation();
-  });
-
-  tdom.appendChild(tt);
-
-  for (const p of Object.keys(node.style)) {
-    tcontent.style[p] = node.style[p];
-  }
-  tdom.appendChild(tcontent);
-
-  // tn.innerHTML =  '';
-  // ta = document.createElement('a');
-  // ta.href = '(?Tx='+tn.dataset["x"]+'&Ty='+tn.dataset["y"]+'&S='+30/tn.dataset["fontSize"];
-  // ta.className = 'node_a';
-  // ta.innerHTML = getHTML(tn.dataset['text']);
-  // ta.onclick = function(e){
-  //   console.log('a click!');
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  // }
-  // ta.onauxclick = function(e){
-  //   // middle mouse button click!!
-  //   e.preventDefault();
-  // }
-  // ta.onmousedown = function(e){
-  //   console.log('a onmousedown!');
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  // }
-  // ta.onmouseup = function(e){
-  //   console.log('a onmouseup!');
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  // }
-  // tn.appendChild(ta);
-  node.node = tdom;
-  node.content_dom = tcontent;
-
-  if (!('className' in node)) {
-    node_container.appendChild(tdom);
-  }
-
-
-
-  [].forEach.call(tdom.getElementsByTagName('a'), (elt) => {
-    if (elt.href) {
-      elt.onclick = (e) => {
-        e.stopPropagation();
-      };
-      elt.onmousedown = (e) => {
-        e.stopPropagation();
-      };
-    }
-  });
-
-  if (redraw) {
-    redrawNode(node);
-  } else {
-    updateNode(node);
-  }
-
-  if(tdom.classList.contains('selected')){
-    // deselectOneDOM(tdom);
-    try{$(tdom).rotatable('destroy');}catch(e){}
-    setTimeout(function(){selectOneDOM(tdom);},1);
-  }
-
-  return tdom;
-}
-
 function changeStrokeWidth(delta=1){
   const node_ids = [];
   const newValues = [];
@@ -1746,87 +1142,60 @@ function changeStrokeWidth(delta=1){
   })
 }
 
-function updateNode (d) {
-  // here, sadly, d s for _NODES element, and n is for DOM element..
-  let n = d;
-  if (d.hasOwnProperty('node')) {
-    n = d.node;
+function updateNode (node_) {
+  let node = node_;
+  if (node.hasOwnProperty('dom')) {
+    dom = node.dom;
   } else {
-    n = d;
-    d = _DOMId2node.get(n.id);
+    dom = node_;
+    node = domNode(dom);
+  }
+  
+  dom.style.left = (node.x - T[0]) * S + 'px';
+  dom.style.top = (node.y - T[1]) * S + 'px';
+  dom.style.fontSize = (node.fontSize) * S + 'px';
+
+  dom.style.zIndex = Math.floor(200 - 10 * Math.log((node.fontSize) * S ));
+
+  let k = (S * node.fontSize / 20);
+
+  if(node.is_svg){
+    node.content_dom.style.position = 'relative';
+    node.content_dom.style.left = '0px';
+    node.content_dom.style.top = '0px';
+
+    let ow = node.svg_dom.getAttribute('width')*1;
+    let oh = node.svg_dom.getAttribute('height')*1
+    node.content_dom.style.width = ow * k + 'px';
+    node.content_dom.style.height = oh * k + 'px';
+    node.dom.style.height = oh * k + 'px';
+    node.dom.style.width = ow * k + 'px';
+    node.svg_dom.style.transform = 'translate(-'+ow/2+'px,-'+oh/2+'px) scale(' + k + ')' +' translate('+ow/2+'px,'+oh/2+'px)';// + ' rotate('+node.rotate+'rad) ' ;
   }
 
-
-  n.style.left = (d.x - T[0]) * S + 'px';
-  n.style.top = (d.y - T[1]) * S + 'px';
-  n.style.fontSize = (d.fontSize) * S + 'px';
-
-  n.style.zIndex = Math.floor(200 - 10 * Math.log((d.fontSize) * S ));
-
-  let k = (S * d.fontSize / 20);
-
-  if(d.is_svg){
-    d.content_dom.style.position = 'relative';
-    d.content_dom.style.left = '0px';
-    d.content_dom.style.top = '0px';
-
-
-    let ow = d.svg_dom.getAttribute('width')*1;
-    let oh = d.svg_dom.getAttribute('height')*1
-    d.content_dom.style.width = ow * k + 'px';
-    d.content_dom.style.height = oh * k + 'px';
-    d.node.style.height = oh * k + 'px';
-    d.node.style.width = ow * k + 'px';
-    // d.content_dom.style.transform = 'scale(' + k + ')';
-    d.svg_dom.style.transform = 'translate(-'+ow/2+'px,-'+oh/2+'px) scale(' + k + ')' +' translate('+ow/2+'px,'+oh/2+'px)';// + ' rotate('+d.rotate+'rad) ' ;
-  // }else{
-  }
-
-  if(d.is_img){
-    if(d.size){
-      const h = 5 * (d.fontSize) * S;
-      const w =  h * d.size[0] / d.size[1];
-      d.content_dom.style.width = w + 'px';
-      d.content_dom.style.height = h + 'px';
-      d.img_dom.style.width = w + 'px';
-      d.img_dom.style.height = h + 'px';//d.size[1] * k + 'px';
+  if(node.is_img){
+    if(node.size){
+      const h = 5 * (node.fontSize) * S;
+      const w =  h * node.size[0] / node.size[1];
+      node.content_dom.style.width = w + 'px';
+      node.content_dom.style.height = h + 'px';
+      node.img_dom.style.width = w + 'px';
+      node.img_dom.style.height = h + 'px';
     }
   }else{
-    [].forEach.call(n.getElementsByTagName('img'), (e) => {
+    dom.getElementsByTagName('img').forEach( (e) => {
       e.style.width = 'auto';
-      e.style.height = 5 * (d.fontSize) * S + 'px';
-      // e.setAttribute('draggable', false);
-      // e.onmousedown = (e)=>{e.preventDefault();};
+      e.style.height = 5 * (node.fontSize) * S + 'px';
     });
   }
 
-    if (d.rotate !== 0) {
-      if(n.classList.contains('selected')){
+  if (node.rotate !== 0) {
+    if(dom.classList.contains('selected')){
 
-
-      }else{
-        n.style.transform = 'rotate(' + d.rotate + 'rad)';
-      }
-
+    }else{
+      dom.style.transform = 'rotate(' + node.rotate + 'rad)';
     }
-
-  // setTimeout(function () {
-  //   [].forEach.call(n.getElementsByClassName('ui-wrapper'), (wrapper) => {
-  //     const img = wrapper.getElementsByTagName('img')[0];
-  //     wrapper.style.height = img.style.height;
-  //     wrapper.style.width = img.getBoundingClientRect.width;
-  //     img.dataset.origS = S;
-  //   })
-  // }, 10);
-  return 1;
-  [].forEach.call(n.getElementsByClassName('ui-wrapper'), (wrapper) => {
-    const img = wrapper.getElementsByTagName('img')[0];
-    // e.style.height = img.clientHeight+'px';
-    // e.style.width = img.clientWidth+'px';
-    wrapper.style.width = wrapper.style.width.slice(0, -2) * S / img.dataset.origS + 'px';
-    wrapper.style.height = wrapper.style.height.slice(0, -2) * S / img.dataset.origS + 'px';
-    img.dataset.origS = S;
-  });
+  }
 }
 
 function updateSizes () {
@@ -1840,8 +1209,8 @@ function updateSizes () {
     for (let j = 0; j < _NODES.length; j++) {
       if (_NODES[j].vis) {
         const d = _NODES[j];
-        d.xMax = d.x + d.node.clientWidth / S;
-        d.yMax = d.y + d.node.clientHeight / S;
+        d.xMax = d.x + d.dom.clientWidth / S;
+        d.yMax = d.y + d.dom.clientHeight / S;
       }
     }
     updateSizes.state = state;
@@ -1869,12 +1238,7 @@ function isVisible (d) {
     && isInBox(d.x, d.xMax, d.y, d.yMax,
       T[0] - width * 0.5 / S, T[0] + width * 1.5 / (1 * S),
       T[1] - height * 0.5 / S, T[1] + width * 1.5 / (1 * S))
-    // &&(d.x<=T[0]+width*1.5/(1*S))
-    // &&(d.y<=T[1]+width*1.5/(1*S))
-    // &&(d.xMax>=T[0] - width*0.5/S)
-    // &&(d.yMax>=T[1] - height*0.5/S)
   );
-
 }
 
 function calcVisible (d, onhide, onshow) {
@@ -1913,23 +1277,23 @@ function redrawNode (e) {
     e.deleted = false;
   }
   if (e.deleted) {
-    e.node.style.display = 'none';
+    e.dom.style.display = 'none';
   } else {
-    e.node.style.display = '';
+    e.dom.style.display = '';
     calcVisible(e
       , function () { // onhide
-        e.node.style.opacity = 0;
-        e.node.style.display = 'none';
+        e.dom.style.opacity = 0;
+        e.dom.style.display = 'none';
       }, function () { // onshow
         let oldTD = 0;
         if ('node' in e) {
-          oldTD = e.node.style.transitionDuration.slice(0, -1) * 1;
-          e.node.style.display = 'none';
+          oldTD = e.dom.style.transitionDuration.slice(0, -1) * 1;
+          e.dom.style.display = 'none';
         }
         updateNode(e);
         setTimeout(function () {
-          e.node.style.display = '';
-          e.node.style.opacity = 1;
+          e.dom.style.display = '';
+          e.dom.style.opacity = 1;
         }, 1 + 1000 * oldTD);
       }
     );
@@ -1974,15 +1338,15 @@ function redraw () {
 
   // _NODES.forEach(redrawNode);
 
-  if (_contentEditTextarea) {
+  if (_ContentEditing.textarea) {
     console.log('redraw : contextEditTextarea');
     console.log('initWidth:');
-    console.log(_contentEditTextarea.dataset.initWidth);
-    console.log('initS: ' + _contentEditTextarea.dataset.initS);
-    console.log('_contentEditTextarea.style.width = ' + _contentEditTextarea.style.width);
-    _contentEditTextarea.style.width = 1 * _contentEditTextarea.dataset.initWidth * S / (1 * _contentEditTextarea.dataset.initS) + 'px';
-    console.log('_contentEditTextarea.style.width = ' + _contentEditTextarea.style.width);
-    _contentEditTextarea.style.height = _contentEditTextarea.dataset.initHeight * S / _contentEditTextarea.dataset.initS + 'px';
+    console.log(_ContentEditing.textarea.dataset.initWidth);
+    console.log('initS: ' + _ContentEditing.textarea.dataset.initS);
+    console.log('_ContentEditing.textarea.style.width = ' + _ContentEditing.textarea.style.width);
+    _ContentEditing.textarea.style.width = 1 * _ContentEditing.textarea.dataset.initWidth * S / (1 * _ContentEditing.textarea.dataset.initS) + 'px';
+    console.log('_ContentEditing.textarea.style.width = ' + _ContentEditing.textarea.style.width);
+    _ContentEditing.textarea.style.height = _ContentEditing.textarea.dataset.initHeight * S / _ContentEditing.textarea.dataset.initS + 'px';
   }
 
   if (_selected_DOM.length > 0) {
@@ -2059,10 +1423,6 @@ const zoom_urlReplaceTimeout = setInterval(function () {
   }
 }, 200);
 
-function getDOM (id) {
-  return document.getElementById('node_' + id);
-}
-
 function onFontSizeEdit () {
   if (_selected_DOM.length === 1) {
     const dom = _selected_DOM[0];
@@ -2083,9 +1443,6 @@ function onTextEditChange () {
   if (_selected_DOM !== null) {
     _selected_DOM.dataset.text = this.value;
     newNode(_selected_DOM);
-
-    // this.style.height = "5px";
-    // this.style.height = (this.scrollHeight)+"px";
 
     save(_selected_DOM);
   }
@@ -2155,121 +1512,6 @@ function showModalYesNo (title, body, yes_callback) {
   $('#modalYesNo').modal('show');
 }
 
-// :::::::::: ::::::::::: :::        :::::::::: ::::::::
-// :+:            :+:     :+:        :+:       :+:    :+:
-// +:+            +:+     +:+        +:+       +:+
-// :#::+::#       +#+     +#+        +#++:++#  +#++:++#++
-// +#+            +#+     +#+        +#+              +#+
-// #+#            #+#     #+#        #+#       #+#    #+#
-// ###        ########### ########## ########## ########
-
-function defaultFilename () {
-  return 'Noteplace_' + date2str(new Date()) + '.json';
-}
-
-// Start file download.
-_('#save').addEventListener('click', function () {
-  _('#modal-input').value = defaultFilename();
-  _('#modal-save').style.display = '';
-  _('#exampleModalLabel').innerHTML = 'Save to local file:';
-
-  _('#modal-save').onclick = function () {
-    download(
-      _('#modal-input').value,
-      JSON.stringify(saveToG())
-    );
-  };
-  _('#modal-list').innerHTML = '';
-}, false);
-
-// save everything to a single object
-function saveToG (add_history = true) {
-  const G = {
-    T: T,
-    S: S,
-    nodes: (
-      add_history
-        ? _NODES
-        : _NODES.filter(node => !node.deleted)
-    ).map(stripNode),
-    places: stripPlace()
-  };
-  if (add_history) {
-    G.history = _HISTORY;
-    G.history_current_id = _HISTORY_CURRENT_ID;
-  }
-  return G;
-}
-
-function stripNode (d) {
-  // strips only relevant data for nodes, also convert to numerical
-  return {
-    id: ('id' in d) ? d.id+'' : newNodeID(), // newNodeID(),//
-    x: 1 * d.x,
-    y: 1 * d.y,
-    fontSize: 1 * d.fontSize,
-    text: d.text,
-    rotate: 'rotate' in d ? 1 * d.rotate:0,
-    deleted: 'deleted' in d ? d.deleted : false,
-    style: 'style' in d ? delete_defaults(d.style, default_node_style) : undefined
-  };
-}
-
-// load everything from single object
-function loadFromG (G) {
-  console.log('Loading..');
-
-  T = [1 * G.T[0], 1 * G.T[1]];
-  S = 1 * G.S;
-
-  // delete _PLACES;
-  if ('places' in G) {
-    _PLACES = G.places;
-  } else {
-    _PLACES = _PLACES_default;
-  }
-  fillPlaces();
-
-  // applyZoom([1*G.T[0],1*G.T[1]], 1*G.S);
-  $('.node').remove();
-  // delete _NODES;
-  _NODES = [];
-  gen_DOMId2nodej();
-
-  G.nodes.map(stripNode).forEach(newNode);
-
-
-  redraw();
-
-  if ( 'history' in G ) {
-    _HISTORY = G.history;
-    if ( 'history_current_id' in G ){
-      _HISTORY_CURRENT_ID = G.history_current_id;
-    } else {
-      _HISTORY_CURRENT_ID = lastHistoryID();
-    }
-    genHistIDMap();
-    fillHistoryList();
-  } else {
-    clearAllHistory();
-  }
-
-  console.log('Loading complete, now ' + _NODES.length + ' nodes');
-}
-
-_('#file').oninput = function () {
-  let fr = new FileReader();
-  fr.onload = function () {
-    console.log('Received file..');
-
-    loadFromG(JSON.parse(fr.result));
-
-    $('#file').value = '';
-  };
-
-  fr.readAsText(this.files[0]);
-};
-
 //  :::::::: ::::::::::: :::     ::::::::: ::::::::::: :::    ::: :::::::::
 // :+:    :+:    :+:   :+: :+:   :+:    :+:    :+:     :+:    :+: :+:    :+:
 // +:+           +:+  +:+   +:+  +:+    +:+    +:+     +:+    +:+ +:+    +:+
@@ -2306,24 +1548,19 @@ _('#btnFontPlus').onclick = function () {
 
 // Load nodes?
 
-if ($('.node').length) {
+if (_('.node').length) {
   console.log('seems we already have nodes.');
 
-  save();
+  _localStorage.save();
 } else {
   console.log('No nodes in html..');
   let nodes = [];
   let nodeIDs = [];
   try {
-  // if(localStorage['noteplace.node_ids']){
-    nodeIDs = JSON.parse(localStorage['noteplace.node_ids']);
-    nodes = nodeIDs.map(function (id) {
-      console.log(id);
-      console.log('noteplace.node_' + id);
-
-      return JSON.parse(localStorage['noteplace.node_' + id]);
-    });
+    nodeIDs = _localStorage.nodeIDs.load();
+    nodes = nodeIDs.map(_localStorage.node.load);
   }catch (e) {
+    console.trace(e);
     console.log('no nodes in localStorage, loading default');
     nodes = nodes_default;
   }
@@ -2333,14 +1570,14 @@ if ($('.node').length) {
 }
 
 try {
-  _PLACES = JSON.parse(localStorage['noteplace.places']);
+  _PLACES = _localStorage.places.load();
 }catch (e) {
   _PLACES = stripPlace(_PLACES_default);
 }
 
 fillPlaces();
 
-save();
+_localStorage.save();
 
 $('#exampleModal').on('shown.bs.modal', function () {
   $('#modal-input').trigger('focus');
@@ -2357,30 +1594,25 @@ node_container.appendChild(copydiv);
 window.addEventListener('paste', function (e) {
   console.log('window paste');
   console.log(e);
-  // items = e.clipboardData.items;
-  // console.log(items);
-  if (_contentEditTextarea) {
+  
+  if (_ContentEditing.textarea) {
     // pass
   } else {
     // hmm, pasting something from the outside?
     copydiv.focus();
 
-    // copydiv.addEventListener('input',function(e){
-    //   console.log('copydiv input')
-    //   console.log(this);
-    //   console.log(e)
-    // })
     if (1) {
-    // copydiv.addEventListener('paste',function(e){
       copydiv_observer = addOnContentChange(copydiv, function (e) {
         console.log('copydiv paste!');
         console.log(e);
 
         E = e;
 
-        let tstuff = [].map.call(e, je => [].map.call(
-          je.addedNodes, n => 'innerHTML' in n ? n.innerHTML:n.textContent
-        ).join('')).join('');
+        let tstuff = e.map( 
+          je => je.addedNodes.map( 
+            (n) => 'innerHTML' in n ? n.innerHTML:n.textContent 
+          ).join('')
+        ).join('');
 
         setTimeout(function () {
           tstuff = _('#copydiv').innerHTML;
@@ -2391,7 +1623,7 @@ window.addEventListener('paste', function (e) {
           let json_parsed = false;
           if (tstuff[0] == '[') {
             try {
-              _clipBoard = JSON.parse(
+              _Mouse.clipboard = JSON.parse(
               // I know, right?
               //  why does pasting JSON-encoded html
               //    create this sort of nonsense?
@@ -2408,20 +1640,20 @@ window.addEventListener('paste', function (e) {
           }
 
           if (json_parsed) {
-            console.log('Pasting JSON-parsed _clipBoard');
+            console.log('Pasting JSON-parsed _Mouse.clipboard');
             selectNode(null);
             // paste Under the cursor?
 
             const A = { type: 'A', nodes: [] };
 
-            _clipBoard.forEach((node) => {
+            _Mouse.clipboard.forEach((node) => {
               const nnode = stripNode(node);
               // de-duplicate if
               nnode.id = newNodeID(nnode.id);
               nnode.x /= S;
               nnode.y /= S;
               nnode.fontSize /= S;
-              const tmousePos = clientToNode(_mousePos);
+              const tmousePos = clientToNode(_Mouse.pos);
               nnode.x += tmousePos[0];
               nnode.y += tmousePos[1];
 
@@ -2432,7 +1664,7 @@ window.addEventListener('paste', function (e) {
 
             const h = applyAction(A);
 
-            selectNode(h.node_ids.map( id => idNode(id).node ));
+            selectNode(h.node_ids.map( id => idNode(id).dom ));
 
           }else {
             // I know this is not perfect (HAHAHAHAHA!!...)
@@ -2450,13 +1682,10 @@ window.addEventListener('paste', function (e) {
                 text: tstuff
               }]
             });
-            selectNode(_NODES[_NODES.length - 1].node);
+            selectNode(_NODES[_NODES.length - 1].dom);
           }
 
-        // node_container.removeChild(copydiv);
         }, 50);
-      // e.stopPropagation();
-        // })
       });
     }
   }
@@ -2465,16 +1694,12 @@ window.addEventListener('paste', function (e) {
 window.addEventListener('cut', function (e) {
   console.log('window cut');
   console.log(e);
-  if (_contentEditTextarea) {
+  if (_ContentEditing.textarea) {
     // pass
   } else {
     e.stopPropagation();
     e.preventDefault();
-    if (('on' in copySelection) && (copySelection.on)) {
-      // pass
-    } else {
-      copySelection();
-    }
+    copySelectedNodesToClipboard();
     _selected_DOM.forEach(deleteNode);
     _selected_DOM = [];
   }
@@ -2483,14 +1708,10 @@ window.addEventListener('cut', function (e) {
 window.addEventListener('copy', function (e) {
   console.log('window copy');
   console.log(e);
-  if (_contentEditTextarea) {
+  if (_ContentEditing.textarea) {
     // pass
   } else {
-    if (('on' in copySelection) && (copySelection.on)) {
-      // pass
-    } else {
-      copySelection();
-    }
+    copySelectedNodesToClipboard();
   }
 });
 
@@ -2536,7 +1757,7 @@ container.addEventListener('drop', function (e) {
         mousePos: [e.clientX, e.clientY]
       }]
     } );
-    selectNode(_NODES[_NODES.length-1].node);
+    selectNode(_NODES[_NODES.length-1].dom);
     // selectNode(
     //   newNode({
     //     text: e.dataTransfer.getData('text'),
@@ -2709,7 +1930,7 @@ function depreviewNode () {
 function previewNode (node) {
   previewState(nodeState(node));
 
-  node.node.classList.add('np-search-preview');
+  node.dom.classList.add('np-search-preview');
 
   previewNode.node = node;
 }
@@ -2756,7 +1977,7 @@ function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_
 }
 
 _('#btnSaveFast').onclick = function (e) {
-  save();
+  _localStorage.save();
   if ( __GDRIVE_savedID != null ){
     gdriveRewrite(__GDRIVE_saveFilename, __GDRIVE_savedID);
   }

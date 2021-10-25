@@ -611,11 +611,13 @@ input[type=color]::-moz-color-swatch {
   /* z-index: -100; */
 }
 
-
+/*
 #freehandField svg path{
   fill:none;
+  
+  width:auto;
 }
-
+*/
 .svg{
   pointer-events: none;
 }
