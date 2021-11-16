@@ -167,12 +167,15 @@ function uploadFile (name, content) {
 let __GDRIVE_saveFilename = null;
 let __GDRIVE_savedID = null;
 let __files = new Map();
+let __files_allInfo = new Map();
 
 function fillFilesList (rowClickFun) {
   listFiles(function (files) {
     __files = new Map();
+    __files_allInfo = new Map();
     files.forEach((file) => {
       __files.set(file.name, file.id);
+      __files_allInfo.set(file.name, file)
       console.log(file);
 
       const row = document.createElement('div');
@@ -241,22 +244,29 @@ _('#load_gdrive').addEventListener('click', function () {
 
   fillFilesList((row) => {
     console.log(row);
-    getFileContent(row.dataset.fileId, function (e) {
-      if (e.status === 200) {
-        // file loaded OK, load nodes'n'stuff
-        loadFromG(JSON.parse(e.result));
-        // only hide on OK load
-        $('#exampleModal').modal('hide');
-        // save Filename for faster save
-        __GDRIVE_saveFilename = row.dataset.name;
-        __GDRIVE_savedID = row.dataset.fileId;
-      }else {
-        alert('error.. ' + e);
-        console.log(e);
-      }
-    });
+    loadFromGDriveFile(row.dataset.name, row.dataset.fileId);
   });
 });
+
+function loadFromGDriveFile(name, fileId){
+  if(fileId==undefined){
+    fileId = __files.get(name);
+  }
+  getFileContent(fileId, function (e) {
+    if (e.status === 200) {
+      // file loaded OK, load nodes'n'stuff
+      loadFromG(JSON.parse(e.result));
+      // only hide on OK load
+      $('#exampleModal').modal('hide');
+      // save Filename for faster save
+      __GDRIVE_saveFilename = name;
+      __GDRIVE_savedID = fileId;
+    }else {
+      alert('error.. ' + e);
+      console.log(e);
+    }
+  });
+}
 
 function saveToGDrive (filename) {
   uploadFile(
@@ -270,9 +280,11 @@ function saveToGDrive (filename) {
     // TODO: simple mobile-like notification
     console.log(data);
     __GDRIVE_savedID = data.id;
+    localStorage.getItem('__GDRIVE_savedID') = __GDRIVE_savedID;
   });
   // save filename
   __GDRIVE_saveFilename = filename;
+  localStorage.getItem('__GDRIVE_saveFilename') = __GDRIVE_saveFilename;
 }
 
 function gdriveRewrite(filename, id){
@@ -327,3 +339,31 @@ _('#save_gdrive').addEventListener('click', function () {
   }
 
 }, false);
+
+
+
+
+__GDRIVE_saveFilename = localStorage.getItem('__GDRIVE_saveFilename');
+__GDRIVE_savedID = localStorage.getItem('__GDRIVE_savedID');
+
+if(__GDRIVE_saveFilename){
+  
+  listFiles((files) => {
+    for(var file of files){
+      if(file.name == __GDRIVE_saveFilename){
+        if(file.id == __GDRIVE_savedID){
+
+        } else {
+          showModalYesNo(
+            'Load from Google?',
+            'Looks like you have worked on <b>' + __GDRIVE_saveFilename + '</b> GDrive file, but its version on Google is different from yours, load from Google (It will overwrite local changes)?',
+            function () {
+              loadFromGDriveFile(__GDRIVE_saveFilename, file.id)
+            }
+          );
+        }
+      }
+    }
+  })
+
+}

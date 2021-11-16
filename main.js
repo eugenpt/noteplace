@@ -1824,6 +1824,9 @@ function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_
   //
   console.log('restart');
   applyZoom([0, 0], 1, false, false);
+  //
+  __GDRIVE_saveFilename = null;
+  __GDRIVE_savedID = null;
 }
 
 _('#btnSaveFast').onclick = function (e) {
