@@ -375,12 +375,12 @@ function fillMissingNodeFields(node){
     if ('mousePos' in node) {
       mousePos = node.mousePos;
     }
-    const mouseXY = clientToNode(mousePos);
+    const mouseXY = _View.clientToPos(mousePos);
     node.x = mouseXY[0];
     node.y = mouseXY[1];
   }
   if (!('fontSize' in node)) {
-    node.fontSize = 20 / S;
+    node.fontSize = 20 / _View.state.S;
   }
   if ((!node.hasOwnProperty('style'))||
       (node.style === undefined)) {

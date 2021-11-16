@@ -97,7 +97,7 @@ function addPlaceFolder (path) {
   pathPlace(path).dom.ul.appendChild(rli);
   pathPlace(path).items.push(place);
 
-  save('places');
+  _localStorage.places.save();
 
   place.dom.btnEdit.click();
 }
@@ -105,7 +105,7 @@ function addPlaceFolder (path) {
 function addPlace (path) {
   console.log('addPlace path=' + path);
 
-  const place = { name: placeNewName(path), state: { T: T, S: S } };
+  const place = { name: placeNewName(path), state: _View.getState()};
   const hpath = JSON.parse(path);
   hpath.push(place.name);
 
@@ -114,7 +114,7 @@ function addPlace (path) {
   pathPlace(path).dom.ul.appendChild(rli);
   pathPlace(path).items.push(place);
 
-  save('places');
+  _localStorage.places.save();
 
   place.dom.btnEdit.click();
 }
@@ -329,12 +329,7 @@ function createPlaceFolderDOM (place, path) {
 
 function createPlaceDOM (place, path) {
   const rli = _ce('li'
-    // ,'className','container'
   );
-
-  // var tc = _ce('div'
-  //   ,'className',
-  // )
 
   const ta = _ce('a'
     , 'className', 'btn col align-self-start align-items-center places-place places-name'

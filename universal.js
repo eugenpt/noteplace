@@ -22,6 +22,21 @@ function newID(start, checkfun, addfun=null, maxTries=1000) {
 
 const log = console.log;
 
+
+function copy(x){
+  if(Array.isArray(x)){
+    return x.map(copy);
+  }else if(x instanceof Object){
+    var r = {};
+    for(var j in x){
+      r[j] = copy(x[j]);
+    }
+    return r;
+  }else{
+    return x;
+  }
+}
+
 function now () {
   return new Date().getTime();
 }

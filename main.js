@@ -1,26 +1,13 @@
-const md = new Remarkable('full', {
-  html: true,
-  typographer: true
-});
 
 // Translate and Scale parameters
 let T = [0, 0];
 let S = 1;
+let _previewNode = null;
 
-let BODY = document.getElementsByTagName('body')[0];
 let M = 0;
-
-const zoomMax = 1e14;
-const zoomMin = 1e-15;
-
-const zoomK = 1.6;
-
-const container = _('#container');
-const node_container = _('#node_container');
 
 let _selected_DOM = [];
 
-let _previewNode = null;
 
 let width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
 let height = window.innerHeight || document.documentElement.clientHeight || BODY.clientHeight;
@@ -36,19 +23,7 @@ window.addEventListener('resize', function (event) {
   }, 500); // run update only every 100ms
 });
 
-// yeah, I don't like limits, but..
-//  without proper custom infinitely precise numbers
-//   this is what I can do with js
-//
-// Which seems OK, 26 orders of magnitude..
-//  is ~ the size of observable universe in meters
-//
-//   I know, I know, it would've been
-//     way cooler if it was ~ size(universe)/size(atom nucleus)
-//       which is.. ~ 10^26/(10^-15) ~ 10^41
-
-
-_FreeHand = new FreeHand()
+const _FreeHand = new FreeHand()
 
 node_container.ondblclick = function (e) {
   console.log('dblclick on empty field at [' + e.clientX + ',' + e.clientY + ']');
@@ -68,36 +43,32 @@ node_container.ondblclick = function (e) {
   }, 10);
 };
 
+function haveNodesSelection(){
+  return _selected_DOM.length > 0;
+}
+
 function zoomInOut (inDegree, clientPos = null) {
   let centerX = 0;
   let centerY = 0;
   if (clientPos == null) {
     // basically - we pressed a +/- button
-    if (_selected_DOM.length > 0) {
-      // zoom to it!
-      _selected_DOM.forEach((dom) => {
-        centerX += domNode(dom).x;
-        centerY += domNode(dom).y;
-      });
-      centerX /= _selected_DOM.length;
-      centerY /= _selected_DOM.length;
+    if (haveNodesSelection()) {
+      centerPos = calcCenterPos(_selected_DOM.map(domNode))
 
-      clientPos = [
-        (centerX - T[0]) * S,
-        (centerY - T[1]) * S
-      ];
+      clientPos = _View.posToClient(centerPos)
     } else {
       // just center
       clientPos = [width / 2, height / 2];
     }
   }
-  mousePos = [T[0] + clientPos[0] / S, T[1] + clientPos[1] / S];
-  S = Math.min(zoomMax, Math.max(zoomMin, S * Math.pow(zoomK, inDegree)));
-  applyZoom(
-    [mousePos[0] - clientPos[0] / S, mousePos[1] - clientPos[1] / S],
-    S,
-    true
-  );
+  _View.changeZoom(
+    Math.pow(zoomK, inDegree),
+    clientPos
+  )
+}
+
+function fitInBorders(x, minX, maxX){
+  return ( x > maxX ) ? maxX : ( x < minX ? minX : x);
 }
 
 const wheelZoom_minInterval_ms = 10;
@@ -161,38 +132,6 @@ function setTransitionDur (s) {
   // $('#container .ui-wrapper').css('transition-duration', s + 's');
 }
 
-let __previewOldState = { T: [0, 0], S: 1 };
-
-function applyZoom (T_, S_, smooth = true, noTemp = false) {
-  console.log('S=' + S + ' S_=' + S_);
-  T = T_;
-
-  const ds = 0.2 + Math.abs(Math.log10(S / S_));
-  console.log('ds=' + ds);
-  S = S_;
-
-  if (smooth) {
-    setTransitionDur(ds);
-  }
-
-  status({ T: T, S: S });
-
-  redraw();
-
-  if (noTemp) {
-    __previewOldState = { T: T, S: S };
-  }
-
-  if (smooth) {
-    clearTimeout(applyZoom.zoomResetTimeout);
-    applyZoom.zoomResetTimeout = setTimeout(function () {
-      setTransitionDur(0);
-    }, 1000 * ds);
-  }
-}
-applyZoom.zoomResetTimeout = null;
-applyZoom.lastSmooth = false;
-
 let _Mouse = {
   is:  {
     down: false,
@@ -231,7 +170,7 @@ node_container.onmousedown = function (e) {
     } else {
       log('!_Mouse.is.downContentEdit')
       _Mouse.down.pos = [e.clientX, e.clientY];
-      _Mouse.down.T = [T[0], T[1]];
+      _Mouse.down.T = [_View.state.T[0],_View.state.T[1]];
       _Mouse.is.down = true;
 
       if (_ContentEditing.textarea) {
@@ -258,10 +197,6 @@ node_container.onmousedown = function (e) {
       setTimeout(function(){selectNode(null);},50);
       }
     }
-
-    // if(_selected_DOM!==_Mouse.down.node){
-    //   selectNode(null);
-    // }
   }
 };
 
@@ -317,8 +252,8 @@ window.addEventListener('mouseup', function (e) {
 
   } else if (_Mouse.is.down) {
     // stop moving
-    T[0] = _Mouse.down.T[0] - 1 * node_container.dataset.x / S;
-    T[1] = _Mouse.down.T[1] - 1 * node_container.dataset.y / S;
+    _View.state.T[0] = _Mouse.down.T[0] - 1 * node_container.dataset.x / _View.state.S;
+    _View.state.T[1] = _Mouse.down.T[1] - 1 * node_container.dataset.y / _View.state.S;
 
     node_container.dataset.x = 0;
     node_container.dataset.y = 0;
@@ -331,15 +266,10 @@ window.addEventListener('mouseup', function (e) {
     redraw();
   }
 
-  // if(e.button==1){
-  //   e.preventDefault();
-  // }
-
   hideGridLine();
   _Mouse.is.resizing = false;
   _Mouse.is.down = false;
   _Mouse.is.downPath = false;
-
 });
 
 function tempSelect (node) {
@@ -405,10 +335,6 @@ function isNodeInBox (node, bxMin, bxMax, byMin, byMax) {
     node.x, node.xMax, node.y, node.yMax,
     bxMin, bxMax, byMin, byMax
   );
-}
-
-function clientToNode (pos) {
-  return [T[0] + pos[0] / S, T[1] + pos[1] / S];
 }
 
 function isNodeInClientBox (node, cbxMin, cbxMax, cbyMin, cbyMax) {
@@ -902,11 +828,11 @@ let _ContentEditing = {
   start: function(node){
   
   },
-};
-
-function nodeEditInProgress() {
-  return _ContentEditing.dom;
+  isInProgress: function nodeEditInProgress() {
+    return _ContentEditing.dom;
+  },
 }
+
 // let _ContentEditing.dom = null;
 // let _ContentEditing.textarea = null;
 
@@ -933,7 +859,7 @@ function textareaBtnDown (e) {
     
     _ContentEditing.stop();
 
-    if (nodeEditInProgress()) {
+    if (_ContentEditing.isInProgress()) {
       // if the node has not been deleted (as empty)
       //  , get actual height (not height of markdown textarea)
       th = tnode_orig.content_dom.getBoundingClientRect().height;
@@ -979,7 +905,7 @@ function textareaBtnDown (e) {
   }
 
   // https://stackoverflow.com/a/3369624/2624911
-  if (nodeEditInProgress()) {
+  if (_ContentEditing.isInProgress()) {
     if (e.key === 'Escape') { // escape key maps to keycode `27`
       log('Escape!');
     
@@ -1066,31 +992,30 @@ function onNodeMouseDown (e) {
   console.log(this.id);
 
   if((!domNode(this).is_svg)||((domNode(this).is_svg)&&(onNodeMouseDown.path_ok))){
-
-  _Mouse.down.node = domNode(this);
-  // console.log(e);
-  if (e.button === 1) {
-    _Mouse.drag.node = _Mouse.down.node;
-    _Mouse.drag.start = [e.clientX, e.clientY];
-
-    let applyDrag = [ this ];
-    if (this.classList.contains('selected')) {
-      // save all selected positions
-      applyDrag = _selected_DOM;
+    _Mouse.down.node = domNode(this);
+    // console.log(e);
+    if (e.button === 1) {
+      _Mouse.drag.node = _Mouse.down.node;
+      _Mouse.drag.start = [e.clientX, e.clientY];
+  
+      let applyDrag = [ this ];
+      if (this.classList.contains('selected')) {
+        // save all selected positions
+        applyDrag = _selected_DOM;
+      }
+      applyDrag.forEach((dom) => {
+        const node = domNode(dom);
+        node.startPos = { x: node.x, y: node.y };
+      });
+  
+      e.preventDefault();
+    } else if (e.button === 0) {
+      // left mouse button
+      console.log(e);
+    } else {
+      // pass
     }
-    applyDrag.forEach((dom) => {
-      const node = domNode(dom);
-      node.startPos = { x: node.x, y: node.y };
-    });
-
-    e.preventDefault();
-  } else if (e.button === 0) {
-    // left mouse button
-    console.log(e);
-  } else {
-    // pass
   }
-}
   if (e.ctrlKey) {
     e.preventDefault();
   }
@@ -1132,8 +1057,6 @@ function changeStrokeWidth(delta=1){
     newValues.push( {
       'style.strokeWidth': (node.style.strokeWidth || 1) * k 
     });
-    // node.strokeWidth *= Math.pow(1.25, delta);
-    // node.strokeWidth = Math.max(1, node.strokeWidth);
   })
 
   applyAction( {
@@ -1151,14 +1074,15 @@ function updateNode (node_) {
     dom = node_;
     node = domNode(dom);
   }
-  
-  dom.style.left = (node.x - T[0]) * S + 'px';
-  dom.style.top = (node.y - T[1]) * S + 'px';
-  dom.style.fontSize = (node.fontSize) * S + 'px';
+
+  var pos = _View.posToClient(node.x, node.y);
+  dom.style.left = pos[0] + 'px';
+  dom.style.top = pos[1] + 'px';
+  dom.style.fontSize = (node.fontSize) * _View.state.S + 'px';
 
   dom.style.zIndex = Math.floor(200 - 10 * Math.log((node.fontSize) * S ));
 
-  let k = (S * node.fontSize / 20);
+  let k = ( _View.state.S * node.fontSize / 20);
 
   if(node.is_svg){
     node.content_dom.style.position = 'relative';
@@ -1187,7 +1111,7 @@ function updateNode (node_) {
   }else{
     dom.getElementsByTagName('img').forEach( (e) => {
       e.style.width = 'auto';
-      e.style.height = 5 * (node.fontSize) * S + 'px';
+      e.style.height = 100 * k + 'px';
     });
   }
 
@@ -1237,9 +1161,7 @@ function isVisible (d) {
   }
   return (
     (d.fontSize > 0.2 / S)
-    && isInBox(d.x, d.xMax, d.y, d.yMax,
-      T[0] - width * 0.5 / S, T[0] + width * 1.5 / (1 * S),
-      T[1] - height * 0.5 / S, T[1] + width * 1.5 / (1 * S))
+    && _View.isBoxSeen(d.x, d.xMax, d.y, d.yMax)
   );
 }
 
@@ -1367,16 +1289,6 @@ function redraw () {
   }
 }
 
-function zoomToURL (s, smooth = true, noTemp = false) {
-  const urlParams = new URLSearchParams(s);
-  applyZoom(
-    [1 * urlParams.get('Tx'), 1 * urlParams.get('Ty')]
-    , 1 * urlParams.get('S') ? 1 * urlParams.get('S') : 1
-    , smooth
-    , noTemp
-  );
-}
-
 function getHTML (node) {
   if((node.text.slice(-4)=='svg>')
   && (node.text.slice(0,4)=='<svg')) {
@@ -1403,9 +1315,9 @@ function isCurrentState () {
   return ((history.state)
       && ('T' in history.state)
       && ('S' in history.state)
-      && (history.state.T[0] == T[0])
-      && (history.state.T[1] == T[1])
-      && (history.state.S == S));
+      && (history.state.T[0] == _View.state.T[0])
+      && (history.state.T[1] == _View.state.T[1])
+      && (history.state.S == _View.state.S));
 }
 
 function replaceHistoryState () {
@@ -1415,15 +1327,15 @@ function replaceHistoryState () {
   window.history.replaceState(
     { T: T, S: S },
     'Noteplace',
-    url + getStateURL());
+    url + _View.getStateURL());
   console.log('history replaced');
 }
 
-const zoom_urlReplaceTimeout = setInterval(function () {
-  if (!isCurrentState()) {
-    replaceHistoryState();
-  }
-}, 200);
+// const zoom_urlReplaceTimeout = setInterval(function () {
+//   if (!isCurrentState()) {
+//     replaceHistoryState();
+//   }
+// }, 200);
 
 function onFontSizeEdit () {
   if (_selected_DOM.length === 1) {
@@ -1551,7 +1463,7 @@ _('#btnFontPlus').onclick = function () {
 // Load nodes?
 
 if (_('.node').length) {
-  console.log('seems we already have nodes.');
+  console.log('seems we already have nodes in HTML.');
 
   _localStorage.save();
 } else {
@@ -1826,12 +1738,6 @@ container.addEventListener('dragend', function (e) {
   // console.log(e);
 });
 
-function getStateURL (state = null) {
-  if (state == null) {
-    state = currentState();
-  }
-  return '?Tx=' + state.T[0] + '&Ty=' + state.T[1] + '&S=' + state.S;
-}
 
 // start updateSizes process
 updateSizes();
@@ -1864,11 +1770,11 @@ window.onpopstate = function (e) {
   e.stopPropagation();
   e.preventDefault();
   console.log('location: ' + document.location + ', state: ' + JSON.stringify(e.state));
-  gotoState(e.state);
+  _View.goto(e.state);
 };
 
 // applyZoom(T,S, false);
-zoomToURL(window.location.search, false);
+_View.gotoURL(window.location.search, false);
 
 // :::    ::: ::::::::::: ::::::::::: :::        ::::::::::: ::::::::::: :::   :::
 // :+:    :+:     :+:         :+:     :+:            :+:         :+:     :+:   :+:
@@ -1878,77 +1784,21 @@ zoomToURL(window.location.search, false);
 // #+#    #+#     #+#         #+#     #+#            #+#         #+#        #+#
 //  ########      ###     ########### ########## ###########     ###        ###
 
-function status () {
+function status (...arguments) {
+  var s = arguments.map(toStr).join(', ');
   if ((arguments.length === 1) && (typeof (arguments[0]) === 'object')) {
-    let s = toStr(arguments[0]);
-    _('#status').innerText = s.slice(1, s.length - 1);
-  } else {
-    _('#status').innerText = [...Array(arguments.length).keys()].map((j) => toStr(arguments[j])).join(', ');
+    s = s.slice(1, s.length - 1);
   }
-}
-
-function currentState () {
-  return { T: T, S: S };
-}
-
-function previewState (state) {
-  if (typeof (state) === 'string') {
-    try {
-      state = JSON.parse(state);
-      state = { T: [state.T[0] * 1, state.T[1] * 1], S: state.S * 1 };
-    } catch (e) {
-      state = new URLSearchParams(state);
-      state = { T: [state.get('Tx') * 1, state.get('Ty') * 1], S: state.get('S') * 1 };
-    }
-  }
-  __previewOldState = currentState();
-
-  gotoState(state, false, false);
-}
-
-function gotoState (state, smooth = false, rewrite_preview = false) {
-  applyZoom(state.T, state.S, smooth, rewrite_preview);
-}
-
-function exitPreview () {
-  gotoState(__previewOldState, false, true);
-}
-
-function nodeState (node) {
-  let hS = 20 / node.fontSize;
-  return {
-    T: [
-      (node.xMax ? (node.x + node.xMax) / 2 : (node.x + node.text.length * node.fontSize * 0.4)) - width / (3 * hS),
-      node.y - height / (3 * hS)
-    ],
-    S: hS
-  };
-}
-
-function depreviewNode () {
-  $('.np-search-preview').removeClass('np-search-preview');
-}
-
-function previewNode (node) {
-  previewState(nodeState(node));
-
-  node.dom.classList.add('np-search-preview');
-
-  previewNode.node = node;
-}
-previewNode.node = null;
-
-function gotoNode (node) {
-  gotoState(nodeState(node), false, true);
-  depreviewNode();
+  console.log(s);
+  _('#status').innerText = s
 }
 
 function addRandomNodesToView (N) {
   addRandomNodes(
     1 * N,
-    [T[0], T[0] + width / S],
-    [T[1], T[1] + height / S],
-    [0.02 / S, 20 / S]
+    [_View.state.T[0], _View.state.T[0] + width / S],
+    [_View.state.T[1], _View.state.T[1] + height / S],
+    [0.02 / _View.state.S, 20 / _View.state.S]
   );
 }
 

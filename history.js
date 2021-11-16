@@ -179,7 +179,6 @@ function applyAction (A) {
   if(h !== null){
     redraw();
 
-    //
     h.id = newHistID();
     h.timestamp = now();
     // TODO: probably calculate state based on action itself?
@@ -233,6 +232,7 @@ function revertHistory (id) {
       break;
     case 'M':
       // move
+      //  edit but with a fancy name hence no break
     case 'E':
       // edit
       log('reverting EDIT');

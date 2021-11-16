@@ -25,7 +25,7 @@
             <button id="btnPlaces" class="btn btn-toggle align-items-center collapsed places-name" data-bs-toggle="collapse" data-bs-target="#places-collapse" aria-expanded="false">
               Places
             </button>
-            <button class="btn" onclick="applyZoom([0,0],1,0);" title="Home">
+            <button class="btn" onclick="gotoState({T:[0,0],S:1},0);" title="Home">
               <i class="bi-house-door"></i>
             </button>
             <button class="btn" title="New folder" id="btnNewHomeSubFolder">
@@ -266,6 +266,8 @@
     onreadystatechange="if (this.readyState === 'complete') this.onload()">
   </script>
 
+  <script src="consts.js"></script>
+  <script src="view.js"></script>
   <script src="nodes_default.js"></script>
   <script src="nodes.js"></script>
   <script src="places.js"></script>

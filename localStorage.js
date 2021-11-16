@@ -109,7 +109,7 @@ _localStorage = {
   places_key:'noteplace.places',
   places:{
     save: function(){
-      localStorage['noteplace.places'] = JSON.stringify(
+      localStorage[_localStorage.places_key] = JSON.stringify(
         stripPlace(_PLACES)
       );
     },
@@ -120,4 +120,5 @@ _localStorage = {
 
 }
 
+save = _localStorage.save;
 
