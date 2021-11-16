@@ -220,7 +220,7 @@ window.addEventListener('mouseup', function (e) {
     A.oldValues = A.node_ids.map( id => idNode(id).startPos );
     A.newValues = A.node_ids.map( id => {
       const node = idNode(id);
-      return { x: node.x, y: node.y}  
+      return { x: node.x, y: node.y}
     });
 
     applyAction(A);
@@ -355,7 +355,7 @@ function allVisibleNodesProps(prop='x', except=[]){
       continue;
     if (except_ids.indexOf(node.id) >= 0)
       continue;
-    
+
     R.set(node.id, node[prop]);
   }
   return R;
@@ -461,7 +461,7 @@ container.onmousemove = function (e) {
         node.y = node.startPos.y + deltaMove.y;
         calcBox(node);
         updateNode(node);
-      });      
+      });
         // move the node under the cursor
         // _Mouse.drag.node.x = _Mouse.drag.node.startPos.x + deltaMove.x;
         // _Mouse.drag.node.y = _Mouse.drag.node.startPos.y + deltaMove.y;
@@ -635,7 +635,7 @@ function rotateStop(e, ui) {
   console.log(e);
   console.log(ui);
 
-  
+
 
   // ui.angle.start = ui.angle.current;
   applyAction({
@@ -671,7 +671,7 @@ function selectOneDOM (dom) {
         _oldValues = [{ rotate: node.rotate }];
         _Mouse.rotatingNode = node;
       },
-      stop: rotateStop 
+      stop: rotateStop
     };
     log(params);
 
@@ -751,7 +751,7 @@ function selectNode (n) {
     _selected_DOM.forEach(deselectOneDOM);
     _selected_DOM = [];
     return 0;
-  }  
+  }
   if (!Array.isArray(n)) {
     log(`[${n.id}]`);
     n = [n];
@@ -783,7 +783,6 @@ function selectNode (n) {
   }
   return 0;
 }
-
 
 
 function isMenuShown(){
@@ -1055,7 +1054,7 @@ function changeStrokeWidth(delta=1){
 
     node_ids.push(node.id);
     newValues.push( {
-      'style.strokeWidth': (node.style.strokeWidth || 1) * k 
+      'style.strokeWidth': (node.style.strokeWidth || 1) * k
     });
   })
 
@@ -1089,7 +1088,6 @@ function updateNode (node_) {
     node.content_dom.style.left = '0px';
     node.content_dom.style.top = '0px';
 
-    
     let ow = node.svg_dom.getAttribute('width')*1;
     let oh = node.svg_dom.getAttribute('height')*1
     node.content_dom.style.width = ow * k + 'px';
@@ -1391,7 +1389,7 @@ function editFontSize (delta) {
       applyAction({
         type: 'E',
         node_ids: _selected_DOM.map( dom => domNode(dom).id ),
-        newValues: _selected_DOM.map( dom => { 
+        newValues: _selected_DOM.map( dom => {
           let node = domNode(dom);
           return {
             fontSize: node.fontSize * k,
@@ -1664,7 +1662,7 @@ container.addEventListener('drop', function (e) {
     // _fileList
   } else {
     selectNode(null);
-    let h = applyAction( { 
+    let h = applyAction( {
       type: 'A',
       nodes: [{
         text: e.dataTransfer.getData('text'),
@@ -1802,27 +1800,28 @@ function addRandomNodesToView (N) {
   );
 }
 
-function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default) {
+function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_links=_LINKS_default) {
   console.log('_RESTART');
   console.log('new_nodes=[' + new_nodes + ']');
   console.log('new_places=[' + new_places + ']');
-
+  log('new_links=[' + new_links + ']');
+  //
   _NODES = [];
   newNodeID.N = 0;
   $('.node').remove();
-
-  _PLACES = stripPlace(_PLACES_default);
+  //
+  gen_DOMId2nodej();  _PLACES = stripPlace(_PLACES_default);
   fillPlaces();
-
+  //
   new_nodes.forEach(n => {
     newNode(stripNode(n));
   });
-
+  //
   _HISTORY = [];
   _HISTORY_CURRENT_ID = null;
   genHistIDMap();
   fillHistoryList();
-
+  //
   console.log('restart');
   applyZoom([0, 0], 1, false, false);
 }
