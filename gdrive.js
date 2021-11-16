@@ -349,10 +349,11 @@ __GDRIVE_savedID = localStorage.getItem('__GDRIVE_savedID');
 if(__GDRIVE_saveFilename){
   
   listFiles((files) => {
+    log("gdive file list loaded")
     for(var file of files){
       if(file.name == __GDRIVE_saveFilename){
         if(file.id == __GDRIVE_savedID){
-
+          log("GDrive has the same file")
         } else {
           showModalYesNo(
             'Load from Google?',

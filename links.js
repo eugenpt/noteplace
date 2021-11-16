@@ -35,20 +35,6 @@ let _LINK_TYPES = [
 //
 
 
-_LINKS_default = [
-	{
-		ns: [_NODES[0].id, _NODES[1].id],
-        connect_style: {
-            type: undefined,
-
-        },
-	    style: {
-            color:'black',
-            
-            },
-	},
-];
-
 
 function renderLink(link){
     
