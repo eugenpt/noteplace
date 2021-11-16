@@ -280,11 +280,11 @@ function saveToGDrive (filename) {
     // TODO: simple mobile-like notification
     console.log(data);
     __GDRIVE_savedID = data.id;
-    localStorage.getItem('__GDRIVE_savedID') = __GDRIVE_savedID;
+    localStorage.setItem('__GDRIVE_savedID', __GDRIVE_savedID);
   });
   // save filename
   __GDRIVE_saveFilename = filename;
-  localStorage.getItem('__GDRIVE_saveFilename') = __GDRIVE_saveFilename;
+  localStorage.setItem('__GDRIVE_saveFilename', __GDRIVE_saveFilename);
 }
 
 function gdriveRewrite(filename, id){
