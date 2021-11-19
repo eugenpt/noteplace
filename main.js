@@ -159,7 +159,7 @@ let _Mouse = {
 
 node_container.onmousedown = function (e) {
   console.log('container.onmousedown');
-  console.log('T=' + T + ' S=' + S);
+  console.log('T=' + _View.state.T + ' S=' + _View.state.S);
   
   if (_Mouse.is.resizing) {
     console.log('resizing..');
@@ -311,9 +311,8 @@ function updateDragSelect () {
   _NODES.forEach((node) => {
     // if(node.vis){
     if (!node.deleted) {
-      if (isNodeInClientBox(node,
-        Math.min(_Mouse.pos[0], _Mouse.down.pos[0]), Math.max(_Mouse.pos[0], _Mouse.down.pos[0]),
-        Math.min(_Mouse.pos[1], _Mouse.down.pos[1]), Math.max(_Mouse.pos[1], _Mouse.down.pos[1])
+      if (nodeIsInClientBox(node,
+      [_Mouse.pos, _Mouse.down.pos]
       )) {
         tempSelect(node);
         node.stillSelected = true;
@@ -337,13 +336,16 @@ function isNodeInBox (node, bxMin, bxMax, byMin, byMax) {
   );
 }
 
-function isNodeInClientBox (node, cbxMin, cbxMax, cbyMin, cbyMax) {
-  const bMin = clientToNode([cbxMin, cbyMin]);
-  const bMax = clientToNode([cbxMax, cbyMax]);
-  return isInBox(
-    node.x, node.xMax, node.y, node.yMax,
-    bMin[0], bMax[0], bMin[1], bMax[1]
-  );
+function nodeBox(node){
+  return [[node.x, node.y], [node.xMax, node.yMax]];
+}
+
+function nodeIsInBox(node, box){
+  return isInBox( nodeBox(node), box );
+}
+
+function nodeIsInClientBox(node, cBox){
+  return nodeIsInBox(node, cBox.map((pos)=>clientToPos(pos)));
 }
 
 function allVisibleNodesProps(prop='x', except=[]){

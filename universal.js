@@ -142,12 +142,36 @@ function delete_defaults (obj, def) {
   return Object.keys(r).length > 0 ? r : undefined;
 }
 
-function isInBox (xMin, xMax, yMin, yMax, bxMin, bxMax, byMin, byMax) {
+function isDotInBox(dotPos, boxPos){
   return (
-     (xMin <= bxMax)
-  && (yMin <= byMax)
-  && (xMax >= bxMin)
-  && (yMax >= byMin)
+    (dotPos[0] >= boxPos[0][0])
+  &&(dotPos[0] <= boxPos[0][1])
+  &&(dotPos[1] >= boxPos[1][0])
+  &&(dotPos[1] <= boxPos[1][1])
+  );
+}
+
+function min(a,b){
+  return (a>b)?b:a;
+}
+function max(a,b){
+  return (a<b)?b:a;
+}
+
+function isInBox (xMin, xMax, yMin, yMax, bxMin, bxMax, byMin, byMax) {
+  if(yMin==undefined){
+    const p1 = xMin;
+    const p2 = xMax;
+    return isInBox(
+      p1[0][0],p1[1][0],p1[0][1],p1[1][1],
+      p2[0][0],p2[1][0],p2[0][1],p2[1][1]
+    )
+  } else
+  return (
+     (min(xMin,xMax) <= max(bxMin,bxMax))
+  && (min(yMin,yMax) <= max(byMin,byMax))
+  && (max(xMin,xMax) >= min(bxMin,bxMax))
+  && (max(yMin,yMax) >= min(byMin,byMax))
   );
 }
 

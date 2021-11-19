@@ -1,8 +1,6 @@
 
 
 function clientToStatePos(clientPos, state){
-  console.log(clientPos);
-  console.log(state);
   return [
       state.T[0] + clientPos[0] / state.S, 
       state.T[1] + clientPos[1] / state.S
@@ -165,6 +163,8 @@ gotoState = _View.goto;
 getStateURL = _View.getStateURL;
 exitPreview = _View.exitPreview;
 previewState = _View.previewState;
+posToClient = _View.posToClient;
+clientToPos = _View.clientToPos;
 
 function currentState(){
   return _View.state;
