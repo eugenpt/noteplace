@@ -69,7 +69,7 @@ let _View = {
   },  
   
   applyZoom: function applyZoom (T_, S_, smooth = true, noTemp = false) {
-    console.log('S=' + S + ' S_=' + S_);
+    console.log('S=' + _View.state.S + ' S_=' + S_);
     _View.state.T = T_;
   
     const ds = 0.2 + Math.abs(Math.log10(_View.state.S / S_));
@@ -85,7 +85,7 @@ let _View = {
     redraw();
   
     if (noTemp) {
-      _View.preview.saved.state = { T: T_, S: S_ };
+      _View.preview.saved.oldState = { T: T_, S: S_ };
     }
   
     if (smooth) {
@@ -167,7 +167,7 @@ posToClient = _View.posToClient;
 clientToPos = _View.clientToPos;
 
 function currentState(){
-  return _View.state;
+  return copy(_View.state);
 }
 
 function parseStateFromString(stateString){
