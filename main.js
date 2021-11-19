@@ -420,8 +420,8 @@ container.onmousemove = function (e) {
   if (_Mouse.is.down) {
     if (_Mouse.drag.node) {
       const deltaMove = { 
-        x: (e.clientX - _Mouse.drag.start[0]) / S  ,
-        y: (e.clientY - _Mouse.drag.start[1]) / S
+        x: (e.clientX - _Mouse.drag.start[0]) / _View.state.S  ,
+        y: (e.clientY - _Mouse.drag.start[1]) / _View.state.S
       }
       const sizeScreen = {
         x: width,
@@ -870,7 +870,7 @@ function textareaBtnDown (e) {
         x: 1 * tnode.x,
         y: 1 * tnode.y +
           // + 1*tnode['fontSize']
-          (th / S),
+          (th / _View.state.S),
         text: '',
         fontSize: tnode.fontSize
       }]
