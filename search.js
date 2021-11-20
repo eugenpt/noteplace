@@ -141,7 +141,6 @@ function fillSearchResults () {
       }
       , 'onmouseleave', function (e) {
         console.log('leave! ' + n.text);
-        exitPreview();
         depreviewNode();
         console.log(currentState());
       }

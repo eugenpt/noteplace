@@ -160,11 +160,13 @@ let _View = {
 
 zoomToURL = _View.gotoURL;
 gotoState = _View.goto;
+gotoNode = _View.gotoNode;
 getStateURL = _View.getStateURL;
 exitPreview = _View.exitPreview;
 previewState = _View.previewState;
 posToClient = _View.posToClient;
 clientToPos = _View.clientToPos;
+previewNode = _View.previewNode;
 
 function currentState(){
   return copy(_View.state);
@@ -194,6 +196,8 @@ function nodeState (node) {
 
 
 function depreviewNode () {
+  exitPreview();
+  
   $('.np-search-preview').removeClass('np-search-preview');
 }
 
