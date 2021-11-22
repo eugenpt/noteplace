@@ -1567,7 +1567,7 @@ window.addEventListener('paste', function (e) {
               nnode.x /= S;
               nnode.y /= S;
               nnode.fontSize /= S;
-              const tmousePos = clientToNode(_Mouse.pos);
+              const tmousePos = clientToPos(_Mouse.pos);
               nnode.x += tmousePos[0];
               nnode.y += tmousePos[1];
 
