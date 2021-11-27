@@ -99,11 +99,21 @@ function listMap(arr, fun) {
 }
 
 // add map and forEach to some DOM-related array-like thingies
-['map','forEach'].forEach( (fun_name) => {
+['map','forEach','slice'].forEach( (fun_name) => {
   [NodeList, HTMLCollection].forEach( (obj) => {
-    obj.prototype[fun_name] = function(fun) { return [][fun_name].call(this, fun); };
+    obj.prototype[fun_name] = function() { return [...this][fun_name](...arguments); };
   })
-})
+});
+
+String.prototype.pxToFloat = function(){
+  return this.slice(0,-2) * 1.0;
+}
+String.prototype.toPx = function(){
+  return this+'px';
+}
+Number.prototype.toPx = function(){
+  return this+'px';
+}
 
 // if property is dot-separated (style.color for example)
 //  take obj.style.color instead of just obj['style.color']

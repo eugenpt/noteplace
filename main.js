@@ -1,13 +1,6 @@
-
-// Translate and Scale parameters
-let T = [0, 0];
-let S = 1;
-let _previewNode = null;
-
 let M = 0;
 
 let _selected_DOM = [];
-
 
 let width = (window.innerWidth || document.documentElement.clientWidth || BODY.clientWidth);
 let height = window.innerHeight || document.documentElement.clientHeight || BODY.clientHeight;
@@ -27,7 +20,7 @@ const _FreeHand = new FreeHand()
 
 node_container.ondblclick = function (e) {
   console.log('dblclick on empty field at [' + e.clientX + ',' + e.clientY + ']');
-  console.log('T=' + T + ' S=' + S);
+  console.log(_View.state);
   applyAction({
     type: 'A',
     nodes: [
@@ -185,8 +178,8 @@ node_container.onmousedown = function (e) {
       _('#select-box').style.display = 'block';
       _('#select-box').style.width = 0;
       _('#select-box').style.height = 0;
-      _('#select-box').style.top = e.clientX + 'px';
-      _('#select-box').style.left = e.clientY + 'px';
+      _('#select-box').style.top = e.clientX.toPx();
+      _('#select-box').style.left = e.clientY.toPx();
     } else {
       if (_Mouse.down.node) {
         // pass
@@ -200,9 +193,17 @@ node_container.onmousedown = function (e) {
   }
 };
 
+function hideSelectBox(){
+  _('#select-box').style.display = 'none';
+  _('#select-box').style.width = 0;
+  _('#select-box').style.height = 0;
+  _('#select-box').style.top = 0;
+  _('#select-box').style.left = 0;
+}
+
 window.addEventListener('mouseup', function (e) {
   console.log('window onmouseup');
-  console.log('T=' + T + ' S=' + S);
+  // console.log('T=' + T + ' S=' + S);
 
   _Mouse.down.node = null;
 
@@ -228,11 +229,7 @@ window.addEventListener('mouseup', function (e) {
 
     _Mouse.drag.node = false;
   } else if (_Mouse.is.dragSelecting) {
-    _('#select-box').style.display = 'none';
-    _('#select-box').style.width = 0;
-    _('#select-box').style.height = 0;
-    _('#select-box').style.top = 0;
-    _('#select-box').style.left = 0;
+    hideSelectBox();
 
     _Mouse.is.dragSelecting = false;
 
@@ -388,21 +385,21 @@ function gridAlignLine(node1, node2, prop){
 
   const delta = 0;
 
-  node1prop = node1.dom.style[domProp].slice(0,-2) * 1;
-  node2prop = node2.dom.style[domProp].slice(0,-2) * 1;
-  node1prop2 = node1.dom.style[domProp2].slice(0,-2) * 1;
-  node2prop2 = node2.dom.style[domProp2].slice(0,-2) * 1;
+  node1prop = node1.dom.style[domProp].pxToFloat();
+  node2prop = node2.dom.style[domProp].pxToFloat();
+  node1prop2 = node1.dom.style[domProp2].pxToFloat();
+  node2prop2 = node2.dom.style[domProp2].pxToFloat();
 
   _theGridAlignLines[prop].style[widthprop] = 1;
-  _theGridAlignLines[prop].style[domProp] = Math.min( node1prop , node2prop ) + 'px'
+  _theGridAlignLines[prop].style[domProp] = Math.min( node1prop , node2prop ).toPx();
 
   let tx = Math.min( node1prop2 , node2prop2) - delta;
   // log('tx=');
   // log(tx);
 
-  _theGridAlignLines[prop].style[domProp2] = tx + 'px';
+  _theGridAlignLines[prop].style[domProp2] = tx.toPx();
   // log(_theGridAlignLines[prop].style[domProp2])
-  _theGridAlignLines[prop].style[heightprop] = (Math.max( node1prop2 , node2prop2) - tx + 2 * delta ) +'px'
+  _theGridAlignLines[prop].style[heightprop] = (Math.max( node1prop2 , node2prop2) - tx + 2 * delta ).toPx();
 
 }
 
@@ -445,7 +442,7 @@ container.onmousemove = function (e) {
           minAbs = Math.min(...allPropsAbs)
           minJ = allPropsAbs.indexOf(minAbs);
 
-          minDvh = minAbs*S / sizeScreen[prop];
+          minDvh = minAbs * _View.state.S / sizeScreen[prop];
 
         if(minDvh < 0.01){
           //
@@ -473,10 +470,10 @@ container.onmousemove = function (e) {
     } else if (_Mouse.is.resizing) {
       // pass
     } else if (_Mouse.is.dragSelecting) {
-      _('#select-box').style.left = Math.min(e.clientX, _Mouse.down.pos[0]) + 'px';
-      _('#select-box').style.width = Math.abs(e.clientX - _Mouse.down.pos[0]) + 'px';
-      _('#select-box').style.top = Math.min(e.clientY, _Mouse.down.pos[1]) + 'px';
-      _('#select-box').style.height = Math.abs(e.clientY - _Mouse.down.pos[1]) + 'px';
+      _('#select-box').style.left = Math.min(e.clientX, _Mouse.down.pos[0]).toPx();
+      _('#select-box').style.width = Math.abs(e.clientX - _Mouse.down.pos[0]).toPx();
+      _('#select-box').style.top = Math.min(e.clientY, _Mouse.down.pos[1]).toPx();
+      _('#select-box').style.height = Math.abs(e.clientY - _Mouse.down.pos[1]).toPx();
 
       updateDragSelect();
       // clearTimeout(_dragSelectingTimeout);
@@ -486,8 +483,8 @@ container.onmousemove = function (e) {
       // T[1] = _Mouse.down.T[1] -  (e.clientY - _Mouse.down.pos[1])/S;
       node_container.dataset.x = (e.clientX - _Mouse.down.pos[0]);
       node_container.dataset.y = (e.clientY - _Mouse.down.pos[1]);
-      node_container.style.left = node_container.dataset.x + 'px';
-      node_container.style.top = node_container.dataset.y + 'px';
+      node_container.style.left = node_container.dataset.x.toPx();
+      node_container.style.top = node_container.dataset.y.toPx();
 
       // redraw()
     }
@@ -498,6 +495,8 @@ container.onmousemove = function (e) {
     _previewNode.style.top = e.clientY;
   }
 };
+
+_previewNode = null;
 
 // :::    ::: :::::::::: :::   ::: :::::::::   ::::::::  :::       ::: ::::    :::
 // :+:   :+:  :+:        :+:   :+: :+:    :+: :+:    :+: :+:       :+: :+:+:   :+:
@@ -840,7 +839,7 @@ let _ContentEditing = {
 function textareaAutoResize (e) {
   var target = ('style' in e) ? e : this;
   target.style.height = 'auto';
-  target.style.height = target.scrollHeight + 'px';
+  target.style.height = target.scrollHeight.toPx();
 }
 
 function textareaBtnDown (e) {
@@ -952,12 +951,12 @@ function onNodeDblClick (e) {
   
     // _ContentEditing.textarea.style.fontSize = _ContentEditing.dom.dataset['fontSize']*S+'px';
     // _ContentEditing.textarea.style.fontFamily = 'Open Sans';
-    _ContentEditing.textarea.dataset.initS = S;
+    _ContentEditing.textarea.dataset.initS = _View.state.S;
     console.log(_ContentEditing.dom.getBoundingClientRect());
     _ContentEditing.textarea.dataset.initWidth = Math.max(width / 3, _ContentEditing.dom.getBoundingClientRect().width + 20);
     _ContentEditing.textarea.dataset.initHeight = _ContentEditing.dom.getBoundingClientRect().height;
-    _ContentEditing.textarea.style.width = _ContentEditing.textarea.dataset.initWidth + 'px';
-    _ContentEditing.textarea.style.height = _ContentEditing.textarea.dataset['initHeight'] +'px';
+    _ContentEditing.textarea.style.width = _ContentEditing.textarea.dataset.initWidth.toPx();
+    _ContentEditing.textarea.style.height = _ContentEditing.textarea.dataset['initHeight'].toPx();
     // _ContentEditing.textarea.style.height = 'auto';
   
     _ContentEditing.textarea.onkeydown = textareaBtnDown;
@@ -1077,11 +1076,11 @@ function updateNode (node_) {
   }
 
   var pos = _View.posToClient(node.x, node.y);
-  dom.style.left = pos[0] + 'px';
-  dom.style.top = pos[1] + 'px';
-  dom.style.fontSize = (node.fontSize) * _View.state.S + 'px';
+  dom.style.left = pos[0].toPx();
+  dom.style.top = pos[1].toPx();
+  dom.style.fontSize = (node.fontSize * _View.state.S).toPx();
 
-  dom.style.zIndex = Math.floor(200 - 10 * Math.log((node.fontSize) * S ));
+  dom.style.zIndex = Math.floor(200 - 10 * Math.log((node.fontSize) * _View.state.S ));
 
   let k = ( _View.state.S * node.fontSize / 20);
 
@@ -1092,10 +1091,10 @@ function updateNode (node_) {
 
     let ow = node.svg_dom.getAttribute('width')*1;
     let oh = node.svg_dom.getAttribute('height')*1
-    node.content_dom.style.width = ow * k + 'px';
-    node.content_dom.style.height = oh * k + 'px';
-    node.dom.style.height = oh * k + 'px';
-    node.dom.style.width = ow * k + 'px';
+    node.content_dom.style.width = ow * k.toPx();
+    node.content_dom.style.height = oh * k.toPx();
+    node.dom.style.height = oh * k.toPx();
+    node.dom.style.width = ow * k.toPx();
     node.svg_dom.style.transform = 'translate(-'+ow/2+'px,-'+oh/2+'px) scale(' + k + ')' +' translate('+ow/2+'px,'+oh/2+'px)';// + ' rotate('+node.rotate+'rad) ' ;
   }
 
@@ -1103,15 +1102,15 @@ function updateNode (node_) {
     if(node.size){
       const h = 5 * (node.fontSize) * S;
       const w =  h * node.size[0] / node.size[1];
-      node.content_dom.style.width = w + 'px';
-      node.content_dom.style.height = h + 'px';
-      node.img_dom.style.width = w + 'px';
-      node.img_dom.style.height = h + 'px';
+      node.content_dom.style.width = w.toPx();
+      node.content_dom.style.height = h.toPx();
+      node.img_dom.style.width = w.toPx();
+      node.img_dom.style.height = h.toPx();
     }
   }else{
     dom.getElementsByTagName('img').forEach( (e) => {
       e.style.width = 'auto';
-      e.style.height = 100 * k + 'px';
+      e.style.height = 100 * k.toPx();
     });
   }
 
@@ -1128,15 +1127,15 @@ function updateSizes () {
   if (!('state' in updateSizes)) {
     updateSizes.state = '';
   }
-  const state = JSON.stringify({ T: T, S: S });
+  const state = JSON.stringify(_View.state);
   if (state === updateSizes.state) {
     // pass
   } else {
     for (let j = 0; j < _NODES.length; j++) {
       if (_NODES[j].vis) {
         const d = _NODES[j];
-        d.xMax = d.x + d.dom.clientWidth / S;
-        d.yMax = d.y + d.dom.clientHeight / S;
+        d.xMax = d.x + d.dom.clientWidth / _View.state.S;
+        d.yMax = d.y + d.dom.clientHeight / _View.state.S;
       }
     }
     updateSizes.state = state;
@@ -1160,7 +1159,7 @@ function isVisible (d) {
     calcBox(d);
   }
   return (
-    (d.fontSize > 0.2 / S)
+    (d.fontSize > 0.2 / _View.state.S)
     && _View.isBoxSeen(d.x, d.xMax, d.y, d.yMax)
   );
 }
@@ -1268,9 +1267,9 @@ function redraw () {
     console.log(_ContentEditing.textarea.dataset.initWidth);
     console.log('initS: ' + _ContentEditing.textarea.dataset.initS);
     console.log('_ContentEditing.textarea.style.width = ' + _ContentEditing.textarea.style.width);
-    _ContentEditing.textarea.style.width = 1 * _ContentEditing.textarea.dataset.initWidth * S / (1 * _ContentEditing.textarea.dataset.initS) + 'px';
+    _ContentEditing.textarea.style.width = 1 * _ContentEditing.textarea.dataset.initWidth * _View.state.S / (1 * _ContentEditing.textarea.dataset.initS).toPx();
     console.log('_ContentEditing.textarea.style.width = ' + _ContentEditing.textarea.style.width);
-    _ContentEditing.textarea.style.height = _ContentEditing.textarea.dataset.initHeight * S / _ContentEditing.textarea.dataset.initS + 'px';
+    _ContentEditing.textarea.style.height = _ContentEditing.textarea.dataset.initHeight * _View.state.S / _ContentEditing.textarea.dataset.initS.toPx();
   }
 
   if (_selected_DOM.length > 0) {
@@ -1281,8 +1280,8 @@ function redraw () {
         wrapper = wrapper[0];
         const img = wrapper.getElementsByTagName('img')[0];
 
-        wrapper.style.width = wrapper.style.width.slice(0, -2) * S / img.dataset.origS + 'px';
-        wrapper.style.height = wrapper.style.height.slice(0, -2) * S / img.dataset.origS + 'px';
+        wrapper.style.width = (wrapper.style.width.pxToFloat() * S / img.dataset.origS).toPx();
+        wrapper.style.height = (wrapper.style.height.pxToFloat() * S / img.dataset.origS).toPx();
         img.dataset.origS = S;
       }
     });
@@ -1325,7 +1324,7 @@ function replaceHistoryState () {
     ? window.location.href
     : window.location.href.slice(0, window.location.href.indexOf('?'));
   window.history.replaceState(
-    { T: T, S: S },
+    _View.state,
     'Noteplace',
     url + _View.getStateURL());
   console.log('history replaced');
@@ -1411,8 +1410,8 @@ function editFontSize (delta) {
         if (wrapper.length > 0) {
           wrapper = wrapper[0];
           console.log(wrapper);
-          wrapper.style.width = (wrapper.style.width.slice(0, -2) * k) + 'px';
-          wrapper.style.height = (wrapper.style.height.slice(0, -2) * k) + 'px';
+          wrapper.style.width = (wrapper.style.width.slice(0, -2) * k).toPx();
+          wrapper.style.height = (wrapper.style.height.slice(0, -2) * k).toPx();
         }
       });
     }
@@ -1687,7 +1686,6 @@ container.addEventListener('dragover', function (e) {
   e.preventDefault();
 });
 
-_previewNode = null;
 
 container.addEventListener('dragenter', function (e) {
   console.log('container dragenter');
@@ -1802,7 +1800,7 @@ function addRandomNodesToView (N) {
   );
 }
 
-function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_links=_LINKS_default) {
+function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_links=[]) {
   console.log('_RESTART');
   console.log('new_nodes=[' + new_nodes + ']');
   console.log('new_places=[' + new_places + ']');
@@ -1825,7 +1823,7 @@ function _RESTART (new_nodes = nodes_default, new_places = _PLACES_default, new_
   fillHistoryList();
   //
   console.log('restart');
-  applyZoom([0, 0], 1, false, false);
+  _View.applyZoom([0, 0], 1, false, false);
   //
   __GDRIVE_saveFilename = null;
   __GDRIVE_savedID = null;
