@@ -936,37 +936,29 @@ function onNodeDblClick (e) {
     console.log('double-clicked on [' + _ContentEditing.dom.id + '] : ' + _ContentEditing.dom.innerText);
     console.log(_ContentEditing.dom);
   
-  
-    // console.log(_ContentEditing.dom);
-  
     const node = domNode(_ContentEditing.dom);
-  
-    _ContentEditing.textarea = document.createElement('textarea');
-    _ContentEditing.textarea.id = '_ContentEditing.textarea';
-    _ContentEditing.textarea.value = node.text;
-  
     node.startText = node.text;
   
     _ContentEditing.dom = _ContentEditing.dom.getElementsByClassName('np-n-c')[0];
   
-    // _ContentEditing.textarea.style.fontSize = _ContentEditing.dom.dataset['fontSize']*S+'px';
-    // _ContentEditing.textarea.style.fontFamily = 'Open Sans';
-    _ContentEditing.textarea.dataset.initS = _View.state.S;
-    console.log(_ContentEditing.dom.getBoundingClientRect());
-    _ContentEditing.textarea.dataset.initWidth = Math.max(width / 3, _ContentEditing.dom.getBoundingClientRect().width + 20);
-    _ContentEditing.textarea.dataset.initHeight = _ContentEditing.dom.getBoundingClientRect().height;
-    _ContentEditing.textarea.style.width = _ContentEditing.textarea.dataset.initWidth.toPx();
-    _ContentEditing.textarea.style.height = _ContentEditing.textarea.dataset['initHeight'].toPx();
-    // _ContentEditing.textarea.style.height = 'auto';
+    ta = document.createElement('textarea');
+    ta.id = 'ta';
+    ta.value = node.text;
   
-    _ContentEditing.textarea.onkeydown = textareaBtnDown;
-    _ContentEditing.textarea.onkeyup = textareaAutoResize;
-    _ContentEditing.textarea.oninput = function (e) {
-      console.log('_ContentEditing.textarea input');
+    ta.dataset.initS = _View.state.S;
+    ta.dataset.initWidth = Math.max(width / 3, _ContentEditing.dom.getBoundingClientRect().width + 20);
+    ta.dataset.initHeight = _ContentEditing.dom.getBoundingClientRect().height;
+    ta.style.width = ta.dataset.initWidth.toPx();
+    ta.style.height = ta.dataset['initHeight'].toPx();
+  
+    ta.onkeydown = textareaBtnDown;
+    ta.onkeyup = textareaAutoResize;
+    ta.oninput = function (e) {
+      console.log('ta input');
       domNode(this.parentElement.parentElement).text = this.value;
     };
   
-    _ContentEditing.textarea.onmousedown = (e) => {
+    ta.onmousedown = (e) => {
       if (e.button === 1) {
         // drag on middle button => just pass the event
       } else {
@@ -975,12 +967,10 @@ function onNodeDblClick (e) {
     };
   
     _ContentEditing.dom.innerHTML = '';
-    _ContentEditing.dom.appendChild(_ContentEditing.textarea);
+    _ContentEditing.dom.appendChild(ta);
   
-    // textareaAutoResize(_ContentEditing.textarea);
-    _ContentEditing.textarea.select();
-  
-    // selectNode(_ContentEditing.dom);
+    ta.select();
+    _ContentEditing.textarea = ta; 
   
   }
   onNodeDblClick.path_ok = false;
@@ -1091,10 +1081,10 @@ function updateNode (node_) {
 
     let ow = node.svg_dom.getAttribute('width')*1;
     let oh = node.svg_dom.getAttribute('height')*1
-    node.content_dom.style.width = ow * k.toPx();
-    node.content_dom.style.height = oh * k.toPx();
-    node.dom.style.height = oh * k.toPx();
-    node.dom.style.width = ow * k.toPx();
+    node.content_dom.style.width = (ow * k).toPx();
+    node.content_dom.style.height = (oh * k).toPx();
+    node.dom.style.height = (oh * k).toPx();
+    node.dom.style.width = (ow * k).toPx();
     node.svg_dom.style.transform = 'translate(-'+ow/2+'px,-'+oh/2+'px) scale(' + k + ')' +' translate('+ow/2+'px,'+oh/2+'px)';// + ' rotate('+node.rotate+'rad) ' ;
   }
 
@@ -1110,7 +1100,7 @@ function updateNode (node_) {
   }else{
     dom.getElementsByTagName('img').forEach( (e) => {
       e.style.width = 'auto';
-      e.style.height = 100 * k.toPx();
+      e.style.height = (100 * k).toPx();
     });
   }
 
