@@ -45,8 +45,8 @@ _('#save').addEventListener('click', function () {
 // save everything to a single object
 function saveToG (add_history = true) {
   const G = {
-    T: T,
-    S: S,
+    T: _View.state.T,
+    S: _View.state.S,
     nodes: (
       add_history
         ? _NODES
@@ -68,8 +68,7 @@ function loadFromG (G) {
   
   _G = G;
 
-  T = [1 * G.T[0], 1 * G.T[1]];
-  S = 1 * G.S;
+  _View.goto(G, false, true);
 
   // delete _PLACES;
   if ('places' in G) {

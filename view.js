@@ -70,11 +70,11 @@ let _View = {
   
   applyZoom: function applyZoom (T_, S_, smooth = true, noTemp = false) {
     console.log('S=' + _View.state.S + ' S_=' + S_);
-    _View.state.T = T_;
+    _View.state.T = [1 * T_[0], 1 * T_[1]];
   
     const ds = 0.2 + Math.abs(Math.log10(_View.state.S / S_));
     console.log('ds=' + ds);
-    _View.state.S = S_;
+    _View.state.S = 1 * S_;
   
     if (smooth) {
       setTransitionDur(ds);
