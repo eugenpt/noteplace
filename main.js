@@ -612,22 +612,6 @@ window.addEventListener('keydown', (e) => {
 let __IMG = null;
 let __X = null;
 
-function deselectOneDOM (dom) {
-  dom.classList.remove('selected');
-  try {
-    $(dom).rotatable('destroy');
-  } catch(e) {
-    // log('error in rotatable destroy..');
-    // log(e);
-  }
-
-  try{
-    $(domNode(dom).content_dom).resizable('destroy');
-  } catch (e) {
-    // console.log('some error in resizable destroy');
-    // console.log(e);
-  }
-}
 
 let _oldValues = null;
 
@@ -650,6 +634,111 @@ function rotateStop(e, ui) {
   save(_Mouse.rotatingNode);
   _Mouse.rotatingNode = null;
 }
+
+class Set{
+  constructor(){
+    this.arr = [];
+  }
+
+}
+
+class NodeSelection{
+  constructor() {
+    this.nodes = [];
+    this.control = null;
+  }
+  
+  add(node){
+    if (this.empty) {
+      this.createControl();
+    }
+    this.nodes.push(node);
+  }
+
+  contains(node){
+    return this.nodes.indexOf(node)>=0;
+  }
+
+  clear(){
+    this.deleteControl();
+
+    this.nodes = [];
+  }
+
+  get length() { return this.nodes.length; }
+  get empty() { return this.nodes.length > 0; }
+
+  createControl() {
+    console.log('createControl placeholder');
+  }
+
+  deleteControl() {
+    console.log('deleteControl placeholder');
+  }
+}
+
+_Selection = new NodeSelection();
+
+
+
+function selectNode (n) {
+  console.log('select')
+  if ( n == null) {
+    console.log('[null]')
+    _selected_DOM.forEach(deselectOneDOM);
+    _selected_DOM = [];
+    return 0;
+  }
+  if (!Array.isArray(n)) {
+    log(`[${n.id}]`);
+    n = [n];
+  } else {
+    log( n.map( dom => dom.id) );
+  }
+  if (_selected_DOM.length > 0) {
+    // see how many are new ones
+    if (n.every((dom) => dom.classList.contains('selected'))) {
+      // if all are already selected - deselect them!
+      n.forEach(deselectOneDOM);
+      n.forEach((dom) => {
+        _selected_DOM.splice(_selected_DOM.indexOf(dom));
+      });
+    }else {
+      // if only some are already selected - add all new ones
+      for (let dom of n) {
+        if (dom.classList.contains('selected')) {
+          continue;
+        }else {
+          selectOneDOM(dom);
+          _selected_DOM.push(dom);
+        }
+      }
+    }
+  }else {
+    _selected_DOM = n.slice();
+    _selected_DOM.forEach(selectOneDOM);
+  }
+  return 0;
+}
+
+
+function deselectOneDOM (dom) {
+  dom.classList.remove('selected');
+  try {
+    $(dom).rotatable('destroy');
+  } catch(e) {
+    // log('error in rotatable destroy..');
+    // log(e);
+  }
+
+  try{
+    $(domNode(dom).content_dom).resizable('destroy');
+  } catch (e) {
+    // console.log('some error in resizable destroy');
+    // console.log(e);
+  }
+}
+
 
 function selectOneDOM (dom) {
   dom.classList.add('selected');
@@ -744,47 +833,6 @@ function selectOneDOM (dom) {
       });
   });
 }
-
-function selectNode (n) {
-  console.log('select')
-  if ( n == null) {
-    console.log('[null]')
-    _selected_DOM.forEach(deselectOneDOM);
-    _selected_DOM = [];
-    return 0;
-  }
-  if (!Array.isArray(n)) {
-    log(`[${n.id}]`);
-    n = [n];
-  } else {
-    log( n.map( dom => dom.id) );
-  }
-  if (_selected_DOM.length > 0) {
-    // see how many are new ones
-    if (n.every((dom) => dom.classList.contains('selected'))) {
-      // if all are already selected - deselect them!
-      n.forEach(deselectOneDOM);
-      n.forEach((dom) => {
-        _selected_DOM.splice(_selected_DOM.indexOf(dom));
-      });
-    }else {
-      // if only some are already selected - add all new ones
-      for (let dom of n) {
-        if (dom.classList.contains('selected')) {
-          continue;
-        }else {
-          selectOneDOM(dom);
-          _selected_DOM.push(dom);
-        }
-      }
-    }
-  }else {
-    _selected_DOM = n.slice();
-    _selected_DOM.forEach(selectOneDOM);
-  }
-  return 0;
-}
-
 
 function isMenuShown(){
   return !_('#wrapper').classList.contains('toggled');
