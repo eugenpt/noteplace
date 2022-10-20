@@ -525,9 +525,9 @@ function copySelectedNodesToClipboard (de_id = false) {
     const centerPos = calcCenterPos(_Mouse.clipboard);
     _Mouse.clipboard.forEach((node) => {
       // yeah, my definition of S is counterintuitive here..
-      node.x = (node.x - centerPos[0]) * S;
-      node.y = (node.y - centerPos[1]) * S;
-      node.fontSize *= S;
+      node.x = (node.x - centerPos[0]) * _View.state.S;
+      node.y = (node.y - centerPos[1]) * _View.state.S;
+      node.fontSize *= _View.state.S;
     });
   
     copyToClipboard(JSON.stringify(_Mouse.clipboard));
@@ -1138,7 +1138,7 @@ function updateNode (node_) {
 
   if(node.is_img){
     if(node.size){
-      const h = 5 * (node.fontSize) * S;
+      const h = 5 * (node.fontSize) * _View.state.S;
       const w =  h * node.size[0] / node.size[1];
       node.content_dom.style.width = w.toPx();
       node.content_dom.style.height = h.toPx();
@@ -1318,9 +1318,9 @@ function redraw () {
         wrapper = wrapper[0];
         const img = wrapper.getElementsByTagName('img')[0];
 
-        wrapper.style.width = (wrapper.style.width.pxToFloat() * S / img.dataset.origS).toPx();
-        wrapper.style.height = (wrapper.style.height.pxToFloat() * S / img.dataset.origS).toPx();
-        img.dataset.origS = S;
+        wrapper.style.width = (wrapper.style.width.pxToFloat() * _View.state.S / img.dataset.origS).toPx();
+        wrapper.style.height = (wrapper.style.height.pxToFloat() * _View.state.S / img.dataset.origS).toPx();
+        img.dataset.origS = _View.state.S;
       }
     });
   }
@@ -1601,9 +1601,9 @@ window.addEventListener('paste', function (e) {
               const nnode = stripNode(node);
               // de-duplicate if
               nnode.id = newNodeID(nnode.id);
-              nnode.x /= S;
-              nnode.y /= S;
-              nnode.fontSize /= S;
+              nnode.x /= _View.state.S;
+              nnode.y /= _View.state.S;
+              nnode.fontSize /= _View.state.S;
               const tmousePos = clientToPos(_Mouse.pos);
               nnode.x += tmousePos[0];
               nnode.y += tmousePos[1];
@@ -1832,8 +1832,8 @@ function status (...arguments) {
 function addRandomNodesToView (N) {
   addRandomNodes(
     1 * N,
-    [_View.state.T[0], _View.state.T[0] + width / S],
-    [_View.state.T[1], _View.state.T[1] + height / S],
+    [_View.state.T[0], _View.state.T[0] + width / _View.state.S],
+    [_View.state.T[1], _View.state.T[1] + height / _View.state.S],
     [0.02 / _View.state.S, 20 / _View.state.S]
   );
 }
