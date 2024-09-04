@@ -65,7 +65,16 @@ let _View = {
     if (state == null) {
       state = currentState();
     }
-    return '?Tx=' + state.T[0] + '&Ty=' + state.T[1] + '&S=' + state.S;
+    // Step 1: Access the current query string
+    const queryString = window.location.search;
+
+    // Step 2: Parse the query string
+    const urlParams = new URLSearchParams(queryString);
+    urlParams.set('Tx',state.T[0]);
+    urlParams.set('Ty',state.T[1]);
+    urlParams.set('S',state.S);
+
+    return '?' + urlParams.toString();
   },  
   
   applyZoom: function applyZoom (T_, S_, smooth = true, noTemp = false) {
